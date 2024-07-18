@@ -15,7 +15,7 @@ Do-Tori는 사용자들이 자신의 할 일 목록을 공유하고, 질문과 �
 
 | 김신이(PL) | 이소현 | 조민준 | 채현영 |
 | --- | --- | --- | --- |
-| ![image](https://github.com/CheHyeonYeong/Do-tori/assets/62824602/cea2ba9e-078d-4cfc-9623-383e4bef7904) | ![image](https://github.com/CheHyeonYeong/Do-tori/assets/62824602/69ba163e-86e0-4b3b-99c0-a6f1dcfb8ac9) | ![image](https://github.com/CheHyeonYeong/Do-tori/assets/62824602/561ff217-7e4d-4e0a-a0d7-7a7977ace8f1) | ![image](https://github.com/CheHyeonYeong/Do-tori/assets/62824602/c24e7391-6d60-42df-9954-c96a8737126e) |
+| ![image](https://github.com/ToriArtis/2NY-Backend/blob/fc7b7c165eb1f67eb27e697b867ffe736259b969/src/main/resources/static/images/SINI.png) | ![image](https://github.com/ToriArtis/2NY-Backend/blob/fc7b7c165eb1f67eb27e697b867ffe736259b969/src/main/resources/static/images/SOHYUN.png) | ![image](https://github.com/ToriArtis/2NY-Backend/blob/fc7b7c165eb1f67eb27e697b867ffe736259b969/src/main/resources/static/images/MINJUNE.png) | ![image](https://github.com/ToriArtis/2NY-Backend/blob/fc7b7c165eb1f67eb27e697b867ffe736259b969/src/main/resources/static/images/HYEONYEONG.png) |
 | [@SiNiKin](https://github.com/SiNiKin) | [@LeeSoHyunn](https://github.com/LeeSoHyunn) | [@Rencal3491](https://github.com/Rencal3491) | [@CheHyeonYeong](https://github.com/CheHyeonYeong)  |
 
 ### 프로젝트 개요
