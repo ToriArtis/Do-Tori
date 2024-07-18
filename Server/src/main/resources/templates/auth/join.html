@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>🌰 Do-Tori</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" th:href="@{/assets/favicon.ico}" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link th:href="@{/css/styles.css}" rel="stylesheet" />
+    <link th:href="@{/css/auth_join.css}" rel="stylesheet" />
+    <title>Join Page</title>
+</head>
+<div class="main-container">
+    <div class="logo">
+        <img th:src="@{/assets/dotori_image.png}" alt="도토리 이미지">
+    </div>
+
+    <div class="join_container">
+        <form id="registerForm" th:action="@{/auth/join}" method="post">
+            <div class="mb">
+                <span class="input-group-txt">아이디</span>
+                <input type="text" name="id" class="form-con id">
+            </div>
+
+            <div class="mb">
+                <span class="input-group-txt">비밀번호</span>
+                <input type="password" name="password" id="password" class="form-con pw">
+            </div>
+
+            <div class="mb">
+                <span class="input-group-txt">비밀번호 확인</span>
+                <input type="password" id="passwordConfirm" class="form-con">
+            </div>
+
+            <div class="mb">
+                <span class="input-group-txt">닉네임</span>
+                <input type="text" name="nickName" id="nickName" class="form-con">
+            </div>
+
+            <div class="mb">
+                <span class="input-group-txt">이메일</span>
+                <input type="email" name="email" class="form-con">
+            </div>
+
+            <div class="btn_box">
+                <button type="submit" class="btn btn-primary submitBtn">가입하기</button>
+                <input type="button" value="취소" class="btn btn-primary closeBtn">
+            </div>
+        </form>
+    </div>
+</div>
+
+<script layout:fragment="script" th:inline="javascript">
+    const error = [[${error}]];
+
+    if (error && error === 'id') {
+        alert("동일한 ID를 가진 계정이 존재합니다.");
+    }
+
+    if (error && error === 'nickName') {
+        alert("동일한 NICKNAME를 가진 계정이 존재합니다.");
+    }
+
+    if (error && error === 'email') {
+        alert("동일한 EMAIL를 가진 계정이 존재합니다.");
+    }
+
+    const formObj = document.querySelector("#registerForm")
+
+    document.querySelector(".closeBtn").addEventListener("click", function (e) {
+        e.preventDefault()
+        e.stopPropagation()
+
+        formObj.reset()
+        self.location = `/auth/login`
+
+    }, false)
+
+    document.querySelector('.submitBtn').addEventListener('click', function (e) {
+        e.preventDefault(); // 기본 제출 동작 막기
+
+        const passwordInput = document.getElementById('password');
+        const passwordConfirmInput = document.getElementById('passwordConfirm');
+        const password = passwordInput.value;
+        const passwordConfirm = passwordConfirmInput.value;
+
+        // 비밀번호 유효성 검사
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            alert("비밀번호는 최소 8자 이상이어야 하며, 영문 대/소문자, 숫자, 특수문자를 모두 포함해야 합니다.");
+            passwordInput.focus();
+            return;
+        }
+        // 비밀번호 일치 여부 검사
+        if (password !== passwordConfirm) {
+            alert("비밀번호가 일치하지 않습니다.");
+            passwordConfirmInput.focus();
+            return;
+        }
+
+        const nicknameInput = document.getElementById('nickName');
+        const nickname = nicknameInput.value;
+        // 닉네임 유효성 검사
+        const nicknameRegex = /^.{1,5}$/;
+        if (!nicknameRegex.test(nickname)) {
+            alert("닉네임은 5글자 이하여야 합니다.")
+            nicknameInput.focus();
+            return;
+        }
+
+        const id = document.querySelector('.id').value
+        const pw = document.querySelector('.pw').value
+
+        if (id === pw) {
+            alert("아이디와 비밀번호는 같을 수 없습니다 !!");
+            return;
+        }
+
+
+        // 유효성 검사 통과 시 폼 제출
+        document.getElementById('registerForm').submit();
+    });
+</script>
+
+</html>

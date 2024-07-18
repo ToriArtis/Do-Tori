@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+
+    <title>🌰 Do-Tori</title>
+
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" th:href="@{/assets/favicon.ico}" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link th:href="@{/css/styles.css}" rel="stylesheet" />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        .active-nav-link {
+            font-weight: bold;
+            color: black; /* 현재 페이지의 링크 색상을 빨간색으로 설정 */
+        }
+        body {
+            background-color: #F5F0EA;
+        }
+        .search{
+            width: 100%;
+        }
+        .date{
+            margin: 0 auto;
+            width: 100%;
+        }
+        .thumbnail {
+            max-width: 200px; /* 원하는 썸네일 크기 */
+            max-height: 200px; /* 원하는 썸네일 크기 */
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+
+        .form-select {
+            border: none;
+            border-radius: 10px 0 0 10px;
+        }
+        .form-control {
+            border: none;
+            border-radius: 0 10px 10px 0;
+            margin-right: 0.5rem;
+        }
+        .searchBar {
+            border-radius: 0 10px 10px 0 !important;
+        }
+        .searchBtn {
+            background-color: #ccbfb2;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+        .clearBtn {
+            background-color: #e1d9d1;
+            border: none;
+            color: #000;
+            transition: 0.3s;
+        }
+        .clearBtn:hover {
+            background-color: #7D625B;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .writer_box {
+            display: flex;
+            align-items: center;
+        }
+        .writer_box>.card-title {
+            margin-left: 0.3rem;
+        }
+
+        .moreBtn {
+            background-color: #CCBFB2;
+            color: #333;
+            padding: 0.5rem 1.7rem;
+            border: none;
+
+            transition: 0.3s;
+        }
+        .moreBtn:hover {
+            background-color: #7D625B;
+            border: none;
+            color: #fff;
+        }
+
+        .profile {
+            width: 30px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+
+<div th:insert="~{layout/navbar.html}"></div>
+
+
+<div layout:fragment="content">
+    <div class="search">
+        <!--    검색 화면 추가 -->
+        <div class="row mt-3 mx-auto p-2 vstack gap-3" style="width: 50%; margin: 50px">
+            <form action="/post/list" method="get">
+                <div class="col">
+                    <input type="hidden" name="size" th:value="${pageRequestDTO.size}">
+                    <div class="input-group searchInputGroup">
+                        <div class="input-group-prepend">
+                            <select class="form-select" name="type">
+                                <option value="c" th:selected="${pageRequestDTO.type =='c'}">내용</option>
+                                <option value="n" th:selected="${pageRequestDTO.type =='n'}">작성자</option>
+                                <option value="cn" th:selected="${pageRequestDTO.type =='cn'}">내용+작성자</option>
+                            </select>
+                        </div>
+                        <input type="text" class="form-control searchBar" name="keyword" th:value="${pageRequestDTO.keyword}" placeholder="검색">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline searchBtn" type="submit" style="background-color: #ccbfb2">검색</button>
+                            <button class="btn btn-outline-secondary clearBtn" type="button">초기화</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Floating Button -->
+    <button type="button" class="btn btn-primary btn-lg rounded-circle floating-btn"
+            style="position: fixed; bottom: 20px; right:5%; background: #CCBFB2; border: none"
+            onclick="redirectToNewPostPage()">
+        +
+    </button>
+
+    <div class="modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">게시글 등록 성공</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>[[${result}]]번 게시글이 성공적으로 등록되었습니다.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                </div>
+            </div>
+        </div>
+    </div>  <!-- search div end -->
+
+    <div id="list" th:with="link = ${pageRequestDTO.getLink()}">
+
+        <div th:each="dto:${responseDTO.postLists}">
+            <div class="card mx-auto p-2 vstack gap-3" style="width: 50%; margin: 50px">
+                <div class="card-header">
+                    <div class="writer_box">
+                        <img th:src="@{${dto.profileImage != null ? '/images/' + dto.profileImage + '?t=' + #dates.createNow().getTime() : '/assets/Profile.png'}}"
+                             class="profile profile-image profileImage"/>
+
+                        <div class="card-title" style="display:inline; font-weight: bold">[[${dto.nickName}]]</div>
+                    </div>
+
+                    <div th:if="${dto.aid == #authentication.principal.aid}">
+                        <div class="dropdown" style="float: right; margin-top: 3px; display: inline">
+
+                            <a id="modifyDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <svg width="5" height="20" viewBox="0 0 10 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="5" cy="5" r="5" fill="black"/>
+                                    <circle cx="5" cy="22" r="5" fill="black"/>
+                                    <circle cx="5" cy="40" r="5" fill="black"/>
+                                </svg>
+                            </a>
+
+                            <div class="dropdown-menu dropdown-menu-end" id="mypage" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" th:href="@{/post/modify(pid=${dto.pid})}" th:text="수정하기"></a>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-item">
+                                    <form th:action="@{/post/remove}" method="post">
+                                        <input type="text" name="pid" th:value="${dto.pid}" readonly style="display: none;">
+                                        <button type="submit" class="removeBtn"  style="all: unset; cursor: pointer;">삭제하기</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <a th:href="|@{/post/read(pid=${dto.pid})}&${link}|" style="all: unset; cursor: pointer;">
+                    <div class="card-body">
+                        <div class="input-group mb-3" style="display: block; cursor: pointer">
+                            <div class="body-content" style="white-space: pre-wrap; margin-bottom: 1rem;">[[${dto.content}]]</div>
+                            <div style="display: flex; align-items: flex-start;">
+                                <div th:if="${dto.thumbnails != null && !dto.thumbnails.isEmpty()}" style="margin-right: 1rem;">
+                                    <img th:src="@{/images/{filename}(filename=${dto.thumbnails[0]})}" alt="썸네일" class="thumbnail" style="max-width: 100px; max-height: 100px;">
+                                </div>
+                                <div style="flex: 1;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <div style="margin: 0 auto; width: 95%">
+                    <hr>
+                    <p class="hstack gap-3 date">
+                        <span>[[${#temporals.format(dto.regDate, 'yyyy-MM-dd')}]] 작성</span>
+                        <span>/</span>
+                        <span>
+                            <span th:if="${dto.modDate == null}">-</span>
+                            <span th:unless="${dto.modDate == null}">[[${#temporals.format(dto.modDate, 'yyyy-MM-dd')}]]</span>
+                            &nbsp;수정
+                        </span>
+                        <span class="p-2 ms-auto">
+
+                            <img id="likeBtn"
+                                 th:src="${dto.liked ? '/assets/Favorite_onclick.png' : '/assets/Favorite.png' }"
+                                 style="width: 30px;"
+                                 th:data-post-id="${dto.pid}"
+                                 th:data-auth-id="${#authentication.principal != null ? #authentication.principal.aid : ''}"
+                                 th:data-liked="${dto.liked}">
+                            <span>[[${dto.toriBoxCount}]]</span>
+                            <img th:src="@{/assets/Comment.png}" style="width: 30px; height: 30px">
+                            <span class="progress-bar-success" style="color: black">[[${dto.commentCount}]]</span>
+                        </span>
+
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 더보기 버튼 추가 -->
+    <div class="text-center" th:if="${!responseDTO.realEnd}">
+        <button id="loadMoreBtn" class="btn btn-primary moreBtn" type="button">더보기</button>
+    </div>
+
+
+</div> <!--<div layout:fragment="content" end -->
+
+<!-- Bootstrap core JS-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script layout:fragment="script" th:inline="javascript">
+
+    function redirectToNewPostPage() {
+        // 새 게시글 작성 페이지로 이동
+        window.location.href = '/post/register';
+    }
+
+    // 초기 count 값 설정
+    let count = 1;
+
+    // 더보기 버튼과 input 요소를 가져오기
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+    // 스크롤 위치
+    let scrollPosition = 0;
+
+    // 이전 스크롤 위치 복원
+    window.addEventListener('load', () => {
+        const savedScrollPosition = sessionStorage.getItem('scrollPosition');
+        if (savedScrollPosition) {
+            window.scrollTo(0, parseInt(savedScrollPosition));
+            sessionStorage.removeItem('scrollPosition');  // 복원 후 삭제
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            // 버튼 클릭 이벤트 리스너 추가
+            loadMoreBtn.addEventListener('click', () => {
+                // 현재 스크롤 위치 저장
+                scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+                sessionStorage.setItem('scrollPosition', scrollPosition);
+
+                // 현재 URL에서 size 값을 가져온 후, 10씩 증가시키기
+                const urlParams = new URLSearchParams(window.location.search);
+                const currentSize = parseInt(urlParams.get('size')) || 10;
+                const nextSize = currentSize + 10;
+
+                // 검색 조건 가져오기
+                const type = urlParams.get('type') || '';
+                const keyword = urlParams.get('keyword') || '';
+
+                // 검색 조건을 포함하여 다음 요청 URL 생성
+                const nextUrl = `/post/list?size=${nextSize}&type=${type}&keyword=${keyword}`;
+
+                // 다음 요청 URL로 이동
+                self.location = nextUrl;
+            });
+        }
+
+    });
+
+    document.querySelector(".clearBtn").addEventListener("click", function (e){
+        e.preventDefault()
+        e.stopPropagation()
+        self.location = '/post/list'
+    }, false)
+
+    // 게시글 등록 이후 모달창이 하나 뜰 것이다.
+
+    const result = [[${result}]]
+    const modal = new  bootstrap.Modal(document.querySelector(".modal"))
+    if(result){
+        modal.show()
+    }
+
+    document.querySelector('.clearBtn').addEventListener('click', function (e){
+        e.preventDefault();
+        e.stopPropagation();
+        self.location = '/post/list';
+    }, false);
+
+    // 좋아요 버튼 클릭 이벤트 처리
+    document.querySelectorAll('#likeBtn').forEach(function (likeBtn) {
+        likeBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const postId = this.getAttribute('data-post-id');
+            const authId = this.getAttribute('data-auth-id');
+            const isLiked = this.getAttribute('data-liked') === 'true';
+
+            // AJAX 요청 보내기
+            fetch('/post/like', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ pid: postId, aid: authId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // 좋아요 카운트 업데이트
+                    const likeCountElement = this.nextElementSibling;
+                    likeCountElement.textContent = data.likeCount;
+
+                    // 좋아요 상태에 따라 이미지 변경
+                    if (isLiked) {
+                        this.src = '/assets/Favorite.png';
+                        this.setAttribute('data-liked', 'false');
+                    } else {
+                        this.src = '/assets/Favorite_onclick.png';
+                        this.setAttribute('data-liked', 'true');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    });
+</script>
+
+
+</body>
+</html>

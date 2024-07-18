@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+
+    <title>🌰 Do-Tori</title>
+
+    <!-- thymeleaf 형식으로 경로 수정 => th:href = "@{경로}" -->
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" th:href="@{/assets/favicon.ico}" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link th:href="@{/css/styles.css}" rel="stylesheet" />
+
+    <title>Post Read</title>
+    <style>
+        body {
+            background-color: #F5F0EA;
+        }
+        .name{
+            font-weight: bold;
+        }
+        .modify-button{
+            margin: 0 auto;
+            width: 50%;
+        }
+
+        .card {
+            padding: 1rem !important;
+        }
+        .writer_info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+
+            border-bottom: 1px solid #7d7d7d;
+        }
+        .writer {
+            display: flex;
+            align-items: center;
+        }
+        .profile {
+            width: 35px;
+            margin-right: 1rem;
+        }
+        .name {
+            font-size: 1.2rem;
+            margin: 0 !important;
+        }
+
+        .toggle {
+            position : absolute;
+            top: auto;
+            right: 3%;
+        }
+
+        .img-fluid{
+            max-width: 50%;
+            height: auto;
+        }
+        .body-content{
+            width: 50%;
+            text-align: left;
+            margin-bottom: 30px;
+        }
+        .p-2 {
+            padding: 0 !important;
+        }
+        .content_bottom {
+            margin: 1.2rem 0 0 0 !important;
+        }
+        .input-group {
+            align-items: center;
+        }
+        .input-group-comment{
+            margin: 0 auto;
+            width: 50%;
+            position: relative;
+            display: flex;
+        }
+        .commentContent{
+            height: 100px;
+            width: 100%;
+            border: none;
+        }
+        .addCommentBtn, .removeBtn{
+            border : none;
+            background-color: #ccbfb2;
+            position: absolute;
+            top: 30%;
+            right: 2%;
+        }
+        .commentList{
+            margin: 0 auto;
+            width: 50%;
+            background-color: #F5F0EA;
+            list-style: none;
+        }
+
+        .removePostBtn {
+            border: none;
+            background-color: transparent;
+            text-align: left;
+            padding: 0;
+        }
+
+        .moreBtn {
+            background-color: #CCBFB2;
+            color: #333;
+            padding: 0.5rem 1.7rem;
+            border: none;
+
+            transition: 0.3s;
+        }
+        .moreBtn:hover {
+            background-color: #7D625B;
+            border: none;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+
+<div th:insert="~{layout/navbar.html}"></div>
+
+
+<div layout:fragment="content">
+    <div class="row mt-3">
+        <div class="col">
+            <div class="card">
+                <div class="card-header writer_info">
+                    <div class="writer">
+                        <img th:src="@{${dto.profileImage != null ? '/images/' + dto.profileImage + '?t=' + #dates.createNow().getTime() : '/assets/Profile.png'}}"
+                             class="profile profile-image profileImage"/>
+                        <span class="card-title name">[[${dto.nickName}]]</span>
+                    </div>
+                    <div th:if="${dto.aid == #authentication.principal.aid}" class="toggle">
+                        <a id="modifyDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <svg width="5" height="20" viewBox="0 0 10 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="5" cy="5" r="5" fill="black"/>
+                                <circle cx="5" cy="22" r="5" fill="black"/>
+                                <circle cx="5" cy="40" r="5" fill="black"/>
+                            </svg>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end" id="mypage" aria-labelledby="navbarDropdown"
+                             th:with="link=${pageRequestDTO != null ? pageRequestDTO.getLink() : ''}">
+                            <a class="dropdown-item" th:href="|@{/post/modify(pid=${dto.pid})}&${link}|">수정하기</a>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item">
+                                <form th:action="@{/post/remove}" method="post" >
+                                    <input type="text" name="pid" th:value="${dto.pid}" readonly style="display: none;">
+                                    <button type="submit" class="removePostBtn">삭제하기</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <input type="hidden" class="form-control" th:value="${dto.pid}" readonly>
+                    </div>
+                    <div class="input-group mb-3" style="display: block; text-align: center">
+                        <div class="body-content" style="white-space: pre-wrap;">[[${dto.content}]]</div>
+                        <div th:if="${dto.thumbnails != null and !dto.thumbnails.isEmpty()}">
+                            <div th:each="thumbnail : ${dto.thumbnails}">
+                                <img th:src="@{/images/{thumbnail}(thumbnail=${thumbnail})}" class="img-fluid">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-group mb-3 content_bottom">
+                        <span> [[${#temporals.format(dto.regDate, 'yyyy-MM-dd')}]] 작성</span>
+                        <span>&nbsp; - &nbsp; [[${#temporals.format(dto.modDate, 'yyyy-MM-dd')}]] 수정 </span>
+                        <div class="p-2 ms-auto">
+                            <img id="likeBtn"
+                                 th:src="${dto.liked ? '/assets/Favorite_onclick.png' : '/assets/Favorite.png' }"
+                                 style="width: 30px;"
+                                 th:data-post-id="${dto.pid}"
+                                 th:data-auth-id="${#authentication.principal != null ? #authentication.principal.aid : ''}"
+                                 th:data-liked="${dto.liked}">
+                            <span>[[${likes}]]</span>
+                        </div>
+                    </div>
+                </div> <!--end card-body -->
+            </div><!--end card -->
+            <br>
+            <hr style="width: 50%; margin: 0 auto">
+        </div> <!--end col -->
+    </div> <!--end row -->
+
+    <!--    댓글 처리 영역 만들기-->
+    <div class="row " >
+        <div class="col-md-12">
+            <div class="my-4">
+                <div class="input-group-comment mb-3">
+                    <input type="hidden" name="aid" th:value="${#authentication.principal.aid}"  class="form-control aid" readonly>
+
+                    <input type="text" class="form-control commentContent" placeholder="댓글을 입력하세요">
+                    <button type="button" class="btn addCommentBtn">등록하기</button>
+
+                </div>
+            </div>
+            <ul class="list-group commentList" >
+
+            </ul>
+        </div>
+
+        <!-- 더보기 버튼 추가 -->
+        <div class="text-center">
+            <button id="loadMoreBtn" class="btn btn-primary moreBtn" type="button">더보기</button>
+        </div>
+
+    </div>
+</div> <!--end layout:fragment -->
+
+
+<!-- Bootstrap core JS-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<script th:src="@{/js/comment.js}"></script>
+
+
+<script layout:fragment="script" th:inline="javascript">
+    const pid = [[${dto.pid}]];
+    const aid = [[${#authentication.principal.aid}]];
+
+    const commentList = document.querySelector('.commentList');
+    // const currentTime = [[${#dates.createNow().time}]];
+
+    function printList(dtoList) {
+        let str = '';
+        if (dtoList && dtoList.length > 0) {
+            for (const dto of dtoList) {
+                const isOwner = dto.aid === aid; // 작성자와 현재 사용자가 같은지 확인
+                str += `
+                <li class="list-group-item d-flex justify-content-between commentItem" style="background-color: #F5F0EA; border: none; align-items: center;">
+                    <img src="${dto.profileImage ? '/images/' + dto.profileImage + '?t=' + new Date().getTime() : '/assets/Profile.png'}"
+                         class="profile profile-image profileImage" style="border-radius: 50%"/>
+                    <div style="background-color: #F5F0EA; width: 90%; border-bottom: 1px solid #c3c3c3">
+                        <h5 style="font-size: 1.2rem;">
+                            <span class="col-2">${dto.nickName}</span>
+                        </h5>
+                        <div style="margin-bottom: 0.7rem;">
+                            <span class="col-6" data-id="${dto.id}">${dto.content}</span>
+                        </div>
+                        <span class="col-2" style="display: none;">${dto.id}</span>
+                    </div>
+                    ${isOwner ? `
+                        <div>
+                            <button type="button" class="btn btn-danger removeBtn" data-id="${dto.id}">삭제</button>
+                        </div>
+                    ` : ''}
+                </li>`;
+            }
+        }
+        commentList.innerHTML = str;
+    }
+
+
+    // 초기 count 값 설정
+    let count = 1;
+
+    // 더보기 버튼과 input 요소를 가져오기
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+    function printComments( size = 10 ) {
+        getList(pid, 0, size).then(response => {
+            printList(response.postLists);
+
+            // 댓글 개수 확인
+            const totalComments = response.commentCount;
+            const displayedComments = commentList.children.length;
+
+            if (totalComments <= 10) {
+                // 댓글 10개 이하면 더보기 숨김
+                loadMoreBtn.style.visibility = 'hidden';
+            } else if (displayedComments >= totalComments) {
+                // 모든 댓글을 불러온 경우 더보기 숨김
+                loadMoreBtn.style.visibility = 'hidden';
+            } else {
+                // 더보기 보이기
+                loadMoreBtn.style.visibility = 'visible';
+            }
+
+        }).catch(error => {
+            console.error(error);
+        });
+    }
+
+    // 버튼 클릭 이벤트 리스너 추가
+    loadMoreBtn.addEventListener('click', () => {
+
+        // count 값 증가
+        count += 1;
+
+        console.log(count);
+
+        printComments(count * 10);
+
+    });
+
+    printComments();
+
+    document.querySelector(".addCommentBtn").addEventListener("click", function () {
+        const commentObj = {
+            pid: pid,
+            content: document.querySelector(".commentContent").value,
+            aid: aid
+        };
+        addComment(commentObj).then(response => {
+            document.querySelector(".commentContent").value = '';
+            count += 1;
+            document.querySelector(".aid").value = '';
+            printComments();
+        }).catch(error => {
+            console.error(error);
+        });
+    }, false);
+
+
+    commentList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('removeBtn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = e.target.dataset.id;
+            removeComment(id).then(() => {
+                printComments();
+            }).catch(error => {
+                console.error(error);
+            });
+        }
+    });
+
+    // 좋아요 버튼 클릭 이벤트 처리
+    document.querySelectorAll('#likeBtn').forEach(function (likeBtn) {
+        likeBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const postId = this.getAttribute('data-post-id');
+            const authId = this.getAttribute('data-auth-id');
+            const isLiked = this.getAttribute('data-liked') === 'true';
+
+            // AJAX 요청 보내기
+            fetch('/post/like', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ pid: postId, aid: authId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // 좋아요 카운트 업데이트
+                    const likeCountElement = this.nextElementSibling;
+                    likeCountElement.textContent = data.likeCount;
+
+                    // 좋아요 상태에 따라 이미지 변경
+                    if (isLiked) {
+                        this.src = '/assets/Favorite.png';
+                        this.setAttribute('data-liked', 'false');
+                    } else {
+                        this.src = '/assets/Favorite_onclick.png';
+                        this.setAttribute('data-liked', 'true');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    });
+
+</script>
+
+</body>
+</html>

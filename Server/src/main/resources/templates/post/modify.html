@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+
+    <!-- thymeleaf 형식으로 경로 수정 => th:href = "@{경로}" -->
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" th:href="@{/assets/favicon.ico}" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link th:href="@{/css/styles.css}" rel="stylesheet" />
+    <title>🌰 Do-Tori</title>
+    <style>
+        body {
+            background-color: #F5F0EA;
+            overflow-x: hidden;
+        }
+        form{
+            position: relative;
+        }
+        /*.my-4{*/
+        /*    position: absolute;*/
+        /*    bottom: 0;*/
+        /*    right: 0;*/
+        /*}*/
+
+    </style>
+</head>
+<body>
+
+
+<div th:insert="~{layout/navbar.html}"></div>
+
+
+<div layout:fragment="content">
+    <div class="row mt-3">
+        <div class="col">
+            <form th:action="@{/post/modify}" method="post" id="f1" enctype="multipart/form-data">
+                <div class="card">
+                    <div class="card-header" style="display: inline">
+                        <input type="text" class="form-control" name="pid" th:value="${dto.pid}" readonly style="display: none;">
+
+                        <input type="hidden" name = "aid" th:value="${#authentication.principal.aid}" readonly />
+                        <img th:src="@{${dto.profileImage != null ? '/images/' + dto.profileImage + '?t=' + #dates.createNow().getTime() : '/assets/Profile.png'}}"
+                             class="profile profile-image profileImage"/>
+                        <span class="card-title name" style="font-size: 30px; margin-left: 10px">[[${#authentication.principal.nickName}]]</span>
+                        <hr>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <div class="input-group mb-3">
+                                <textarea class="col-sm-5" rows="20" style="width: 100%; resize: none; border: none" name="content">[[${dto.content}]]</textarea>
+                            </div>
+                        </div>
+                    </div><!-- cardbody end-->
+                </div> <!--end card-->
+                <br>
+                <div class="insert input-group mb-3" style="margin: 0 auto; width: 50%">
+                    <div th:if="${dto.thumbnails != null and !dto.thumbnails.isEmpty()}" th:each="thumbnail, index : ${dto.thumbnails}">
+                        <div style="display: inline-block; margin-right: 10px;">
+                            <img th:src="@{/images/{thumbnail}(thumbnail=${thumbnail})}" style="width: 80px; height: 35px; object-fit: contain;">
+                            <input type="checkbox" name="deletedThumbnails" th:value="${thumbnail}"> 삭제
+                        </div>
+                    </div>
+                    <div th:if="${dto.thumbnails == null or dto.thumbnails.isEmpty()}">
+                        <span style="margin-top: 7px; margin-right: 10px">사진 등록하기</span>
+                    </div>
+                    <input type="file" name="files" class="form-control" multiple>
+                </div>
+                <div class="insert my-4" style="margin: 0 auto; width: 50%">
+                    <div class="float-end">
+                        <button type="button" class="btn listBtn" style="background: #ffffff; color: #000000; width: 100px;">취소</button>
+                        <button type="button" class="btn modBtn" style="background: #ccbfb2; color: #000000; width: 100px;">수정하기</button>
+                        <button type="button" class="btn btn-danger removeBtn">삭제하기</button>
+                    </div>
+                </div>
+            </form>
+        </div><!--end col-->
+    </div><!--end row-->
+</div><!--content end-->
+
+<script layout:fragment="script" th:inline="javascript">
+
+
+    const errors = [[${errors}]];
+    console.log(errors);
+
+    let errorMsg = '';
+    if (errors) {
+        for (let i = 0; i < errors.length; i++) {
+            errorMsg += `${errors[i].field}으(는) ${errors[i].code}\n`;
+        }
+        history.replaceState({}, null, null);
+        alert(errorMsg);
+    }
+    const link = [[${pageRequestDTO.getLink()}]];
+    const formObj = document.querySelector("#f1");
+
+    document.querySelector(".modBtn").addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        formObj.action = `/post/modify?${link}`;
+        formObj.method = "post";
+        formObj.submit();
+
+    }, false);
+
+    document.querySelector(".listBtn").addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        formObj.reset();
+        self.location = `/post/list?${link}`;
+    }, false);
+
+    document.querySelector(".removeBtn").addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        formObj.action = `/post/remove`;
+        formObj.method = "post";
+        formObj.submit();
+    }, false);
+
+    document.querySelectorAll(".removeImageBtn").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const filename = this.getAttribute("data-filename");
+            this.parentElement.remove();
+
+            // Add the filename to the hidden input `deletedThumbnails`
+            const deletedThumbnailInput = document.createElement("input");
+            deletedThumbnailInput.type = "hidden";
+            deletedThumbnailInput.name = "deletedThumbnails";
+            deletedThumbnailInput.value = filename;
+            formObj.appendChild(deletedThumbnailInput);
+        });
+    });
+
+</script>
+</body>
+
+</html>

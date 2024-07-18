@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>🌰 Do-Tori</title>
+    <link rel="icon" type="image/x-icon" th:href="@{/assets/favicon.ico}" />
+    <link th:href="@{/css/styles.css}" rel="stylesheet" />
+    <link th:href="@{/css/auth_join.css}" rel="stylesheet" />
+</head>
+<body>
+<div class="login-container">
+    <div class="image-section">
+        <img th:src="@{/assets/dotori_image.png}" alt="도토리 이미지">
+    </div>
+    <div class="form-section">
+        <form id="registerForm" th:action="@{/auth/login}" method="post">
+            <div class="mb-3">
+                <input type="text" name="username" class="form-control" placeholder="아이디">
+            </div>
+            <div class="mb-3">
+                <input type="password" name="password" class="form-control" placeholder="비밀번호">
+            </div>
+            <div class="rememberBox">
+                <input type="checkbox" id="rememberMe" name="rememberMe">
+                <label th:for="rememberMe">자동 로그인</label>
+            </div>
+            <br>
+            <div class="hr-sect">소셜 계정 로그인</div>
+            <br>
+            <div class="social-login">
+                <a href="/oauth2/authorization/google">
+                    <img th:src="@{/assets/googleIcon.png}" alt="Google Login">
+                </a>
+                &nbsp; &nbsp; &nbsp; &nbsp;
+                <a href="/oauth2/authorization/naver">
+                    <img th:src="@{/assets/naverIcon.png}" alt="Naver Login">
+                </a>
+            </div>
+            <br>
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-primary">로그인</button>
+                &nbsp; &nbsp;
+                <a href="/auth/join" class="btn btn-primary">회원가입</a>
+            </div>
+        </form>
+    </div>
+</div>
+<script th:if="${param.logout != null}">
+    alert("저희 서비스를 이용해주셔서 감사합니다. 안녕히가세요.");
+
+    $.ajax({
+        type: "POST",
+        url: "auth/login",
+        data: {
+            username: userName,
+            password: password,
+            rememberMe: rememberMe
+        },
+        success: function(data, state, xhr) {
+            if (xhr.getResponseHeader("isSuccess") === "true") {
+                location.replace("/todo/list");
+            } else if (xhr.getResponseHeader("isSuccess") === "false") {
+                // 접근 권한이 없을 경우
+                alert('접근 권한이 없습니다.');
+            } else {
+                alert('로그인에 실패했습니다. 아이디 혹은 비밀번호를 확인하세요.');
+            }
+        },
+        error: function() {
+            // 에러 처리
+        }
+    });
+</script>
+</body>
+</html>
