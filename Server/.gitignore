@@ -17,7 +17,7 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-
+### IntelliJ IDEA ###
 .idea
 *.iws
 *.iml
@@ -32,6 +32,10 @@ out/
 /dist/
 /nbdist/
 /.nb-gradle/
-### IntelliJ IDEA ###
+
 ### VS Code ###
 .vscode/
+
+# API_KEY
+!**/src/main/resources/application.properties
+/src/main/resources/application.properties
