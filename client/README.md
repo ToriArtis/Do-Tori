@@ -9,8 +9,12 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    ```bash
    npm install
    ```
-
-2. Start the app
+   **tsconfig.json 오류 뜰 시 업데이트 재설치 실행**
+   ```bash
+   npm install -g expo-cli
+   ```
+   
+3. Start the app
 
    ```bash
     npx expo start
