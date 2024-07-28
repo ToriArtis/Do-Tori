@@ -36,7 +36,7 @@ public class SecurityConfig {
  //   private final OAuth2Service oAuth2Service;
     private final TokenProvider tokenProvider;
     private final UserRepository userRepository;
-    private final OAuth2UserService oAuth2UserService;
+//    private final OAuth2UserService oAuth2UserService;
     private final PasswordEncoder passwordEncoder;
 
 

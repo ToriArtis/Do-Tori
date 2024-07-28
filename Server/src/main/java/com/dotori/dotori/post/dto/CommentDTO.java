@@ -1,4 +1,4 @@
-package com.dotori.dotori.dto;
+package com.dotori.dotori.post.dto;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -13,17 +13,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CommentDTO {
 
-    private int id;
+    private Long id;
 
     @NotNull
-    private int pid;    // post 참조
+    private Long pid;
 
     @NotEmpty
     private String content;
 
-    // auth 참조
-    private int aid;
+    private Long aid;
     private String nickName;
     private String profileImage;
-
 }

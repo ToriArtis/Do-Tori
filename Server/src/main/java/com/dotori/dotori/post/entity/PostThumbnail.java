@@ -1,4 +1,4 @@
-package com.dotori.dotori.entity;
+package com.dotori.dotori.post.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
