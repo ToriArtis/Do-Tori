@@ -1,4 +1,4 @@
-package com.dotori.dotori.dto;
+package com.dotori.dotori.post.dto;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -10,14 +10,12 @@ import java.util.List;
 @ToString
 public class PageResponseDTO<E> {
 
-    private int size; // 불러올 게시물 수
-    private int total; // 전체 게시물 수
-    private int commentCount; //댓글 수
+    private int size;
+    private int total;
+    private int commentCount;
     private boolean realEnd;
-
     private long currentTime;
-
-    private List<E> postLists;  // 게시글 내용!
+    private List<E> postLists;
 
     @Builder(builderMethodName = "withAll")
     public PageResponseDTO(PageRequestDTO pageRequestDTO, List<E> postLists, int total, boolean realEnd) {
@@ -28,7 +26,6 @@ public class PageResponseDTO<E> {
         this.total = total;
         this.realEnd = realEnd;
         this.postLists = postLists;
-
     }
 
     public void setCommentCount(int commentCount) {

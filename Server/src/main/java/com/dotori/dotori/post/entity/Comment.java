@@ -1,5 +1,6 @@
-package com.dotori.dotori.entity;
+package com.dotori.dotori.post.entity;
 
+import com.dotori.dotori.auth.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -14,21 +15,21 @@ public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Post post;
 
-    private int pid;
+    private Long pid;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "aid")
-    private Auth auth;
+    private User user;
 
     @NotNull
     private String content;
 
-    public void setPost(int pid) {
+    public void setPost(Long pid) {
         this.post = Post.builder().pid(pid).build();
     }
 

@@ -1,7 +1,10 @@
-package com.dotori.dotori.entity;
+package com.dotori.dotori.post.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
@@ -12,16 +15,16 @@ public class ToriBox {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Post post;
 
-    private int pid;
+    private Long pid;
 
-    private int aid;
+    private Long aid;
 
-    public void setPost(int pid) {
+    public void setPost(Long pid) {
         this.post = Post.builder().pid(pid).build();
     }
 

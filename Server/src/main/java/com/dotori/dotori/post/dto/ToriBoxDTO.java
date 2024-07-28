@@ -1,4 +1,4 @@
-package com.dotori.dotori.dto;
+package com.dotori.dotori.post.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -12,12 +12,11 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ToriBoxDTO {
 
-    private int id;
+    private Long id;
 
     @NotNull
-    private int aid;
+    private Long aid;
 
     @NotNull
-    private int pid;
-
+    private Long pid;
 }

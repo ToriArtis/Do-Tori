@@ -1,12 +1,14 @@
 package com.dotori.dotori.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
 import java.util.Collections;
 import java.util.Map;
 
+@Getter
 public class AuthSecurityDTO extends User {
 
     @NotBlank private String email; // 사용자 이메일
