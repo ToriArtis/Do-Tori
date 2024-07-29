@@ -16,7 +16,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -34,10 +33,13 @@ public class SecurityConfig {
     @Autowired
     private final JwtAuthenticationFilter jwtAuthenticationFilter; // jwt 필터 의존성 주입
     private final CustomUserDetailsService userDetailsService;
+    //   private final OAuth2Service oAuth2Service;
     private final TokenProvider tokenProvider;
     private final UserRepository userRepository;
+    //    private final OAuth2UserService oAuth2UserService;
     private final PasswordEncoder passwordEncoder;
-    private final OAuth2UserService oAuth2UserService;
+
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -48,17 +50,16 @@ public class SecurityConfig {
                 // HTTP 요청에 대한 인가 설정
                 .authorizeHttpRequests(auth -> auth
                         // 나머지 모든 요청은 인증 필요
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
-
-                // HTTP 기본 인증 비활성화
+//                // HTTP 기본 인증 비활성화
                 .httpBasic(httpBasic -> httpBasic.disable())
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(oAuth2UserService)
-                        )
-                        .successHandler(oAuth2AuthenticationSuccessHandler())
-                )
+//                .oauth2Login(oauth2 -> oauth2
+//                        .userInfoEndpoint(userInfo -> userInfo
+//                                .userService(oAuth2UserService)
+//                        )
+//                        .successHandler(oAuth2AuthenticationSuccessHandler())
+//                )
                 // 세션 관리 설정을 무상태(stateless)로 설정
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -77,10 +78,11 @@ public class SecurityConfig {
         // 설정된 SecurityFilterChain 반환
         return http.build();
     }
-    @Bean
-    public AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
-        return new OAuth2AuthenticationSuccessHandler(tokenProvider, userRepository, passwordEncoder);
-    }
+
+//    @Bean
+//    public AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
+//        return new OAuth2AuthenticationSuccessHandler(tokenProvider, userRepository, passwordEncoder);
+//    }
 
     // CORS 필터 Bean 설정
     @Bean
