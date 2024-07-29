@@ -1,9 +1,12 @@
 package com.dotori.dotori.auth.entity;
 
+import com.dotori.dotori.Follow.entity.Follow;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -34,6 +37,23 @@ public class User {
     @Column(name = "provider")
     private String provider;
 
+    @Column(name = "provider_id")
+    private String providerId;
+
+    @Column(name = "profile_image")
+    private String profileImage;
+
+    @Column(name = "header_image")
+    private String headerImage;
+
+    // 팔로워 리스트
+    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL)
+    private List<Follow> followers = new ArrayList<>();
+
+    // 팔로잉 리스트
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL)
+    private List<Follow> followings = new ArrayList<>();
+
     @Column(name = "created_at")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -44,5 +64,11 @@ public class User {
     @Enumerated(value = EnumType.STRING)
     @Builder.Default
     private UserStatus userStatus = UserStatus.USER_ACTIVE; // 기본값을 USER_ACTIVE로 설정
+
+    public User updateUser(String email, String provider) {
+        this.email = email;
+        this.provider = provider;
+        return this;
+    }
 
 }
