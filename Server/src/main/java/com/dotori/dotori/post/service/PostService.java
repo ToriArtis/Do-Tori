@@ -54,7 +54,8 @@ public class PostService {
                             .collect(Collectors.toList());
                     postDTO.setThumbnails(thumbnails);
                     postDTO.setToriBoxCount(countLikes(postDTO.getPid()));
-//                    postDTO.setProfileImage(posts.getUser().getProfileImage());
+                    postDTO.setProfileImage(posts.getUser().getProfileImage());
+                    postDTO.setEmail(posts.getUser().getEmail()); // email 값 설정
                     return postDTO;
                 })
                 .collect(Collectors.toList());
@@ -67,8 +68,8 @@ public class PostService {
     }
 
     public Long addPost(PostDTO postDTO, List<MultipartFile> files) throws Exception {
-        User user = userRepository.findById(postDTO.getAid())
-                .orElseThrow(() -> new Exception("Not Found auth id :" + postDTO.getAid()));
+        User user = userRepository.findByEmail(postDTO.getEmail())
+                .orElseThrow(() -> new Exception("Not Found user email: " + postDTO.getEmail()));
 
         Post post = modelMapper.map(postDTO, Post.class);
         post.setUser(user);
@@ -85,7 +86,8 @@ public class PostService {
         PostDTO postDTO = modelMapper.map(result, PostDTO.class);
 
         postDTO.setNickName(result.getUser().getNickName());
-//        postDTO.setProfileImage(result.getUser().getProfileImage());
+        postDTO.setProfileImage(result.getUser().getProfileImage());
+        postDTO.setEmail(result.getUser().getEmail()); // email 값 설정
 
         List<String> thumbnails = result.getThumbnails().stream()
                 .map(PostThumbnail::getThumbnail)
@@ -96,8 +98,8 @@ public class PostService {
 
     public void modifyPost(PostDTO postDTO, List<MultipartFile> files, List<String> deletedThumbnails) throws Exception {
         Post post = postRepository.findById(postDTO.getPid()).orElseThrow();
-        User user = userRepository.findById(postDTO.getAid())
-                .orElseThrow(() -> new Exception("Not Found auth id :" + postDTO.getAid()));
+        User user = userRepository.findByEmail(postDTO.getEmail())
+                .orElseThrow(() -> new Exception("Not Found user email: " + postDTO.getEmail()));
 
         if (post.getNickName() == null || !post.getNickName().equals(user.getNickName())) {
             post.setNickName(user.getNickName());
@@ -166,14 +168,15 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
-    public Long registerComment(CommentDTO commentDTO) throws Exception {
-        User user= userRepository.findById(commentDTO.getAid())
+    public Long registerComment(CommentDTO commentDTO, Long postId) throws Exception {
+        User user = userRepository.findById(commentDTO.getAid())
                 .orElseThrow(() -> new Exception("Not Found auth id :" + commentDTO.getAid()));
 
-//        commentDTO.setProfileImage(user.getProfileImage());
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new Exception("Not Found post id :" + postId));
 
         Comment comment = modelMapper.map(commentDTO, Comment.class);
-        comment.setPost(commentDTO.getPid());
+        comment.setPost(post);
         comment.setUser(user);
 
         return commentRepository.save(comment).getId();
@@ -185,11 +188,10 @@ public class PostService {
 
         return CommentDTO.builder()
                 .id(comment.getId())
-                .pid(comment.getPid())
                 .content(comment.getContent())
                 .aid(user.getId())
                 .nickName(user.getNickName())
-//                .profileImage(user.getProfileImage())
+                .profileImage(user.getProfileImage())
                 .build();
     }
 
@@ -197,20 +199,19 @@ public class PostService {
         commentRepository.deleteById(id);
     }
 
-    public PageResponseDTO<CommentDTO> getListOfComment(Long pid, PageRequestDTO pageRequestDTO) {
+    public PageResponseDTO<CommentDTO> getListOfComment(Long postId, PageRequestDTO pageRequestDTO) {
         Pageable pageable = pageRequestDTO.getPageable("id");
-        Page<Comment> result = commentRepository.listOfPost(pid, pageable);
+        Page<Comment> result = commentRepository.listOfPost(postId, pageable);
 
         List<CommentDTO> dtoList = result.getContent().stream()
                 .map(comment -> {
                     User user = comment.getUser();
                     return CommentDTO.builder()
                             .id(comment.getId())
-                            .pid(comment.getPid())
                             .content(comment.getContent())
                             .aid(user.getId())
                             .nickName(user.getNickName())
-//                            .profileImage(user.getProfileImage())
+                            .profileImage(user.getProfileImage())
                             .build();
                 })
                 .collect(Collectors.toList());

@@ -65,7 +65,7 @@ public class PostSearchImpl extends QuerydslRepositorySupport implements PostSea
                         post.user.id,
                         post.content,
                         post.user.nickName,
-//                        post.user.profileImage,
+                        post.user.profileImage,
                         post.regDate,
                         post.modDate,
                         postThumbnail.thumbnail,

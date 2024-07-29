@@ -15,9 +15,6 @@ public class CommentDTO {
 
     private Long id;
 
-    @NotNull
-    private Long pid;
-
     @NotEmpty
     private String content;
 
