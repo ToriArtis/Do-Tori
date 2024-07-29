@@ -7,13 +7,15 @@ import com.dotori.dotori.auth.dto.UserDTO;
 import com.dotori.dotori.auth.entity.User;
 import com.dotori.dotori.auth.jwt.TokenProvider;
 import com.dotori.dotori.auth.service.UserService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +31,6 @@ public class UserController {
     private UserService userService;
     @Autowired
     private TokenProvider tokenProvider;
-//    @Autowired
-//    private TokenProvider tokenProvider;
 
     // 사용자 등록
     @PostMapping()
@@ -62,12 +62,10 @@ public class UserController {
                 userDTO.getPassword()
         );
         if( user != null){
-            final String accessToken = tokenProvider.createAccessToken(user);
-            final String refreshToken = tokenProvider.createRefreshToken(user);
+            final String token = tokenProvider.create(user);
             final UserDTO.LoginDTO responseUserDTO = UserDTO.LoginDTO.builder()
                     .email(user.getEmail())
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
+                    .token(token)
                     .nickName(user.getNickName())
                     .build();
             return ResponseEntity.ok().body(responseUserDTO);
@@ -175,6 +173,28 @@ public class UserController {
             response.put("success", false);
             response.put("message", "이메일을 찾지 못했습니다.");
             return ResponseEntity.ok(response);
+        }
+    }
+
+    // 이미지 업로드
+    @PostMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateProfileImage(@RequestParam("profile") MultipartFile file) {
+        try {
+            userService.updateProfileImage(file);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping(value = "/header-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateHeaderImage(@RequestParam("header") MultipartFile file) {
+        try {
+            User loginUser = userService.getLoginUser();
+            userService.updateHeaderImage(file);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

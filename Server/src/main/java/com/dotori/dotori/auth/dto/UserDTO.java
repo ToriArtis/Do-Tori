@@ -3,8 +3,6 @@ package com.dotori.dotori.auth.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
-import java.util.Set;
-
 public class UserDTO {
 
     @Builder
@@ -19,6 +17,8 @@ public class UserDTO {
         @NotBlank private String password; // 사용자 비밀번호
         @NotBlank private String nickName; // 사용자 닉네임
         @NotBlank private String phone; // 사용자 전화번호
+        private String profileImage; // 프로필 이미지
+        private String headerImage; // 헤더 이미지
     }
 
     @Builder
@@ -27,8 +27,7 @@ public class UserDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static  class LoginDTO{
-        private String accessToken;
-        private String refreshToken;
+        private String token;
         private String provider;
 
         @NotBlank private String email; // 사용자 이메일

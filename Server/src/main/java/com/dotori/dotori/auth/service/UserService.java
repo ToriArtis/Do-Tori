@@ -15,7 +15,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -150,6 +154,52 @@ public class UserService {
         } else {
             return null;
         }
+    }
+
+    // 이미지 업로드
+    public void updateProfileImage(MultipartFile file) throws Exception {
+        User user = getLoginUser();
+        List<MultipartFile> files = new ArrayList<>();
+        files.add(file);
+        List<String> uploadedFiles = uploadImages(files);
+        if (!uploadedFiles.isEmpty()) {
+            user.setProfileImage(uploadedFiles.get(0));
+            userRepository.save(user);
+        }
+    }
+
+    public void updateHeaderImage(MultipartFile file) throws Exception {
+        User user = getLoginUser();
+        List<MultipartFile> files = new ArrayList<>();
+        files.add(file);
+        List<String> uploadedFiles = uploadImages(files);
+        if (!uploadedFiles.isEmpty()) {
+            user.setHeaderImage(uploadedFiles.get(0));
+            userRepository.save(user);
+        }
+    }
+
+    private List<String> uploadImages(List<MultipartFile> files) throws Exception {
+        List<String> uploadedFiles = new ArrayList<>();
+        if (files != null) {
+            for (MultipartFile file : files) {
+                String originalName = file.getOriginalFilename();
+                if (originalName != null && !originalName.isEmpty()) {
+                    // 파일 이름 생성
+                    String fileName = System.currentTimeMillis() + "_" + originalName;
+                    // 파일 저장 경로
+                    String savePath = System.getProperty("user.dir") + "/Server/src/main/resources/static/images/";
+                    // 저장 경로 없으면 디렉토리 생성
+                    if (!new File(savePath).exists()) {
+                        new File(savePath).mkdir();
+                    }
+                    String filePath = savePath + fileName;
+                    file.transferTo(new File(filePath));
+                    uploadedFiles.add(fileName);
+                }
+            }
+        }
+        return uploadedFiles;
     }
 
 }
