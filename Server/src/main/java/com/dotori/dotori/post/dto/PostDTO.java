@@ -18,7 +18,7 @@ public class PostDTO {
     private Long commentCount;
     private Long toriBoxCount;
 
-    private Long aid;
+    private String email;
     private String nickName;
     private String profileImage;
 

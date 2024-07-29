@@ -26,7 +26,7 @@ public class Post{
     private Long pid;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "aid")
+    @JoinColumn(name = "user_email", referencedColumnName = "email")
     private User user;
 
     @Column(name = "nickName")

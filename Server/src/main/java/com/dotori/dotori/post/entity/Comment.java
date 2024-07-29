@@ -20,8 +20,6 @@ public class Comment {
     @ManyToOne(fetch = FetchType.LAZY)
     private Post post;
 
-    private Long pid;
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "aid")
     private User user;
@@ -29,8 +27,8 @@ public class Comment {
     @NotNull
     private String content;
 
-    public void setPost(Long pid) {
-        this.post = Post.builder().pid(pid).build();
+    public void setPost(Post post) {
+        this.post = post;
     }
 
 }

@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 public interface PostRepository extends JpaRepository<Post, Long>, PostSearch {
 
     Page<Post> findByContentContainingOrderByPidDesc(String keyword, Pageable pageable);
@@ -18,4 +20,6 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostSearch {
     String getTime();
 
     void deleteByUser_Id(Long aid);
+
+//    List<Post> findByEmail(String email);
 }

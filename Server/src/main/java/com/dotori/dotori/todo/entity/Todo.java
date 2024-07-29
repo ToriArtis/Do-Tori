@@ -1,5 +1,6 @@
 package com.dotori.dotori.todo.entity;
 
+import com.dotori.dotori.auth.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -20,15 +21,16 @@ public class Todo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(nullable = false)
-    private int aid;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_email", referencedColumnName = "email")
+    private User user;
 
     @Builder.Default
     @Column(length = 50)
     @ColumnDefault("'No category'")
     private String category = "No category";
 
-    @Column(nullable = false,length = 500)
+    @Column(nullable = false, length = 500)
     private String content;
 
     @ColumnDefault("false")

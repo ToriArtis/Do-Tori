@@ -10,16 +10,15 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@Setter
 public class TodoDTO {
 
     private int id;
-
-    private int aid;
+    private String email;  // aid를 email로 변경
+    private String userNickName;
 
     @NotEmpty
     @Builder.Default
-    private String category="No category";
+    private String category = "No category";
 
     @NotEmpty
     @NotNull
@@ -29,6 +28,4 @@ public class TodoDTO {
 
     @Builder.Default
     private LocalDate todoDate = LocalDate.now();
-
-
 }

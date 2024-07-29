@@ -6,8 +6,11 @@ import com.dotori.dotori.auth.dto.AuthSecurityDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,26 +24,45 @@ public class TodoController {
     private final TodoService todoService;
 
     @GetMapping
-    public ResponseEntity<List<TodoDTO>> getAllTodos(@AuthenticationPrincipal AuthSecurityDTO authSecurityDTO) {
-        return ResponseEntity.ok(todoService.getTodoByEmail(authSecurityDTO.getEmail()));
+    public ResponseEntity<List<TodoDTO>> getAllTodos() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return ResponseEntity.ok(todoService.getTodoByEmail(email));
     }
 
     @PostMapping
-    public ResponseEntity<TodoDTO> addTodo(@RequestBody @Valid TodoDTO todoDTO) {
-        log.info("Add todo: {}", todoDTO);
-        return ResponseEntity.ok(todoService.addTodo(todoDTO));
+    public ResponseEntity<TodoDTO> addTodo(@Valid @RequestBody TodoDTO todo) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            todo.setEmail(email);
+            log.info("Setting email: " + email);
+        } else {
+            log.warn("No authenticated user found");
+        }
+        return ResponseEntity.ok(todoService.addTodo(todo));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TodoDTO> updateTodo(@PathVariable int id, @RequestBody @Valid TodoDTO todoDTO) {
-        todoDTO.setId(id);
-        todoService.updateTodo(todoDTO);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<TodoDTO> modifyTodo(@PathVariable int id, @Valid @RequestBody TodoDTO todoDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            todoDTO.setId(id);
+            todoDTO.setEmail(email);
+            log.info("Updating todo. ID: " + id + ", Email: " + email);
+        } else {
+            log.warn("No authenticated user found for todo update");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(todoService.updateTodo(todoDTO));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTodo(@PathVariable int id) {
-        todoService.deleteTodo(id);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        todoService.deleteTodo(id, email);
         return ResponseEntity.ok().build();
     }
 }
