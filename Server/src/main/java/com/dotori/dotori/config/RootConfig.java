@@ -1,6 +1,8 @@
 package com.dotori.dotori.config;
 
+import com.dotori.dotori.post.dto.CommentDTO;
 import com.dotori.dotori.post.dto.PostDTO;
+import com.dotori.dotori.post.entity.Comment;
 import com.dotori.dotori.post.entity.Post;
 import com.dotori.dotori.todo.dto.TodoDTO;
 import com.dotori.dotori.todo.entity.Todo;

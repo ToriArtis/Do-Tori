@@ -1,5 +1,6 @@
 package com.dotori.dotori.post.repository;
 
+import com.dotori.dotori.auth.entity.User;
 import com.dotori.dotori.post.entity.Post;
 import com.dotori.dotori.post.service.PostSearch;
 import org.springframework.data.domain.Page;
@@ -25,4 +26,9 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostSearch {
             "GROUP BY p.pid ORDER BY COUNT(t.id) DESC")
     Page<Post> findTopPostsByToriBoxCount(Pageable pageable);
 
+    List<Post> findByUser_Email(String email);
+
+    List<Post> findByUserIdIn(List<Long> userIds);
+
+//    List<Post> findByTagsName(String tagName);
 }

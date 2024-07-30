@@ -15,6 +15,7 @@ import java.util.List;
 @Getter
 @Builder
 @Setter
+@ToString(exclude = "tags")
 @AllArgsConstructor
 @NoArgsConstructor
 @EntityListeners(value = {AuditingEntityListener.class})
@@ -54,6 +55,7 @@ public class Post{
             joinColumns = @JoinColumn(name = "post_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
+    @Builder.Default
     private List<Tag> tags = new ArrayList<>();
 
     public void changePost(String content, LocalDateTime modDate, List<PostThumbnail> thumbnails) {

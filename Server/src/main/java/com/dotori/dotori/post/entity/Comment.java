@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(exclude = {"post", "parent"})
 public class Comment {
 
     @Id
@@ -31,6 +32,7 @@ public class Comment {
     @JoinColumn(name = "parent_id")
     private Comment parent;
 
+    @Builder.Default
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> children = new ArrayList<>();
 
