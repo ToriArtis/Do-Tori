@@ -1,12 +1,9 @@
 package com.dotori.dotori.auth.entity;
 
-import com.dotori.dotori.Follow.entity.Follow;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter

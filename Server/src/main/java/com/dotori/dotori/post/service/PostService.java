@@ -3,13 +3,8 @@ package com.dotori.dotori.post.service;
 import com.dotori.dotori.auth.entity.User;
 import com.dotori.dotori.auth.repository.UserRepository;
 import com.dotori.dotori.post.dto.*;
-import com.dotori.dotori.post.entity.Comment;
-import com.dotori.dotori.post.entity.Post;
-import com.dotori.dotori.post.entity.PostThumbnail;
-import com.dotori.dotori.post.entity.ToriBox;
-import com.dotori.dotori.post.repository.CommentRepository;
-import com.dotori.dotori.post.repository.PostRepository;
-import com.dotori.dotori.post.repository.ToriBoxRepository;
+import com.dotori.dotori.post.entity.*;
+import com.dotori.dotori.post.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -38,6 +33,8 @@ public class PostService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final PostSearchImpl postSearchImpl;
+    private final TagRepository tagRepository;
+    private final BookmarkRepository bookmarkRepository;
 
     public PageResponseDTO<PostDTO> list(PageRequestDTO pageRequestDTO) {
         String[] types = pageRequestDTO.getTypes();
@@ -52,8 +49,13 @@ public class PostService {
                     List<String> thumbnails = posts.getThumbnails().stream()
                             .map(PostThumbnail::getThumbnail)
                             .collect(Collectors.toList());
+                    List<String> tagNames = posts.getTags().stream()
+                            .map(Tag::getName)
+                            .collect(Collectors.toList());
+                    postDTO.setTags(tagNames);
                     postDTO.setThumbnails(thumbnails);
                     postDTO.setToriBoxCount(countLikes(postDTO.getPid()));
+                    postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(posts));
                     postDTO.setProfileImage(posts.getUser().getProfileImage());
                     postDTO.setEmail(posts.getUser().getEmail()); // email 값 설정
                     return postDTO;
@@ -75,8 +77,22 @@ public class PostService {
         post.setUser(user);
         post.setNickName(user.getNickName());
 
-        List<PostThumbnail> thumbnails = uploadImages(files, post);
-        post.getThumbnails().addAll(thumbnails);
+        List<Tag> tags = new ArrayList<>();
+        for (String tagName : postDTO.getTags()) {
+            Tag tag = tagRepository.findByName(tagName)
+                    .orElseGet(() -> tagRepository.save(new Tag(null, tagName, new ArrayList<>())));
+            tags.add(tag);
+        }
+        post.setTags(tags);
+
+        if (files != null && !files.isEmpty()) {
+            if (files.size() > postDTO.getThumbnailLimit()) {
+                throw new Exception("Number of thumbnails exceeds the limit of " + postDTO.getThumbnailLimit());
+            }
+
+            List<PostThumbnail> thumbnails = uploadImages(files, post);
+            post.getThumbnails().addAll(thumbnails);
+        }
 
         return postRepository.save(post).getPid();
     }
@@ -88,6 +104,16 @@ public class PostService {
         postDTO.setNickName(result.getUser().getNickName());
         postDTO.setProfileImage(result.getUser().getProfileImage());
         postDTO.setEmail(result.getUser().getEmail()); // email 값 설정
+        postDTO.setLiked(isLikedByUser(postDTO.getPid(), result.getUser().getId()));
+        postDTO.setToriBoxCount(countLikes(postDTO.getPid()));
+        postDTO.setBookmarked(isBookmarkedByUser(postDTO.getEmail(), id));
+        postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(result));
+
+
+        List<String> tagNames = result.getTags().stream()
+                .map(Tag::getName)
+                .collect(Collectors.toList());
+        postDTO.setTags(tagNames);
 
         List<String> thumbnails = result.getThumbnails().stream()
                 .map(PostThumbnail::getThumbnail)
@@ -112,6 +138,13 @@ public class PostService {
         if (files != null && !files.isEmpty()) {
             List<PostThumbnail> thumbnails = uploadImages(files, post);
             post.getThumbnails().addAll(thumbnails);
+        }
+
+        if (postDTO.getTags() != null && !postDTO.getTags().isEmpty()) {
+            List<String> tagNames = post.getTags().stream()
+                    .map(Tag::getName)
+                    .collect(Collectors.toList());
+            postDTO.setTags(tagNames);
         }
 
         post.changePost(postDTO.getContent(), LocalDateTime.now(), post.getThumbnails());
@@ -163,6 +196,61 @@ public class PostService {
                             .map(PostThumbnail::getThumbnail)
                             .collect(Collectors.toList());
                     postDTO.setThumbnails(thumbnails);
+                    List<String> tagNames = post.getTags().stream()
+                            .map(Tag::getName)
+                            .collect(Collectors.toList());
+                    postDTO.setTags(tagNames);
+                    return postDTO;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public Long bookmarkPost(String email, Long postId) throws Exception {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new Exception("Not Found user email :" + email));
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new Exception("Not Found post id :" + postId));
+
+        Optional<Bookmark> existingBookmark = bookmarkRepository.findByUserAndPost(user, post);
+
+        if (existingBookmark.isPresent()) {
+            bookmarkRepository.delete(existingBookmark.get());
+            return -1L;
+        } else {
+            Bookmark bookmark = Bookmark.builder().post(post).user(user).build();
+            return bookmarkRepository.save(bookmark).getId();
+        }
+    }
+
+    public boolean isBookmarkedByUser(String email, Long postId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Not Found post id :" + postId));
+
+        Optional<Bookmark> existingBookmark = bookmarkRepository.findByUserAndPost(user, post);
+        return existingBookmark.isPresent();
+    }
+
+    public List<PostDTO> getBookmarkedPosts(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
+
+        List<Bookmark> bookmarks = bookmarkRepository.findByUser(user);
+        return bookmarks.stream()
+                .map(bookmark -> {
+                    Post post = bookmark.getPost();
+                    PostDTO postDTO = modelMapper.map(post, PostDTO.class);
+                    List<String> thumbnails = post.getThumbnails().stream()
+                            .map(PostThumbnail::getThumbnail)
+                            .collect(Collectors.toList());
+                    postDTO.setThumbnails(thumbnails);
+                    List<String> tagNames = post.getTags().stream()
+                            .map(Tag::getName)
+                            .collect(Collectors.toList());
+                    postDTO.setTags(tagNames);
                     return postDTO;
                 })
                 .collect(Collectors.toList());
@@ -178,6 +266,12 @@ public class PostService {
         Comment comment = modelMapper.map(commentDTO, Comment.class);
         comment.setPost(post);
         comment.setUser(user);
+
+        if (commentDTO.getParentId() != null) {
+            Comment parent = commentRepository.findById(commentDTO.getParentId())
+                    .orElseThrow(() -> new Exception("Not Found parent comment id :" + commentDTO.getParentId()));
+            comment.setParent(parent);
+        }
 
         return commentRepository.save(comment).getId();
     }

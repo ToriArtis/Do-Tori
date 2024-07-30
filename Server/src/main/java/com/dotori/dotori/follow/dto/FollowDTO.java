@@ -1,4 +1,4 @@
-package com.dotori.dotori.Follow.dto;
+package com.dotori.dotori.follow.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

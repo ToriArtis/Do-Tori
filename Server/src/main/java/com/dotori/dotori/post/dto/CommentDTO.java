@@ -18,6 +18,8 @@ public class CommentDTO {
     @NotEmpty
     private String content;
 
+    private Long parentId;
+
     private Long aid;
     private String nickName;
     private String profileImage;

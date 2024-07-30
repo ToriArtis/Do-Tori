@@ -1,6 +1,6 @@
-package com.dotori.dotori.Follow.repository;
+package com.dotori.dotori.follow.repository;
 
-import com.dotori.dotori.Follow.entity.Follow;
+import com.dotori.dotori.follow.entity.Follow;
 import com.dotori.dotori.auth.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -48,6 +48,14 @@ public class Post{
     @Builder.Default
     private List<PostThumbnail> thumbnails = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "post_tag",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<Tag> tags = new ArrayList<>();
+
     public void changePost(String content, LocalDateTime modDate, List<PostThumbnail> thumbnails) {
         this.content = content;
         this.modDate = modDate;
