@@ -46,14 +46,6 @@ public class User {
     @Column(name = "header_image")
     private String headerImage;
 
-    // 팔로워 리스트
-    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL)
-    private List<Follow> followers = new ArrayList<>();
-
-    // 팔로잉 리스트
-    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL)
-    private List<Follow> followings = new ArrayList<>();
-
     @Column(name = "created_at")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
