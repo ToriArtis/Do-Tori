@@ -1,10 +1,7 @@
 package com.dotori.dotori.post.service;
 
 import com.dotori.dotori.post.dto.PostListCommentCountDTO;
-import com.dotori.dotori.post.entity.Post;
-import com.dotori.dotori.post.entity.QPost;
-import com.dotori.dotori.post.entity.QComment;
-import com.dotori.dotori.post.entity.QPostThumbnail;
+import com.dotori.dotori.post.entity.*;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.JPQLQuery;
@@ -59,10 +56,10 @@ public class PostSearchImpl extends QuerydslRepositorySupport implements PostSea
         JPQLQuery<PostListCommentCountDTO> query = from(post)
                 .leftJoin(post.thumbnails, postThumbnail)
                 .leftJoin(comment).on(comment.post.eq(post))
-                .groupBy(post)
+                .groupBy(post, postThumbnail.thumbnail)
                 .select(Projections.constructor(PostListCommentCountDTO.class,
                         post.pid,
-                        post.user.id,
+                        post.user.email,
                         post.content,
                         post.user.nickName,
                         post.user.profileImage,
@@ -76,7 +73,7 @@ public class PostSearchImpl extends QuerydslRepositorySupport implements PostSea
             BooleanBuilder booleanBuilder = new BooleanBuilder();
             for (String type : types) {
                 switch (type) {
-                    case "t":
+                    case "c":
                         booleanBuilder.or(post.content.contains(keyword));
                         break;
                     case "w":

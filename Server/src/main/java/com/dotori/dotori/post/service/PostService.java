@@ -10,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,6 +46,12 @@ public class PostService {
 
         Page<Post> result = postRepository.searchAll(types, keyword, pageable);
 
+        // 현재 로그인한 사용자의 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User loginUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
+
         List<PostDTO> postDTOS = result.stream()
                 .map(posts -> {
                     PostDTO postDTO = modelMapper.map(posts, PostDTO.class);
@@ -58,15 +67,27 @@ public class PostService {
                     postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(posts));
                     postDTO.setProfileImage(posts.getUser().getProfileImage());
                     postDTO.setEmail(posts.getUser().getEmail()); // email 값 설정
+                    postDTO.setCommentCount(commentRepository.countByPost(posts));
+                    postDTO.setLiked(isLikedByUser(posts.getPid(), loginUser.getId())); // 좋아요 여부 설정
+                    postDTO.setBookmarked(isBookmarkedByUser(loginUser.getEmail(), posts.getPid()));
                     return postDTO;
                 })
                 .collect(Collectors.toList());
 
-        return PageResponseDTO.<PostDTO>withAll()
+        // 전체 댓글 수 계산
+        int totalCommentCount = postDTOS.stream()
+                .mapToInt(postDTO -> postDTO.getCommentCount().intValue())
+                .sum();
+
+        PageResponseDTO<PostDTO> pageResponseDTO = PageResponseDTO.<PostDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
                 .postLists(postDTOS)
                 .total((int) result.getTotalElements())
                 .build();
+
+        pageResponseDTO.setCommentCount(totalCommentCount); // 전체 댓글 수 설정
+
+        return pageResponseDTO;
     }
 
     public Long addPost(PostDTO postDTO, List<MultipartFile> files) throws Exception {
@@ -101,13 +122,21 @@ public class PostService {
         Post result = postRepository.findById(id).orElseThrow();
         PostDTO postDTO = modelMapper.map(result, PostDTO.class);
 
+        // 현재 로그인한 사용자의 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User loginUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
+
         postDTO.setNickName(result.getUser().getNickName());
         postDTO.setProfileImage(result.getUser().getProfileImage());
         postDTO.setEmail(result.getUser().getEmail()); // email 값 설정
-        postDTO.setLiked(isLikedByUser(postDTO.getPid(), result.getUser().getId()));
         postDTO.setToriBoxCount(countLikes(postDTO.getPid()));
         postDTO.setBookmarked(isBookmarkedByUser(postDTO.getEmail(), id));
         postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(result));
+        postDTO.setCommentCount(commentRepository.countByPost(result));
+        postDTO.setLiked(isLikedByUser(result.getPid(), loginUser.getId())); // 좋아요 여부 설정
+        postDTO.setBookmarked(isBookmarkedByUser(loginUser.getEmail(), result.getPid()));
 
 
         List<String> tagNames = result.getTags().stream()
@@ -188,6 +217,13 @@ public class PostService {
 
     public List<PostDTO> toriBoxSelectAll(Long aid) {
         List<ToriBox> toriBoxList = toriBoxRepository.findByAid(aid);
+
+        // 현재 로그인한 사용자의 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User loginUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
+
         return toriBoxList.stream()
                 .map(toriBox -> {
                     Post post = toriBox.getPost();
@@ -200,6 +236,12 @@ public class PostService {
                             .map(Tag::getName)
                             .collect(Collectors.toList());
                     postDTO.setTags(tagNames);
+                    postDTO.setToriBoxCount(countLikes(post.getPid()));
+                    postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(post));
+                    postDTO.setCommentCount(commentRepository.countByPost(post));
+                    postDTO.setLiked(isLikedByUser(post.getPid(), loginUser.getId())); // 좋아요 여부 설정
+                    postDTO.setBookmarked(isBookmarkedByUser(loginUser.getEmail(), post.getPid()));
+
                     return postDTO;
                 })
                 .collect(Collectors.toList());
@@ -238,6 +280,11 @@ public class PostService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
 
+        // 현재 로그인한 사용자의 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User loginUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
+
         List<Bookmark> bookmarks = bookmarkRepository.findByUser(user);
         return bookmarks.stream()
                 .map(bookmark -> {
@@ -251,9 +298,49 @@ public class PostService {
                             .map(Tag::getName)
                             .collect(Collectors.toList());
                     postDTO.setTags(tagNames);
+                    postDTO.setEmail(post.getUser().getEmail()); // email 값 설정
+                    postDTO.setToriBoxCount(countLikes(postDTO.getPid()));
+                    postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(post));
+                    postDTO.setCommentCount(commentRepository.countByPost(post));
+                    postDTO.setLiked(isLikedByUser(post.getPid(), loginUser.getId())); // 좋아요 여부 설정
+                    postDTO.setBookmarked(isBookmarkedByUser(loginUser.getEmail(), post.getPid()));
                     return postDTO;
                 })
                 .collect(Collectors.toList());
+    }
+
+    public List<PostDTO> getTopPostsByToriBoxCount() {
+        Pageable pageable = PageRequest.of(0, 3);
+        Page<Post> topPosts = postRepository.findTopPostsByToriBoxCount(pageable);
+
+        // 현재 로그인한 사용자의 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User loginUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
+
+        return topPosts.getContent().stream()
+                .map(post -> {
+                    PostDTO postDTO = modelMapper.map(post, PostDTO.class);
+                    List<String> thumbnails = post.getThumbnails().stream()
+                            .map(PostThumbnail::getThumbnail)
+                            .collect(Collectors.toList());
+                    List<String> tagNames = post.getTags().stream()
+                            .map(Tag::getName)
+                            .collect(Collectors.toList());
+                    postDTO.setTags(tagNames);
+                    postDTO.setThumbnails(thumbnails);
+                    postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(post));
+                    postDTO.setProfileImage(post.getUser().getProfileImage());
+                    postDTO.setEmail(post.getUser().getEmail()); // email 값 설정
+                    postDTO.setToriBoxCount(countLikes(post.getPid()));
+                    postDTO.setCommentCount(commentRepository.countByPost(post));
+                    postDTO.setLiked(isLikedByUser(post.getPid(), loginUser.getId())); // 좋아요 여부 설정
+                    postDTO.setBookmarked(isBookmarkedByUser(loginUser.getEmail(), post.getPid()));
+                    return postDTO;
+                })
+                .collect(Collectors.toList());
+
     }
 
     public Long registerComment(CommentDTO commentDTO, Long postId) throws Exception {
@@ -333,7 +420,7 @@ public class PostService {
                 String originalName = file.getOriginalFilename();
                 if (originalName != null && !originalName.isEmpty()) {
                     String fileName = System.currentTimeMillis() + "_" + originalName;
-                    String savePath = System.getProperty("user.dir") + "/src/main/resources/static/images/";
+                    String savePath = System.getProperty("user.dir") + "/Server/src/main/resources/static/images/";
                     if (!new File(savePath).exists()) {
                         new File(savePath).mkdir();
                     }

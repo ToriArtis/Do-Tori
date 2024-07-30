@@ -3,11 +3,12 @@ package com.dotori.dotori.post.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class PostListCommentCountDTO {
     private Long pid;
-    private Long aid;
+    private String email;
     private String content;
     private String nickName;
     private String profileImage;
@@ -17,9 +18,9 @@ public class PostListCommentCountDTO {
     private Long commentCount;
     private String thumbnail;
 
-    public PostListCommentCountDTO(Long pid, Long aid, String content, String nickName, String profileImage, LocalDateTime regDate, LocalDateTime modDate, String thumbnail, Long commentCount) {
+    public PostListCommentCountDTO(Long pid, String email, String content, String nickName, String profileImage, LocalDateTime regDate, LocalDateTime modDate, String thumbnail, Long commentCount) {
         this.pid = pid;
-        this.aid = aid;
+        this.email = email;
         this.content = content;
         this.profileImage = profileImage;
         this.nickName = nickName;

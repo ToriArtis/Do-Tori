@@ -21,5 +21,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostSearch {
 
     void deleteByUser_Id(Long aid);
 
-//    List<Post> findByEmail(String email);
+    @Query("SELECT p FROM Post p LEFT JOIN ToriBox t ON p.pid = t.post.pid " +
+            "GROUP BY p.pid ORDER BY COUNT(t.id) DESC")
+    Page<Post> findTopPostsByToriBoxCount(Pageable pageable);
+
 }
