@@ -1,8 +1,8 @@
-package com.dotori.dotori.Follow.service;
+package com.dotori.dotori.follow.service;
 
-import com.dotori.dotori.Follow.dto.FollowDTO;
-import com.dotori.dotori.Follow.entity.Follow;
-import com.dotori.dotori.Follow.repository.FollowRepository;
+import com.dotori.dotori.follow.dto.FollowDTO;
+import com.dotori.dotori.follow.entity.Follow;
+import com.dotori.dotori.follow.repository.FollowRepository;
 import com.dotori.dotori.auth.config.exception.BusinessLogicException;
 import com.dotori.dotori.auth.config.exception.ExceptionCode;
 import com.dotori.dotori.auth.entity.User;

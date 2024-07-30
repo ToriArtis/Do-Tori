@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/posts")
+@RequestMapping("/posts")
 @RequiredArgsConstructor
 @Log4j2
 public class PostController {
@@ -79,6 +79,20 @@ public class PostController {
     @GetMapping("/likes")
     public ResponseEntity<List<PostDTO>> getLikedPosts(@RequestParam Long aid) {
         return ResponseEntity.ok(postService.toriBoxSelectAll(aid));
+    }
+
+    @PostMapping("/{id}/bookmark")
+    public ResponseEntity<Long> bookmarkPost(@PathVariable Long id) throws Exception {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return ResponseEntity.ok(postService.bookmarkPost(email, id));
+    }
+
+    @GetMapping("/bookmarks")
+    public ResponseEntity<List<PostDTO>> getBookmarkedPosts() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return ResponseEntity.ok(postService.getBookmarkedPosts(email));
     }
 
     @PostMapping("/{postId}/comments")

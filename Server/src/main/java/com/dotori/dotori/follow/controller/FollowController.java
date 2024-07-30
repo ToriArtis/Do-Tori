@@ -1,7 +1,7 @@
-package com.dotori.dotori.Follow.controller;
+package com.dotori.dotori.follow.controller;
 
-import com.dotori.dotori.Follow.dto.FollowDTO;
-import com.dotori.dotori.Follow.service.FollowService;
+import com.dotori.dotori.follow.dto.FollowDTO;
+import com.dotori.dotori.follow.service.FollowService;
 import com.dotori.dotori.auth.entity.User;
 import com.dotori.dotori.auth.service.UserService;
 import lombok.RequiredArgsConstructor;

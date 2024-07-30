@@ -1,7 +1,5 @@
 package com.dotori.dotori.todo.service;
 
-import com.dotori.dotori.auth.config.exception.BusinessLogicException;
-import com.dotori.dotori.auth.config.exception.ExceptionCode;
 import com.dotori.dotori.auth.entity.User;
 import com.dotori.dotori.auth.repository.UserRepository;
 import com.dotori.dotori.todo.dto.TodoDTO;
@@ -11,8 +9,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

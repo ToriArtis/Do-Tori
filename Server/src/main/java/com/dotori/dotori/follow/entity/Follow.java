@@ -1,4 +1,4 @@
-package com.dotori.dotori.Follow.entity;
+package com.dotori.dotori.follow.entity;
 
 import com.dotori.dotori.auth.entity.User;
 import jakarta.persistence.*;

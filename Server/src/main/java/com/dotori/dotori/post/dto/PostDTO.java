@@ -15,16 +15,22 @@ import java.util.List;
 public class PostDTO {
 
     private Long pid;
-    private Long commentCount;
-    private Long toriBoxCount;
 
-    private String email;
-    private String nickName;
-    private String profileImage;
+    private Long commentCount;
+
+    private Long toriBoxCount;
+    private boolean liked;
+
+    private Long bookmarkCount;
+    private boolean bookmarked;
 
     @NotEmpty
     @Size(min = 1, max = 500)
     private String content;
+
+    private String email;
+    private String nickName;
+    private String profileImage;
 
     @Builder.Default
     private LocalDateTime regDate = LocalDateTime.now();
@@ -33,7 +39,11 @@ public class PostDTO {
     @Builder.Default
     private List<String> thumbnails = new ArrayList<>();
 
-    private boolean liked;
+    @Builder.Default
+    private int thumbnailLimit = 4;
+
+    @Builder.Default
+    private List<String> tags = new ArrayList<>();
 
     public void setToriBoxCount(Long toriBoxCount) {
         this.toriBoxCount = toriBoxCount;

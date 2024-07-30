@@ -2,21 +2,19 @@ package com.dotori.dotori.todo.controller;
 
 import com.dotori.dotori.todo.dto.TodoDTO;
 import com.dotori.dotori.todo.service.TodoService;
-import com.dotori.dotori.auth.dto.AuthSecurityDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/todos")
+@RequestMapping("/todos")
 @RequiredArgsConstructor
 @Log4j2
 public class TodoController {
