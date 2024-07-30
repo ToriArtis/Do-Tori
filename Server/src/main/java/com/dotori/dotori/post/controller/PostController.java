@@ -95,6 +95,13 @@ public class PostController {
         return ResponseEntity.ok(postService.getBookmarkedPosts(email));
     }
 
+    @GetMapping("/best")
+    public ResponseEntity<List<PostDTO>> getTopPostsByToriBoxCount() {
+        List<PostDTO> topPosts = postService.getTopPostsByToriBoxCount();
+        return ResponseEntity.ok(topPosts);
+    }
+
+
     @PostMapping("/{postId}/comments")
     public ResponseEntity<CommentDTO> addComment(@PathVariable Long postId, @RequestBody CommentDTO commentDTO) throws Exception {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
