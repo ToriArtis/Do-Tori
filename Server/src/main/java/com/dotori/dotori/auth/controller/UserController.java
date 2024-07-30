@@ -105,7 +105,7 @@ public class UserController {
     }
 
     // 계정 삭제
-    @DeleteMapping()
+    @PostMapping("/userStatus")
     public ResponseEntity<?> deleteUser() {
         try {
             userService.deleteUser();
