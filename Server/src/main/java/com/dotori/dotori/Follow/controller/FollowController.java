@@ -19,18 +19,18 @@ public class FollowController {
     private final UserService userService;
 
     // 팔로우
-    @PostMapping("/{followingUserId}")
-    public ResponseEntity<String> follow(@PathVariable Long followingUserId) {
+    @PostMapping("/{userId}")
+    public ResponseEntity<String> follow(@PathVariable Long userId) {
         User currentUser = userService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
-        followService.follow(currentUser.getId(), followingUserId);
+        followService.follow(currentUser.getId(), userId);
         return ResponseEntity.ok("팔로우 성공");
     }
 
     // 언팔로우
-    @DeleteMapping("/{followingUserId}")
-    public ResponseEntity<String> unfollow(@PathVariable Long followingUserId) {
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<String> unfollow(@PathVariable Long userId) {
         User currentUser = userService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
-        followService.unfollow(currentUser.getId(), followingUserId);
+        followService.unfollow(currentUser.getId(), userId);
         return ResponseEntity.ok("언팔로우 성공");
     }
 
