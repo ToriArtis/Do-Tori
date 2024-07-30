@@ -20,25 +20,24 @@ public class FollowController {
 
     // 팔로우
     @PostMapping("/{followingUserId}")
-    public ResponseEntity<String> follow(@PathVariable Long followingId) {
+    public ResponseEntity<String> follow(@PathVariable Long followingUserId) {
         User currentUser = userService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
-        followService.follow(currentUser.getId(), followingId);
+        followService.follow(currentUser.getId(), followingUserId);
         return ResponseEntity.ok("팔로우 성공");
     }
 
     // 언팔로우
     @DeleteMapping("/{followingUserId}")
-    public ResponseEntity<String> unfollow(@PathVariable Long followingId) {
+    public ResponseEntity<String> unfollow(@PathVariable Long followingUserId) {
         User currentUser = userService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
-        followService.unfollow(currentUser.getId(), followingId);
+        followService.unfollow(currentUser.getId(), followingUserId);
         return ResponseEntity.ok("언팔로우 성공");
     }
 
     // 팔로워 목록 조회
     @GetMapping("/{userId}/followers")
     public ResponseEntity<Page<FollowDTO>> getFollowers(
-            @PathVariable Long userId,
-            Pageable pageable) {
+            @PathVariable Long userId, Pageable pageable) {
         Page<FollowDTO> followers = followService.getFollowers(userId, pageable);
         return ResponseEntity.ok(followers);
     }
@@ -46,8 +45,7 @@ public class FollowController {
     // 팔로잉 목록 조회
     @GetMapping("/{userId}/followings")
     public ResponseEntity<Page<FollowDTO>> getFollowings(
-            @PathVariable Long userId,
-            Pageable pageable) {
+            @PathVariable Long userId, Pageable pageable) {
         Page<FollowDTO> followings = followService.getFollowings(userId, pageable);
         return ResponseEntity.ok(followings);
     }
