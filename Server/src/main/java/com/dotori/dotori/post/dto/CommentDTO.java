@@ -20,7 +20,7 @@ public class CommentDTO {
 
     private Long parentId;
 
-    private Long aid;
+    private String email;
     private String nickName;
     private String profileImage;
 }

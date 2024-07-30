@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = "posts")
 public class Tag {
 
     @Id
@@ -21,6 +22,7 @@ public class Tag {
     @Column(unique = true, nullable = false)
     private String name;
 
+    @Builder.Default
     @ManyToMany(mappedBy = "tags")
     private List<Post> posts = new ArrayList<>();
 }
