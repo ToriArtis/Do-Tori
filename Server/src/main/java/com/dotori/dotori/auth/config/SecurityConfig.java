@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -44,8 +45,12 @@ public class SecurityConfig {
 
                 // HTTP 요청에 대한 인가 설정
                 .authorizeHttpRequests(auth -> auth
-                        // 나머지 모든 요청은 인증 필요
-                        .anyRequest().permitAll()
+                        // 공개 접근 허용 경로
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "todos/**").permitAll()
+                        // 이 외엔 인증 필요
+                        .anyRequest().authenticated()
                 )
 //                // HTTP 기본 인증 비활성화
                 .httpBasic(httpBasic -> httpBasic.disable())

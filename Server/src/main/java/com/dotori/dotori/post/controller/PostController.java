@@ -1,6 +1,7 @@
 package com.dotori.dotori.post.controller;
 
 import com.dotori.dotori.auth.entity.Auth;
+import com.dotori.dotori.auth.entity.AuthStatus;
 import com.dotori.dotori.auth.repository.AuthRepository;
 import com.dotori.dotori.auth.service.AuthService;
 import com.dotori.dotori.post.dto.*;
@@ -12,6 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -35,23 +37,27 @@ public class PostController {
     private Auth getLoginUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        return authRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
+        Auth auth = authRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Not Found user email: " + email));
+
+        // 사용자의 계정 상태가 탈퇴(AUTH_WITHDRAWAL)인 경우 예외 발생
+        if (auth.getAuthStatus() == AuthStatus.AUTH_WITHDRAWAL) {
+            throw new RuntimeException("User account is withdrawn");
+        }
+
+        return auth;
     }
 
-    // 게시글 목록 조회
+    // 전체 post 목록 (로그인 불필요)
     @GetMapping
     public ResponseEntity<PageResponseDTO<PostDTO>> listPosts(PageRequestDTO pageRequestDTO) {
         return ResponseEntity.ok(postService.list(pageRequestDTO));
     }
 
-    // 게시글 등록
+    // 게시글 등록 (로그인 필요)
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<PostDTO> addPost(@RequestBody PostDTO postDTO, @RequestParam(required = false) List<MultipartFile> files) throws Exception {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        postDTO.setEmail(email);
-
         Long postId = postService.addPost(postDTO, files);
         PostDTO addedPost = postService.getPost(postId);
         return ResponseEntity.ok(addedPost);
@@ -63,29 +69,31 @@ public class PostController {
         return ResponseEntity.ok(postService.getPost(id));
     }
 
-    // 게시글 수정
+    // 게시글 수정 (작성자만 가능)
+    @PreAuthorize("isAuthenticated() and @postService.isPostAuthor(#id, authentication.name)")
     @PutMapping("/{id}")
     public ResponseEntity<PostDTO> modifyPost(@PathVariable Long id, @RequestBody PostDTO postDTO,
                                               @RequestParam(required = false) List<MultipartFile> files,
                                               @RequestParam(required = false) List<String> deletedThumbnails) throws Exception {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        postDTO.setEmail(email);
-
+        Auth loginAuth = getLoginUser();
+        postDTO.setEmail(loginAuth.getEmail());
         postDTO.setPid(id);
+
         postService.modifyPost(postDTO, files, deletedThumbnails);
         PostDTO modifiedPost = postService.getPost(id);
         return ResponseEntity.ok(modifiedPost);
     }
 
-    // 게시글 삭제
+    // 게시글 삭제 (작성자만 가능)
+    @PreAuthorize("isAuthenticated() and @postService.isPostAuthor(#id, authentication.name)")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id) {
         postService.deletePost(id);
         return ResponseEntity.ok().build();
     }
 
-    // 게시글 좋아요
+    // 게시글 좋아요 (로그인 필요)
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{id}/like")
     public ResponseEntity<Boolean> likePost(@PathVariable Long id) {
         Auth loginAuth = getLoginUser();
@@ -112,21 +120,19 @@ public class PostController {
         return ResponseEntity.ok(postService.toriBoxSelectAll(loginAuth.getId()));
     }
 
-    // 게시글 북마크
+    // 게시글 북마크 (로그인 필요)
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{id}/bookmark")
     public ResponseEntity<Boolean> bookmarkPost(@PathVariable Long id) throws Exception {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        boolean isBookmarked = postService.bookmarkPost(email, id);
+        Auth loginAuth = getLoginUser();
+        boolean isBookmarked = postService.bookmarkPost(id);
         return ResponseEntity.ok(isBookmarked);
     }
 
     // 북마크한 게시글 목록 조회
     @GetMapping("/bookmarks")
     public ResponseEntity<List<PostDTO>> getBookmarkedPosts() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        return ResponseEntity.ok(postService.getBookmarkedPosts(email));
+        return ResponseEntity.ok(postService.getBookmarkedPosts());
     }
 
     // 좋아요 수가 많은 상위 게시글 조회
@@ -136,18 +142,10 @@ public class PostController {
         return ResponseEntity.ok(topPosts);
     }
 
-    // 댓글 등록
+    // 댓글 등록 (로그인 필요)
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{postId}/comments")
     public ResponseEntity<CommentDTO> addComment(@PathVariable Long postId, @RequestBody CommentDTO commentDTO) throws Exception {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-
-        // commentDTO에 이메일 설정
-        commentDTO.setEmail(email);
-
-        Auth auth = authRepository.findByEmail(email)
-                .orElseThrow(() -> new Exception("Not Found user email :" + email));
-
         Long commentId = postService.registerComment(commentDTO, postId);
         CommentDTO addedComment = postService.readComment(commentId);
         return ResponseEntity.ok(addedComment);
@@ -159,7 +157,8 @@ public class PostController {
         return ResponseEntity.ok(postService.getListOfComment(postId, pageRequestDTO));
     }
 
-    // 댓글 삭제
+    // 댓글 삭제 (작성자만 가능)
+    @PreAuthorize("isAuthenticated() and @postService.isCommentAuthor(#id, authentication.name)")
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
         postService.removeComment(id);
@@ -172,25 +171,24 @@ public class PostController {
         return ResponseEntity.ok(postService.searchWithCommentCount(types, keyword, pageable));
     }
 
-    // 내가 쓴 글 모아보기
+    // 내가 쓴 글 모아보기 (로그인 필요)
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public ResponseEntity<List<PostDTO>> getMyPosts() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        return ResponseEntity.ok(postService.getPostsByEmail(email));
+        return ResponseEntity.ok(postService.getPostsByEmail());
     }
 
-    // 내가 쓴 댓글 모아보기
+    // 내가 쓴 댓글 모아보기 (로그인 필요)
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me/comments")
     public ResponseEntity<List<CommentDTO>> getMyComments() {
-        Auth loginAuth = authService.getLoginUser();
-        return ResponseEntity.ok(postService.getCommentsByEmail(loginAuth.getEmail()));
+        return ResponseEntity.ok(postService.getCommentsByEmail());
     }
 
-    // 팔로잉한 사용자의 게시글 모아보기
+    // 팔로잉한 사용자의 게시글 모아보기 (로그인 필요)
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/following")
     public ResponseEntity<List<PostDTO>> getFollowingPosts() {
-        Auth loginAuth = authService.getLoginUser();
-        return ResponseEntity.ok(postService.getPostsByFollowing(loginAuth.getEmail()));
+        return ResponseEntity.ok(postService.getPostsByFollowing());
     }
 }

@@ -1,6 +1,7 @@
 package com.dotori.dotori.post.service;
 
 import com.dotori.dotori.auth.entity.Auth;
+import com.dotori.dotori.auth.entity.AuthStatus;
 import com.dotori.dotori.auth.repository.AuthRepository;
 import com.dotori.dotori.follow.dto.FollowDTO;
 import com.dotori.dotori.follow.repository.FollowRepository;
@@ -41,7 +42,6 @@ public class PostService {
     private final PostSearchImpl postSearchImpl;
     private final TagRepository tagRepository;
     private final BookmarkRepository bookmarkRepository;
-    private final FollowRepository followRepository;
     private final FollowService followService;
     private final PostLikeService postLikeService;
 
@@ -49,44 +49,59 @@ public class PostService {
     private Auth getLoginUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        return authRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
+        Auth auth = authRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Not Found user email: " + email));
+
+        // 사용자의 계정 상태가 탈퇴(AUTH_WITHDRAWAL)인 경우 예외 발생
+        if (auth.getAuthStatus() == AuthStatus.AUTH_WITHDRAWAL) {
+            throw new RuntimeException("User account is withdrawn");
+        }
+
+        return auth;
+    }
+
+    // 특정 사용자가 게시글의 작성자인지 확인하는 메서드
+    public boolean isPostAuthor(Long postId, String email) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+        return post.getAuth().getEmail().equals(email);
+    }
+
+    // 특정 사용자가 댓글의 작성자인지 확인하는 메서드
+    public boolean isCommentAuthor(Long commentId, String email) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+        return comment.getAuth().getEmail().equals(email);
     }
 
     // Post 기능
     // 게시글 전체 목록
     public PageResponseDTO<PostDTO> list(PageRequestDTO pageRequestDTO) {
-        // 검색 타입과 키워드 가져오기
         String[] types = pageRequestDTO.getTypes();
         String keyword = pageRequestDTO.getKeyword();
-
-        // 페이징
         Pageable pageable = pageRequestDTO.getPageable("pid");
-
-        // 검색 조건에 맞는 게시글 목록 가져오기
         Page<Post> result = postRepository.searchAll(types, keyword, pageable);
 
-        // 로그인한 사용자 정보 가져오기
         Auth loginAuth = getLoginUser();
 
-        // 게시글 엔티티 목록을 DTO 목록으로 변환
+        // 검색 결과의 게시글 리스트를 PostDTO 리스트로 변환
         List<PostDTO> postDTOS = result.getContent().stream()
                 .map(post -> convertToPostDTO(post, loginAuth))
                 .collect(Collectors.toList());
 
-        // 총 댓글 수 계산
+        // PostDTO 리스트에서 댓글 개수의 총합 계산
         int totalCommentCount = postDTOS.stream()
                 .mapToInt(postDTO -> postDTO.getCommentCount().intValue())
                 .sum();
 
-        // 페이지 응답 DTO 생성
+        // PageResponseDTO 객체 생성
         PageResponseDTO<PostDTO> pageResponseDTO = PageResponseDTO.<PostDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
                 .postLists(postDTOS)
                 .total((int) result.getTotalElements())
                 .build();
 
-        // 페이지 응답 DTO에 총 댓글 수와 현재 시간 설정
+        // PageResponseDTO에 댓글 개수 총합과 현재 시간 설정
         pageResponseDTO.setCommentCount(totalCommentCount);
         pageResponseDTO.setCurrentTime(System.currentTimeMillis());
 
@@ -95,37 +110,35 @@ public class PostService {
 
     // 게시글 등록
     public Long addPost(PostDTO postDTO, List<MultipartFile> files) throws Exception {
-        // 사용자 정보 조회
-        Auth auth = authRepository.findByEmail(postDTO.getEmail())
-                .orElseThrow(() -> new Exception("Not Found user email: " + postDTO.getEmail()));
-
+        Auth auth = getLoginUser();
         // PostDTO를 Post 엔티티로 변환
         Post post = modelMapper.map(postDTO, Post.class);
-        // 게시글에 작성자 정보 설정
+        // 변환된 Post 엔티티에 작성자 정보 설정
         post.setAuth(auth);
         post.setNickName(auth.getNickName());
 
-        // 태그 리스트 설정
-        List<Tag> tags = new ArrayList<>();
-        for (String tagName : postDTO.getTags()) {
-            // 태그 이름으로 태그 조회, 없을 경우 새로운 태그 생성
-            Tag tag = tagRepository.findByName(tagName)
-                    .orElseGet(() -> tagRepository.save(new Tag(null, tagName, new ArrayList<>())));
-            tags.add(tag);
+        // 태그 처리
+        List<String> tagNames = postDTO.getTags();
+        if (tagNames != null && !tagNames.isEmpty()) {
+            // 태그 이름 리스트를 Tag 엔티티 리스트로 변환
+            List<Tag> tags = tagNames.stream()
+                    .map(tagName -> tagRepository.findByName(tagName)
+                            .orElseGet(() -> tagRepository.save(new Tag(null, tagName, new ArrayList<>())))
+                    )
+                    .collect(Collectors.toList());
+            // 변환된 Tag 엔티티 리스트를 Post 엔티티에 설정
+            post.setTags(tags);
         }
-        // 게시글에 태그 리스트 설정
-        post.setTags(tags);
 
-        // 첨부 파일이 있는 경우
+        // 파일 처리 (기존 로직 유지)
         if (files != null && !files.isEmpty()) {
-            // 첨부파일 개수가 허용된 썸네일 개수를 초과하는 경우 예외 발생
+            // 첨부 파일 개수가 허용된 썸네일 개수를 초과하는 경우 예외 발생
             if (files.size() > postDTO.getThumbnailLimit()) {
                 throw new Exception("Number of thumbnails exceeds the limit of " + postDTO.getThumbnailLimit());
             }
-
-            // 첨부 파일 업로드 및 썸네일 생성
+            // 첨부 파일을 업로드하고 PostThumbnail 엔티티 리스트 생성
             List<PostThumbnail> thumbnails = uploadImages(files, post);
-            // 게시글에 썸네일 리스트 추가
+            // 생성된 PostThumbnail 엔티티 리스트를 Post 엔티티의 썸네일 리스트에 추가
             post.getThumbnails().addAll(thumbnails);
         }
 
@@ -136,88 +149,52 @@ public class PostService {
     public PostDTO getPost(Long id) {
         Post result = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
-
-        // 로그인한 사용자 정보 가져오기
         Auth loginAuth = getLoginUser();
-
         return convertToPostDTO(result, loginAuth);
     }
 
     // 게시글 수정
     public void modifyPost(PostDTO postDTO, List<MultipartFile> files, List<String> deletedThumbnails) throws Exception {
+        Auth auth = getLoginUser();
         Post post = postRepository.findById(postDTO.getPid())
                 .orElseThrow(() -> new Exception("Not Found post id: " + postDTO.getPid()));
-        Auth auth = authRepository.findByEmail(postDTO.getEmail())
-                .orElseThrow(() -> new Exception("Not Found user email: " + postDTO.getEmail()));
 
-        // 게시글의 닉네임과 사용자의 닉네임이 다르면 업데이트
-        if (post.getNickName() == null || !post.getNickName().equals(auth.getNickName())) {
+        // 기본 필드 매핑
+        modelMapper.map(postDTO, post);
+
+        // 닉네임 업데이트
+        if (!post.getNickName().equals(auth.getNickName())) {
             post.setNickName(auth.getNickName());
         }
 
-        // 삭제된 썸네일이 있다면 게시글의 썸네일에서 제거
+        // 삭제된 썸네일 처리
         if (deletedThumbnails != null && !deletedThumbnails.isEmpty()) {
             post.getThumbnails().removeIf(thumbnail -> deletedThumbnails.contains(thumbnail.getThumbnail()));
         }
 
-        // 새로 추가된 파일이 있다면 업로드하고 게시글의 썸네일에 추가
+        // 새 파일 추가
         if (files != null && !files.isEmpty()) {
             List<PostThumbnail> thumbnails = uploadImages(files, post);
             post.getThumbnails().addAll(thumbnails);
         }
 
-        // 태그가 있다면 태그 업데이트
+        // 태그 업데이트
         if (postDTO.getTags() != null && !postDTO.getTags().isEmpty()) {
-            List<Tag> tags = new ArrayList<>();
-            for (String tagName : postDTO.getTags()) {
-                Tag tag = tagRepository.findByName(tagName)
-                        .orElseGet(() -> tagRepository.save(new Tag(null, tagName, new ArrayList<>())));
-                tags.add(tag);
-            }
+            List<Tag> tags = postDTO.getTags().stream()
+                    .map(tagName -> tagRepository.findByName(tagName)
+                            .orElseGet(() -> tagRepository.save(new Tag(null, tagName, new ArrayList<>())))
+                    )
+                    .collect(Collectors.toList());
             post.setTags(tags);
         }
 
-        post.changePost(postDTO.getContent(), LocalDateTime.now(), post.getThumbnails());
+        post.setModDate(LocalDateTime.now());
         postRepository.save(post);
     }
 
     // 게시글 삭제
     public void deletePost(Long id) {
         postRepository.deleteById(id);
-    }
-
-    // post 엔티티를 postdto로 변환하는 기능
-    private PostDTO convertToPostDTO(Post post, Auth loginAuth) {
-        // post 엔티티를 postDTO로 매핑
-        PostDTO postDTO = modelMapper.map(post, PostDTO.class);
-        // 사용자 정보 설정
-        postDTO.setNickName(post.getAuth().getNickName());
-        postDTO.setProfileImage(post.getAuth().getProfileImage());
-        postDTO.setEmail(post.getAuth().getEmail());
-        // 좋아요, 북마크 댓글 수 설정
-        postDTO.setToriBoxCount(postLikeService.countLikes(post.getPid()));
-        postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(post));
-        postDTO.setCommentCount(commentRepository.countByPost(post));
-        // 로그인 한 사용자의 좋아요, 북마크 여부 설정
-        postDTO.setLiked(postLikeService.isLikedByUser(post.getPid(), loginAuth.getId()));
-        postDTO.setBookmarked(postLikeService.isBookmarkedByUser(loginAuth.getEmail(), post.getPid()));
-        // 등록일, 수정일 설정
-        postDTO.setRegDate(post.getRegDate());
-        postDTO.setModDate(post.getModDate());
-
-        // 태그 이름 리스트 설정
-        List<String> tagNames = post.getTags().stream()
-                .map(Tag::getName)
-                .collect(Collectors.toList());
-        postDTO.setTags(tagNames);
-
-        // 썸네일 리스트 설정
-        List<String> thumbnails = post.getThumbnails().stream()
-                .map(PostThumbnail::getThumbnail)
-                .collect(Collectors.toList());
-        postDTO.setThumbnails(thumbnails);
-
-        return postDTO;
     }
 
     // 게시글 이미지 업로드
@@ -258,13 +235,9 @@ public class PostService {
 
     // 특정 사용자의 좋아요 모아보기
     public List<PostDTO> toriBoxSelectAll(Long aid) {
-        // 사용자 ID로 좋아요 목록 가져오기
         List<ToriBox> toriBoxList = toriBoxRepository.findByAid(aid);
-
-        // 로그인한 사용자 정보 가져오기
         Auth loginAuth = getLoginUser();
-
-        // 좋아요한 게시글을 POSTDTO 리스트로 변환하여 반환
+        // 조회한 ToriBox 엔티티 리스트를 PostDTO 리스트로 변환하여 반환
         return toriBoxList.stream()
                 .map(toriBox -> convertToPostDTO(toriBox.getPost(), loginAuth))
                 .collect(Collectors.toList());
@@ -272,22 +245,20 @@ public class PostService {
 
     // 북마크 기능
     // 북마크 토글
-    public boolean bookmarkPost(String email, Long postId) throws Exception {
-        Auth auth = authRepository.findByEmail(email)
-                .orElseThrow(() -> new Exception("Not Found user email :" + email));
-
+    public boolean bookmarkPost(Long postId) {
+        Auth auth = getLoginUser();
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new Exception("Not Found post id :" + postId));
+                .orElseThrow(() -> new RuntimeException("Not Found post id :" + postId));
 
-        // 사용자와 게시글로 북마크 찾기
+        // 사용자와 게시글로 기존의 북마크 조회
         Optional<Bookmark> existingBookmark = bookmarkRepository.findByAuthAndPost(auth, post);
 
-        // 이미 북마크가 있다면 삭제하고 false 반환
         if (existingBookmark.isPresent()) {
+            // 이미 북마크가 존재하면 북마크 삭제
             bookmarkRepository.delete(existingBookmark.get());
             return false;
         } else {
-            // 북마크가 없다면 새로 만들어서 저장하고 true 반환
+            // 북마크가 없으면 새로운 북마크 생성 및 저장
             Bookmark bookmark = Bookmark.builder().post(post).auth(auth).build();
             bookmarkRepository.save(bookmark);
             return true;
@@ -295,12 +266,10 @@ public class PostService {
     }
 
     // 북마크 모아보기
-    public List<PostDTO> getBookmarkedPosts(String email) {
-        Auth auth = authRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
-
+    public List<PostDTO> getBookmarkedPosts() {
+        Auth auth = getLoginUser();
         List<Bookmark> bookmarks = bookmarkRepository.findByAuth(auth);
-        // 북마크한 게시글을 PostDTO 리스트로 변환하여 반환
+        // 북마크 리스트를 PostDTO 리스트로 변환하여 반환
         return bookmarks.stream()
                 .map(bookmark -> convertToPostDTO(bookmark.getPost(), auth))
                 .collect(Collectors.toList());
@@ -309,26 +278,16 @@ public class PostService {
     // Comment 기능
     // 댓글 목록 조회
     public PageResponseDTO<CommentDTO> getListOfComment(Long postId, PageRequestDTO pageRequestDTO) {
-        // 페이징 객체 생성
+        // 페이징 정보 설정
         Pageable pageable = pageRequestDTO.getPageable("id");
-        // 게시글 id와 페이징 객체로 댓글 목록 가져오기
         Page<Comment> result = commentRepository.listOfPost(postId, pageable);
 
-        // 댓글을 CommentDTO 리스트로 변환
+        // 조회한 댓글 엔티티 리스트를 CommentDTO 리스트로 변환
         List<CommentDTO> dtoList = result.getContent().stream()
-                .map(comment -> {
-                    Auth auth = comment.getAuth();
-                    return CommentDTO.builder()
-                            .id(comment.getId())
-                            .content(comment.getContent())
-                            .email(auth.getEmail())
-                            .nickName(auth.getNickName())
-                            .profileImage(auth.getProfileImage())
-                            .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
-                            .build();
-                })
+                .map(this::convertToCommentDTO)
                 .collect(Collectors.toList());
 
+        // 페이징 정보와 변환된 CommentDTO 리스트로 PageResponseDTO 생성 및 반환
         return PageResponseDTO.<CommentDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
                 .postLists(dtoList)
@@ -338,43 +297,43 @@ public class PostService {
 
     // 댓글 등록
     public Long registerComment(CommentDTO commentDTO, Long postId) throws Exception {
-        Auth auth = authRepository.findByEmail(commentDTO.getEmail())
-                .orElseThrow(() -> new Exception("Not Found auth email :" + commentDTO.getEmail()));
-
+        Auth auth = getLoginUser();
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new Exception("Not Found post id :" + postId));
+                .orElseThrow(() -> new RuntimeException("Not Found post id :" + postId));
 
-        // CommentDTO를 Comment 엔티티로 매핑
-        Comment comment = modelMapper.map(commentDTO, Comment.class);
-        // 댓글에 게시글과 사용자 설정
+        Comment comment = new Comment();
+        comment.setContent(commentDTO.getContent());
         comment.setPost(post);
         comment.setAuth(auth);
 
-        // 부모 댓글이 있다면 설정
+        // 부모 댓글 ID가 존재하면 부모 댓글 엔티티 조회 및 설정
         if (commentDTO.getParentId() != null) {
             Comment parent = commentRepository.findById(commentDTO.getParentId())
-                    .orElseThrow(() -> new Exception("Not Found parent comment id :" + commentDTO.getParentId()));
+                    .orElseThrow(() -> new RuntimeException("Not Found parent comment id :" + commentDTO.getParentId()));
             comment.setParent(parent);
         }
 
-        return commentRepository.save(comment).getId();
+        Comment savedComment = commentRepository.save(comment);
+        return savedComment.getId();
     }
 
     // 특정 댓글 조회
     public CommentDTO readComment(Long id) {
-        Comment comment = commentRepository.findById(id).orElseThrow();
-        Auth auth = comment.getAuth();
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
 
-        // CommentDTO 생성하여 반환
-        CommentDTO dto = CommentDTO.builder()
-                .id(comment.getId())
-                .content(comment.getContent())
-                .email(auth.getEmail())
-                .nickName(auth.getNickName())
-                .profileImage(auth.getProfileImage())
-                .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
-                .build();
+        // Comment 엔티티를 CommentDTO로 변환
+        CommentDTO dto = modelMapper.map(comment, CommentDTO.class);
 
+        // 작성자 정보가 존재하면 CommentDTO에 설정
+        if (comment.getAuth() != null) {
+            dto.setEmail(comment.getAuth().getEmail());
+            dto.setNickName(comment.getAuth().getNickName());
+            dto.setProfileImage(comment.getAuth().getProfileImage());
+        }
+
+        // 부모 댓글이 존재하면 부모 댓글의 ID를 CommentDTO에 설정
+        dto.setParentId(comment.getParent() != null ? comment.getParent().getId() : null);
         return dto;
     }
 
@@ -398,50 +357,41 @@ public class PostService {
 
     // 기타 기능
     // 내가 쓴 글 모아보기
-    public List<PostDTO> getPostsByEmail(String email) {
-        // 사용자 이메일로 게시글 목록 가져오기
-        List<Post> posts = postRepository.findByAuth_Email(email);
-        // 사용자 이메일로 사용자 찾기
-        Auth auth = authRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
-        // 게시글을 PostDTO 리스트로 변환하여 반환
+    public List<PostDTO> getPostsByEmail() {
+        Auth auth = getLoginUser();
+        List<Post> posts = postRepository.findByAuth_Email(auth.getEmail());
+        // 조회한 게시글 리스트를 PostDTO 리스트로 변환하여 반환
         return posts.stream()
                 .map(post -> convertToPostDTO(post, auth))
                 .collect(Collectors.toList());
     }
 
     // 내가 쓴 댓글 모아보기
-    public List<CommentDTO> getCommentsByEmail(String email) {
-        // 사용자 이메일로 사용자 찾기
-        Auth auth = authRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        // 사용자의 댓글 목록 가져오기
+    public List<CommentDTO> getCommentsByEmail() {
+        Auth auth = getLoginUser();
         List<Comment> comments = commentRepository.findByAuth(auth);
-        // 댓글을 CommentDTO 리스트로 변환하여 반환
+        // 조회한 댓글 리스트를 CommentDTO 리스트로 변환하여 반환
         return comments.stream()
-                .map(comment -> {
-                    CommentDTO dto = modelMapper.map(comment, CommentDTO.class);
-                    dto.setEmail(auth.getEmail());
-                    dto.setNickName(auth.getNickName());
-                    dto.setProfileImage(auth.getProfileImage());
-                    dto.setParentId(comment.getParent() != null ? comment.getParent().getId() : null);
-                    return dto;
-                })
+                .map(this::convertToCommentDTO)
                 .collect(Collectors.toList());
     }
 
     // 팔로잉한 사람 게시글 모아보기
-    public List<PostDTO> getPostsByFollowing(String email) {
-        Auth auth = authRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        // 사용자의 팔로잉 목록 가져오기
+    public List<PostDTO> getPostsByFollowing() {
+        Auth auth = getLoginUser();
+
+        // 사용자가 팔로잉한 사람들의 리스트 조회
         List<FollowDTO> followings = followService.getFollowings(auth.getId(), Pageable.unpaged()).getContent();
-        // 팔로잉한 사용자의 id 리스트 생성
+
+        // 팔로잉한 사람들의 사용자 ID 리스트 추출
         List<Long> followingIds = followings.stream()
                 .map(FollowDTO::getUserId)
                 .collect(Collectors.toList());
-        // 팔로잉한 사용자의 게시글 목록 가져오기
+
+        // 팔로잉한 사람들이 작성한 게시글 리스트 조회
         List<Post> posts = postRepository.findByAuthIdIn(followingIds);
+
+        // 조회한 게시글 리스트를 PostDTO 리스트로 변환하여 반환
         return posts.stream()
                 .map(post -> convertToPostDTO(post, auth))
                 .collect(Collectors.toList());
@@ -460,6 +410,41 @@ public class PostService {
         return topPosts.getContent().stream()
                 .map(post -> convertToPostDTO(post, loginAuth))
                 .collect(Collectors.toList());
+    }
+
+    // Post 엔티티를 PostDTO로 변환하는 메서드
+    private PostDTO convertToPostDTO(Post post, Auth loginAuth) {
+        // Post 엔티티를 PostDTO로 매핑
+        PostDTO postDTO = modelMapper.map(post, PostDTO.class);
+
+        // 작성자 정보가 존재하면 PostDTO에 설정
+        if (post.getAuth() != null) {
+            postDTO.setEmail(post.getAuth().getEmail());
+            postDTO.setNickName(post.getAuth().getNickName());
+            postDTO.setProfileImage(post.getAuth().getProfileImage());
+        }
+
+        // 좋아요 수, 북마크 수, 댓글 수, 좋아요 여부, 북마크 여부 설정
+        postDTO.setToriBoxCount(postLikeService.countLikes(post.getPid()));
+        postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(post));
+        postDTO.setCommentCount(commentRepository.countByPost(post));
+        postDTO.setLiked(postLikeService.isLikedByUser(post.getPid(), loginAuth.getId()));
+        postDTO.setBookmarked(postLikeService.isBookmarkedByUser(loginAuth.getEmail(), post.getPid()));
+
+        // 태그 정보 처리
+        if (post.getTags() != null && !post.getTags().isEmpty()) {
+            postDTO.setTags(post.getTags().stream()
+                    .map(Tag::getName)
+                    .collect(Collectors.toList()));
+        }
+
+        return postDTO;
+    }
+
+    // Comment 엔티티를 CommentDTO로 변환하는 메서드
+    private CommentDTO convertToCommentDTO(Comment comment) {
+        // ModelMapper를 사용하여 Comment 엔티티를 CommentDTO로 매핑
+        return modelMapper.map(comment, CommentDTO.class);
     }
 
 }
