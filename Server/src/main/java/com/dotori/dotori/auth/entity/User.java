@@ -19,7 +19,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "email", unique = true, nullable = false)
+    @Column(name = "email")
     private String email;
 
     @Column(name = "nick_name", length = 20)
@@ -54,7 +54,8 @@ public class User {
     @Builder.Default
     private UserStatus userStatus = UserStatus.USER_ACTIVE; // 기본값을 USER_ACTIVE로 설정
 
-    public User updateUser(String email, String provider) {
+    public User updateUser(String username, String email, String provider) {
+        this.nickName = username;
         this.email = email;
         this.provider = provider;
         return this;
