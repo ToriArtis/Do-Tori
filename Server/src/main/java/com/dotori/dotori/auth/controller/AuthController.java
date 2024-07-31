@@ -24,7 +24,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/users")
+@RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
@@ -62,10 +62,12 @@ public class AuthController {
                 userDTO.getPassword()
         );
         if( auth != null){
-            final String token = tokenProvider.create(auth);
+            final String accessToken = tokenProvider.createAccessToken(auth);
+            final String refreshToken = tokenProvider.createRefreshToken(auth);
             final AuthDTO.LoginDTO responseUserDTO = AuthDTO.LoginDTO.builder()
                     .email(auth.getEmail())
-                    .token(token)
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
                     .nickName(auth.getNickName())
                     .build();
             return ResponseEntity.ok().body(responseUserDTO);

@@ -51,21 +51,21 @@ export function call(api, method, request) {
       // 에러 처리
       if (error.status === 403) {
         // 403 에러(권한 없음)인 경우 로그인 페이지로 리디렉션
-        navigation.navigate('Login');
+        navigation.navigate('login');
       }
       return Promise.reject(error);
     });
 }
 
 // 회원가입
-export async function signup(userDTO) {
+export async function signup(authDTO) {
   try {
-    const response = await call("/users", "POST", userDTO);
+    const response = await call("/auth", "POST", authDTO);
     
     console.log("회원가입 성공:", response);
     if (response && response.email) {
       alert("회원가입이 성공적으로 완료되었습니다.");
-      navigation.navigate('Login');
+      navigation.navigate('login');
     } else {
       alert("회원가입에 실패했습니다. 다시 시도해 주세요.");
       // 에러 메시지가 있다면 표시

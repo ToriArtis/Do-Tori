@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { createUser, isValidEmail, isValidPassword } from '../models/User';
-import { signup } from '../api/userApi';
+import { createAuth, isValidEmail, isValidPassword } from '../models/Auth';
+import { signup } from '../api/authsApi';
 
 export function useSignUpViewModel() {
   const [values, setValues] = useState({
@@ -35,13 +35,13 @@ export function useSignUpViewModel() {
     if (!validateForm()) return;
 
     try {
-      const user = createUser(
+      const auth = createAuth(
         values.email,
         values.password,
         values.nickName,
         values.phone
       );
-      await signup(user);
+      await signup(auth);
       // 성공 처리 로직 (예: 로그인 페이지로 리디렉션)
     } catch (error) {
       setError(error.message);

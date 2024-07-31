@@ -1,5 +1,5 @@
 import React from 'react';
-import SignUpView from '../src/user/views/SignUpView';
+import SignUpView from '../src/auth/views/SignUpView';
 
 export default function SignUpPage() {
   return <SignUpView />;
