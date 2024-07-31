@@ -24,10 +24,11 @@ class User {
   function isValidPassword(password) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return passwordRegex.test(password);
+    
   }
   
   // 사용자 객체 생성 함수
-  function createUser(email, username, password, phone) {
+  function createUser(email, password, nickName, phone) {
     if (!isValidEmail(email)) {
       throw new Error('Invalid email address');
     }
@@ -36,7 +37,7 @@ class User {
     }
     // 실제 애플리케이션에서는 ID를 서버에서 생성하거나 UUID를 사용할 수 있습니다.
     
-    return new User(email, username, password, nickName, phone);
+    return new User(email, password, nickName, phone);
   }
 
   function loginUser(email, password) {
