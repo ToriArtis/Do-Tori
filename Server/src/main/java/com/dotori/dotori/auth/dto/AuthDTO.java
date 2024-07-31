@@ -27,7 +27,8 @@ public class AuthDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static  class LoginDTO{
-        private String token;
+        private String accessToken;
+        private String refreshToken;
         private String provider;
 
         @NotBlank private String email; // 사용자 이메일

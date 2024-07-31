@@ -14,33 +14,69 @@ import java.util.Date;
 
 @Component
 public class TokenProvider {
-    private final Key key;
+    private final Key accessKey;
+    private final Key refreshKey;
 
     public TokenProvider() {
-        this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        this.accessKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        this.refreshKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     }
 
     // create 메서드에서 key 사용
-    public String create(Auth authEntity) {
-        Date expiryDate = Date.from(Instant.now().plus(1, ChronoUnit.DAYS));
+    public String createAccessToken(Auth authEntity) {
+        Date expiryDate = Date.from(Instant.now().plus(30, ChronoUnit.MINUTES));  // 30분동안 실행되게 함
 
         return Jwts.builder()
                 .setSubject(authEntity.getEmail())
                 .setIssuer("demo app")
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
-                .signWith(key, SignatureAlgorithm.HS512)
+                .signWith(accessKey, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
+    public String createRefreshToken(Auth authEntity) {
+        Date expiryDate = Date.from(Instant.now().plus(7, ChronoUnit.DAYS));
+
+        return Jwts.builder()
+                .setSubject(authEntity.getEmail())
+                .setIssuer("demo app")
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
+                .signWith(refreshKey, SignatureAlgorithm.HS512)
                 .compact();
     }
 
     // validateAndGetUserId 메서드에서도 key 사용
     public String validateAndGetUserId(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
+                .setSigningKey(accessKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
 
         return claims.getSubject();
+    }
+    public String validateAndGetUserIdFromRefreshToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(refreshKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getSubject();
+    }
+
+    public boolean isTokenExpired(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(accessKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.getExpiration().before(new Date());
+        } catch (Exception e) {
+            return true;
+        }
     }
 }

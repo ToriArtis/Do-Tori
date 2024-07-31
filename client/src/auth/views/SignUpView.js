@@ -25,11 +25,7 @@ export default function SignUpView() {
         <TextInput
           style={styles.input} placeholder="닉네임" value={values.nickName} onChangeText={(text) => handleChange('nickName', text)}/>
         <TextInput
-          style={styles.input}
-          placeholder="전화번호"
-          value={values.phone}
-          onChangeText={(text) => handleChange('phone', text)}
-        />
+          style={styles.input} placeholder="전화번호" value={values.phone} onChangeText={(text) => handleChange('phone', text)}/>
         
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
