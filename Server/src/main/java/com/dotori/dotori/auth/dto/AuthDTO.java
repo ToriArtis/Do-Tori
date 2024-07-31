@@ -3,7 +3,7 @@ package com.dotori.dotori.auth.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
-public class UserDTO {
+public class AuthDTO {
 
     @Builder
     @Getter

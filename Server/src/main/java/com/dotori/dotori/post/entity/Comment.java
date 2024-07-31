@@ -1,6 +1,6 @@
 package com.dotori.dotori.post.entity;
 
-import com.dotori.dotori.auth.entity.User;
+import com.dotori.dotori.auth.entity.Auth;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -26,7 +26,7 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "aid")
-    private User user;
+    private Auth auth;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")

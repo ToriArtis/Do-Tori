@@ -1,6 +1,6 @@
 package com.dotori.dotori.todo.entity;
 
-import com.dotori.dotori.auth.entity.User;
+import com.dotori.dotori.auth.entity.Auth;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -22,8 +22,8 @@ public class Todo {
     private int id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_email", referencedColumnName = "email")
-    private User user;
+    @JoinColumn(name = "auth_email", referencedColumnName = "email")
+    private Auth auth;
 
     @Builder.Default
     @Column(length = 50)

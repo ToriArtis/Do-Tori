@@ -304,9 +304,9 @@
 <script src="js/todo.js"></script>
 <script>
 
-    var user = /*[[${#authentication.principal}]]*/ null;
+    var auth = /*[[${#authentication.principal}]]*/ null;
 
-    if (user !== null) {
+    if (auth !== null) {
         window.location.href = "http://localhost:8080/todo/list"; // 리다이렉트할 페이지의 URL을 입력하세요.
     } else{
 

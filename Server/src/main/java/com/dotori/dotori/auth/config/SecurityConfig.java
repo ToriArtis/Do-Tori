@@ -2,8 +2,8 @@ package com.dotori.dotori.auth.config;
 
 import com.dotori.dotori.auth.jwt.JwtAuthenticationFilter;
 import com.dotori.dotori.auth.jwt.TokenProvider;
-import com.dotori.dotori.auth.repository.UserRepository;
-import com.dotori.dotori.auth.service.CustomUserDetailsService;
+import com.dotori.dotori.auth.repository.AuthRepository;
+import com.dotori.dotori.auth.service.CustomAuthDetailsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +15,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-
-import java.util.Arrays;
 
 @Configuration
 @Log4j2
@@ -33,10 +27,10 @@ public class SecurityConfig {
 
     @Autowired
     private final JwtAuthenticationFilter jwtAuthenticationFilter; // jwt 필터 의존성 주입
-    private final CustomUserDetailsService userDetailsService;
+    private final CustomAuthDetailsService userDetailsService;
     //   private final OAuth2Service oAuth2Service;
     private final TokenProvider tokenProvider;
-    private final UserRepository userRepository;
+    private final AuthRepository authRepository;
     //    private final OAuth2UserService oAuth2UserService;
     private final PasswordEncoder passwordEncoder;
 

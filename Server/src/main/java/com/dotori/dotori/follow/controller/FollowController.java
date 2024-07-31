@@ -1,9 +1,9 @@
 package com.dotori.dotori.follow.controller;
 
+import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.follow.dto.FollowDTO;
 import com.dotori.dotori.follow.service.FollowService;
-import com.dotori.dotori.auth.entity.User;
-import com.dotori.dotori.auth.service.UserService;
+import com.dotori.dotori.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,21 +16,21 @@ import org.springframework.web.bind.annotation.*;
 public class FollowController {
 
     private final FollowService followService;
-    private final UserService userService;
+    private final AuthService authService;
 
     // 팔로우
     @PostMapping("/{userId}")
     public ResponseEntity<String> follow(@PathVariable Long userId) {
-        User currentUser = userService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
-        followService.follow(currentUser.getId(), userId);
+        Auth currentAuth = authService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
+        followService.follow(currentAuth.getId(), userId);
         return ResponseEntity.ok("팔로우 성공");
     }
 
     // 언팔로우
     @DeleteMapping("/{userId}")
     public ResponseEntity<String> unfollow(@PathVariable Long userId) {
-        User currentUser = userService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
-        followService.unfollow(currentUser.getId(), userId);
+        Auth currentAuth = authService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
+        followService.unfollow(currentAuth.getId(), userId);
         return ResponseEntity.ok("언팔로우 성공");
     }
 

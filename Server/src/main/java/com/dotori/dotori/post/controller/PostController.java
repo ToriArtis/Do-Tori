@@ -1,10 +1,9 @@
 package com.dotori.dotori.post.controller;
 
-import com.dotori.dotori.auth.entity.User;
-import com.dotori.dotori.auth.repository.UserRepository;
-import com.dotori.dotori.auth.service.UserService;
+import com.dotori.dotori.auth.entity.Auth;
+import com.dotori.dotori.auth.repository.AuthRepository;
+import com.dotori.dotori.auth.service.AuthService;
 import com.dotori.dotori.post.dto.*;
-import com.dotori.dotori.post.entity.Post;
 import com.dotori.dotori.post.service.PostLikeService;
 import com.dotori.dotori.post.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -27,16 +26,16 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
-    private final UserRepository userRepository;
-    private final UserService userService;
+    private final AuthRepository authRepository;
+    private final AuthService authService;
     private final ModelMapper modelMapper;
     private final PostLikeService postLikeService;
 
     // 로그인한 사용자 조회
-    private User getLoginUser() {
+    private Auth getLoginUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
-        return userRepository.findByEmail(email)
+        return authRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Not Found user email :" + email));
     }
 
@@ -89,10 +88,10 @@ public class PostController {
     // 게시글 좋아요
     @PostMapping("/{id}/like")
     public ResponseEntity<Boolean> likePost(@PathVariable Long id) {
-        User loginUser = getLoginUser();
+        Auth loginAuth = getLoginUser();
 
         ToriBoxDTO toriBoxDTO = ToriBoxDTO.builder()
-                .aid(loginUser.getId())
+                .aid(loginAuth.getId())
                 .pid(id)
                 .build();
         boolean isLiked = postService.toriBoxPost(toriBoxDTO);
@@ -102,15 +101,15 @@ public class PostController {
     // 게시글 좋아요 여부 확인
     @GetMapping("/{id}/like")
     public ResponseEntity<Boolean> isLiked(@PathVariable Long id) {
-        User loginUser = getLoginUser();
-        return ResponseEntity.ok(postLikeService.isLikedByUser(id, loginUser.getId()));
+        Auth loginAuth = getLoginUser();
+        return ResponseEntity.ok(postLikeService.isLikedByUser(id, loginAuth.getId()));
     }
 
     // 좋아요한 게시글 목록 조회
     @GetMapping("/likes")
     public ResponseEntity<List<PostDTO>> getLikedPosts() {
-        User loginUser = getLoginUser();
-        return ResponseEntity.ok(postService.toriBoxSelectAll(loginUser.getId()));
+        Auth loginAuth = getLoginUser();
+        return ResponseEntity.ok(postService.toriBoxSelectAll(loginAuth.getId()));
     }
 
     // 게시글 북마크
@@ -146,7 +145,7 @@ public class PostController {
         // commentDTO에 이메일 설정
         commentDTO.setEmail(email);
 
-        User user = userRepository.findByEmail(email)
+        Auth auth = authRepository.findByEmail(email)
                 .orElseThrow(() -> new Exception("Not Found user email :" + email));
 
         Long commentId = postService.registerComment(commentDTO, postId);
@@ -184,14 +183,14 @@ public class PostController {
     // 내가 쓴 댓글 모아보기
     @GetMapping("/me/comments")
     public ResponseEntity<List<CommentDTO>> getMyComments() {
-        User loginUser = userService.getLoginUser();
-        return ResponseEntity.ok(postService.getCommentsByEmail(loginUser.getEmail()));
+        Auth loginAuth = authService.getLoginUser();
+        return ResponseEntity.ok(postService.getCommentsByEmail(loginAuth.getEmail()));
     }
 
     // 팔로잉한 사용자의 게시글 모아보기
     @GetMapping("/following")
     public ResponseEntity<List<PostDTO>> getFollowingPosts() {
-        User loginUser = userService.getLoginUser();
-        return ResponseEntity.ok(postService.getPostsByFollowing(loginUser.getEmail()));
+        Auth loginAuth = authService.getLoginUser();
+        return ResponseEntity.ok(postService.getPostsByFollowing(loginAuth.getEmail()));
     }
 }

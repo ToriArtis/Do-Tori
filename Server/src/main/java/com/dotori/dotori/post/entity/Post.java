@@ -1,6 +1,6 @@
 package com.dotori.dotori.post.entity;
 
-import com.dotori.dotori.auth.entity.User;
+import com.dotori.dotori.auth.entity.Auth;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -27,8 +27,8 @@ public class Post{
     private Long pid;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_email", referencedColumnName = "email")
-    private User user;
+    @JoinColumn(name = "auth_email", referencedColumnName = "email")
+    private Auth auth;
 
     @Column(name = "nickName")
     private String nickName;
