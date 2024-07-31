@@ -44,6 +44,10 @@ export function call(api, method, request) {
       })
     )
     .catch((error) => {
+      console.error("API 호출 오류:", error);
+      console.error("요청 URL:", options.url);
+      console.error("요청 메소드:", options.method);
+      console.error("요청 데이터:", options.body);
       // 에러 처리
       if (error.status === 403) {
         // 403 에러(권한 없음)인 경우 로그인 페이지로 리디렉션
