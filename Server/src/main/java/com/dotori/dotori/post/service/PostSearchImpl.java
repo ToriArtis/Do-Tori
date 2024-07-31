@@ -1,7 +1,6 @@
 package com.dotori.dotori.post.service;
 
-import com.dotori.dotori.auth.entity.User;
-import com.dotori.dotori.auth.repository.UserRepository;
+import com.dotori.dotori.auth.repository.AuthRepository;
 import com.dotori.dotori.post.dto.PostListCommentCountDTO;
 import com.dotori.dotori.post.entity.*;
 import com.querydsl.core.BooleanBuilder;
@@ -12,22 +11,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class PostSearchImpl extends QuerydslRepositorySupport implements PostSearch {
 
-    private final UserRepository userRepository;
+    private final AuthRepository authRepository;
 
-    public PostSearchImpl(UserRepository userRepository) {
+    public PostSearchImpl(AuthRepository authRepository) {
         super(Post.class);
-        this.userRepository = userRepository;
+        this.authRepository = authRepository;
     }
 
     // 게시글 검색 기능
@@ -48,7 +43,7 @@ public class PostSearchImpl extends QuerydslRepositorySupport implements PostSea
                         booleanBuilder.or(post.content.contains(keyword));
                         break;
                     case "w":
-                        booleanBuilder.or(post.user.nickName.contains(keyword));
+                        booleanBuilder.or(post.auth.nickName.contains(keyword));
                         break;
                     case "t":
                         booleanBuilder.or(post.tags.any().name.eq(keyword));
@@ -84,13 +79,13 @@ public class PostSearchImpl extends QuerydslRepositorySupport implements PostSea
                 .leftJoin(toriBox).on(toriBox.post.eq(post))
                 .leftJoin(bookmark).on(bookmark.post.eq(post))
                 .leftJoin(post.tags, tag)
-                .groupBy(post.pid, post.user.email, post.content, post.user.nickName, post.user.profileImage, post.regDate, post.modDate)
+                .groupBy(post.pid, post.auth.email, post.content, post.auth.nickName, post.auth.profileImage, post.regDate, post.modDate)
                 .select(Projections.constructor(PostListCommentCountDTO.class,
                         post.pid,
-                        post.user.email,
+                        post.auth.email,
                         post.content,
-                        post.user.nickName,
-                        post.user.profileImage,
+                        post.auth.nickName,
+                        post.auth.profileImage,
                         post.regDate,
                         post.modDate,
                         Expressions.as(Expressions.stringTemplate("MAX({0})", postThumbnail.thumbnail), "thumbnail"),
@@ -110,7 +105,7 @@ public class PostSearchImpl extends QuerydslRepositorySupport implements PostSea
                         booleanBuilder.or(post.content.contains(keyword));
                         break;
                     case "w":
-                        booleanBuilder.or(post.user.nickName.contains(keyword));
+                        booleanBuilder.or(post.auth.nickName.contains(keyword));
                         break;
                     case "t":
                         booleanBuilder.or(post.tags.any().name.eq(keyword));

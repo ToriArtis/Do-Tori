@@ -1,6 +1,6 @@
 package com.dotori.dotori.post.repository;
 
-import com.dotori.dotori.auth.entity.User;
+import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.post.entity.Bookmark;
 import com.dotori.dotori.post.entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,10 +12,10 @@ import java.util.Optional;
 @Repository
 public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
-    Optional<Bookmark> findByUserAndPost(User user, Post post);
-    List<Bookmark> findByUser(User user);
+    Optional<Bookmark> findByAuthAndPost(Auth auth, Post post);
+    List<Bookmark> findByAuth(Auth auth);
     int countByPost(Post post);
 
-    Optional<Object> findByUserEmailAndPost(String email, Post post);
+    Optional<Object> findByAuthEmailAndPost(String email, Post post);
 }
 

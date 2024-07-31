@@ -3,10 +3,10 @@ package com.dotori.dotori.auth.service;
 import com.dotori.dotori.auth.config.exception.BusinessLogicException;
 import com.dotori.dotori.auth.config.exception.ExceptionCode;
 import com.dotori.dotori.auth.dto.LoginDTO;
-import com.dotori.dotori.auth.dto.UserDTO;
-import com.dotori.dotori.auth.entity.User;
-import com.dotori.dotori.auth.entity.UserStatus;
-import com.dotori.dotori.auth.repository.UserRepository;
+import com.dotori.dotori.auth.dto.AuthDTO;
+import com.dotori.dotori.auth.entity.Auth;
+import com.dotori.dotori.auth.entity.AuthStatus;
+import com.dotori.dotori.auth.repository.AuthRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,97 +26,97 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
-public class UserService {
+public class AuthService {
 
-    private final UserRepository userRepository;
+    private final AuthRepository authRepository;
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
 
     // 회원가입
-    public User join(UserDTO.ResponseDTO userDTO) throws BusinessLogicException {
+    public Auth join(AuthDTO.ResponseDTO userDTO) throws BusinessLogicException {
         String email = userDTO.getEmail();
         String nickName = userDTO.getNickName();
         String phone = userDTO.getPhone();
 
         // 중복 확인
-        if (userRepository.existsByPhone(phone)) {
+        if (authRepository.existsByPhone(phone)) {
             throw new BusinessLogicException(ExceptionCode.EXIST_PHONE_NUMBER);
         }
-        if (userRepository.existsByEmail(email)) {
+        if (authRepository.existsByEmail(email)) {
             throw new BusinessLogicException(ExceptionCode.EXIST_EMAIL);
         }
-        if (userRepository.existsByNickName(nickName)) {
+        if (authRepository.existsByNickName(nickName)) {
             throw new BusinessLogicException(ExceptionCode.EXIST_NICK_NAME);
         }
         if (nickName.length() >= 12) {
             throw new BusinessLogicException(ExceptionCode.NICKNAME_TOO_LONG);
         }
 
-        User user = modelMapper.map(userDTO, User.class);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));       //password는 암호화
+        Auth auth = modelMapper.map(userDTO, Auth.class);
+        auth.setPassword(passwordEncoder.encode(auth.getPassword()));       //password는 암호화
 
-        return userRepository.save(user);
+        return authRepository.save(auth);
     }
 
     // 로그인
-    public User getByCredentials(final String email, final String password) {
+    public Auth getByCredentials(final String email, final String password) {
         // 주어진 이메일을 사용하여 사용자 정보를 데이터베이스에서 조회
 
         log.info("getByCredentials");
-        final User onlineUser = userRepository.findByEmail(email).orElseThrow();
+        final Auth onlineAuth = authRepository.findByEmail(email).orElseThrow();
 
         // 사용자가 존재하고 비밀번호가 일치하는지 확인
-        if (onlineUser != null
-                && passwordEncoder.matches(password, onlineUser.getPassword())
-                && onlineUser.getUserStatus() == UserStatus.USER_ACTIVE) {
+        if (onlineAuth != null
+                && passwordEncoder.matches(password, onlineAuth.getPassword())
+                && onlineAuth.getAuthStatus() == AuthStatus.AUTH_ACTIVE) {
             // 비밀번호가 일치하면 사용자 객체를 반환
-            return onlineUser;
+            return onlineAuth;
         }
         // 비밀번호가 일치하지 않으면 null 반환
         return null;
     }
 
     // 사용자 정보 조회
-    public UserDTO.ResponseDTO info(String email) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        User user = userOptional.orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-        UserDTO.ResponseDTO userDTO = modelMapper.map(user, UserDTO.ResponseDTO.class);
+    public AuthDTO.ResponseDTO info(String email) {
+        Optional<Auth> userOptional = authRepository.findByEmail(email);
+        Auth auth = userOptional.orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
+        AuthDTO.ResponseDTO userDTO = modelMapper.map(auth, AuthDTO.ResponseDTO.class);
 
         log.info("info AuthDTO : " + userDTO);
-        userDTO.setEmail(user.getEmail());
+        userDTO.setEmail(auth.getEmail());
         return userDTO;
     }
 
     // 사용자 정보 수정
-    public void modify(UserDTO.ResponseDTO userDTO) {
+    public void modify(AuthDTO.ResponseDTO userDTO) {
 
-        User loginUser = getLoginUser();
+        Auth loginAuth = getLoginUser();
 
-        loginUser.setPhone(userDTO.getPhone());
-        loginUser.setNickName(userDTO.getNickName());
+        loginAuth.setPhone(userDTO.getPhone());
+        loginAuth.setNickName(userDTO.getNickName());
 
-        loginUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        loginAuth.setPassword(passwordEncoder.encode(userDTO.getPassword()));
 
-        userRepository.save(loginUser);
+        authRepository.save(loginAuth);
     }
 
     // 계정 삭제
-    public User deleteUser(){
+    public Auth deleteUser(){
 
-        User loginUser = getLoginUser();
-        Long userId = loginUser.getId();
+        Auth loginAuth = getLoginUser();
+        Long userId = loginAuth.getId();
 
-        loginUser.setUserStatus(UserStatus.USER_WITHDRAWAL);
+        loginAuth.setAuthStatus(AuthStatus.AUTH_WITHDRAWAL);
 
-        return loginUser;
+        return loginAuth;
     }
 
     // 로그인한 사용자 정보 조회
-    public User getLoginUser(){
+    public Auth getLoginUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String name = authentication.getName();
         log.info("회원 이메일 = {}", name);
-        Optional<User> user = userRepository.findByEmail(name);
+        Optional<Auth> user = authRepository.findByEmail(name);
         return user.orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
     }
 
@@ -125,18 +125,18 @@ public class UserService {
     public Long getUserId(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String name = authentication.getName();
-        Optional<User> user = userRepository.findByEmail(name);
+        Optional<Auth> user = authRepository.findByEmail(name);
         return user.get().getId();
     }
 
     //비밀번호 재설정
     public boolean newpassword(LoginDTO request) {
-        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+        Optional<Auth> userOptional = authRepository.findByEmail(request.getEmail());
 
         if (userOptional.isPresent()) {
-            User user = userOptional.get();
+            Auth auth = userOptional.get();
             String encodedPassword = passwordEncoder.encode(request.getPassword());
-            int updatedRows = userRepository.updatePassword(request.getEmail(), encodedPassword);
+            int updatedRows = authRepository.updatePassword(request.getEmail(), encodedPassword);
             return updatedRows > 0;
         } else {
             return false;
@@ -145,12 +145,12 @@ public class UserService {
 
     // 이메일 찾기
     public String findEmail(String phone) {
-        Optional<User> userOptional = userRepository.findByPhone(phone);
+        Optional<Auth> userOptional = authRepository.findByPhone(phone);
         log.info(userOptional.toString());
 
         if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            return user.getEmail();
+            Auth auth = userOptional.get();
+            return auth.getEmail();
         } else {
             return null;
         }
@@ -158,24 +158,24 @@ public class UserService {
 
     // 이미지 업로드
     public void updateProfileImage(MultipartFile file) throws Exception {
-        User user = getLoginUser();
+        Auth auth = getLoginUser();
         List<MultipartFile> files = new ArrayList<>();
         files.add(file);
         List<String> uploadedFiles = uploadImages(files);
         if (!uploadedFiles.isEmpty()) {
-            user.setProfileImage(uploadedFiles.get(0));
-            userRepository.save(user);
+            auth.setProfileImage(uploadedFiles.get(0));
+            authRepository.save(auth);
         }
     }
 
     public void updateHeaderImage(MultipartFile file) throws Exception {
-        User user = getLoginUser();
+        Auth auth = getLoginUser();
         List<MultipartFile> files = new ArrayList<>();
         files.add(file);
         List<String> uploadedFiles = uploadImages(files);
         if (!uploadedFiles.isEmpty()) {
-            user.setHeaderImage(uploadedFiles.get(0));
-            userRepository.save(user);
+            auth.setHeaderImage(uploadedFiles.get(0));
+            authRepository.save(auth);
         }
     }
 

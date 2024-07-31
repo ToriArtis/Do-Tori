@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Table(name = "USERS")
-public class User {
+@Table(name = "auth")
+public class Auth {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,9 +52,9 @@ public class User {
 
     @Enumerated(value = EnumType.STRING)
     @Builder.Default
-    private UserStatus userStatus = UserStatus.USER_ACTIVE; // 기본값을 USER_ACTIVE로 설정
+    private AuthStatus authStatus = AuthStatus.AUTH_ACTIVE; // 기본값을 USER_ACTIVE로 설정
 
-    public User updateUser(String username, String email, String provider) {
+    public Auth updateAuth(String username, String email, String provider) {
         this.nickName = username;
         this.email = email;
         this.provider = provider;

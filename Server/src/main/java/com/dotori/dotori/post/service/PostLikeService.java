@@ -1,7 +1,7 @@
 package com.dotori.dotori.post.service;
 
-import com.dotori.dotori.auth.entity.User;
-import com.dotori.dotori.auth.repository.UserRepository;
+import com.dotori.dotori.auth.entity.Auth;
+import com.dotori.dotori.auth.repository.AuthRepository;
 import com.dotori.dotori.post.dto.ToriBoxDTO;
 import com.dotori.dotori.post.entity.Post;
 import com.dotori.dotori.post.entity.ToriBox;
@@ -19,7 +19,7 @@ public class PostLikeService {
     private final ToriBoxRepository toriBoxRepository;
     private final BookmarkRepository bookmarkRepository;
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final AuthRepository authRepository;
 
     // 특정 사용자가 게시글에 좋아요를 눌렀는지 확인
     public boolean isLikedByUser(Long pid, Long aid) {
@@ -32,7 +32,7 @@ public class PostLikeService {
     public boolean isBookmarkedByUser(String email, Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Not Found post id :" + postId));
-        return bookmarkRepository.findByUserEmailAndPost(email, post).isPresent();
+        return bookmarkRepository.findByAuthEmailAndPost(email, post).isPresent();
     }
 
     // 게시글의 좋아요 개수 조회
@@ -44,13 +44,13 @@ public class PostLikeService {
 
     // 게시글 좋아요 토글 기능
     public boolean toriBoxPost(ToriBoxDTO toriBoxDTO) {
-        User user = userRepository.findById(toriBoxDTO.getAid())
+        Auth auth = authRepository.findById(toriBoxDTO.getAid())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Post post = postRepository.findById(toriBoxDTO.getPid())
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         // 사용자와 게시글로 기존의 좋아요 조회
-        Optional<ToriBox> existingLike = toriBoxRepository.findByAidAndPost(user.getId(), post);
+        Optional<ToriBox> existingLike = toriBoxRepository.findByAidAndPost(auth.getId(), post);
 
         if (existingLike.isPresent()) {
             // 이미 좋아요가 존재하면 좋아요 취소
@@ -61,7 +61,7 @@ public class PostLikeService {
             ToriBox toriBox = ToriBox.builder()
                     .post(post)
                     .pid(post.getPid())
-                    .aid(user.getId())
+                    .aid(auth.getId())
                     .build();
             toriBoxRepository.save(toriBox);
             return true;

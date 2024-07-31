@@ -3,10 +3,10 @@ package com.dotori.dotori.auth.controller;
 import com.dotori.dotori.auth.config.exception.BusinessLogicException;
 import com.dotori.dotori.auth.dto.LoginDTO;
 import com.dotori.dotori.auth.dto.ResponseDTO;
-import com.dotori.dotori.auth.dto.UserDTO;
-import com.dotori.dotori.auth.entity.User;
+import com.dotori.dotori.auth.dto.AuthDTO;
+import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.auth.jwt.TokenProvider;
-import com.dotori.dotori.auth.service.UserService;
+import com.dotori.dotori.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,24 +25,24 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Validated
 @RequestMapping("/users")
-public class UserController {
+public class AuthController {
 
     @Autowired
-    private UserService userService;
+    private AuthService authService;
     @Autowired
     private TokenProvider tokenProvider;
 
     // 사용자 등록
     @PostMapping()
-    public ResponseEntity<?> registerUser(@RequestBody UserDTO.ResponseDTO userDTO){
+    public ResponseEntity<?> registerUser(@RequestBody AuthDTO.ResponseDTO userDTO){
         try {
             //서비스를 이용해 리포지터리에 사용자 저장
-            User registeredUser = userService.join(userDTO);
-            UserDTO.ResponseDTO responseUserDTO = userDTO.builder()
-                    .email(registeredUser.getEmail())
-                    .password(registeredUser.getPassword())
-                    .phone(registeredUser.getPhone())
-                    .nickName(registeredUser.getNickName())
+            Auth registeredAuth = authService.join(userDTO);
+            AuthDTO.ResponseDTO responseUserDTO = userDTO.builder()
+                    .email(registeredAuth.getEmail())
+                    .password(registeredAuth.getPassword())
+                    .phone(registeredAuth.getPhone())
+                    .nickName(registeredAuth.getNickName())
                     .build();
 
             return ResponseEntity.ok().body(responseUserDTO);
@@ -57,16 +57,16 @@ public class UserController {
     // 사용자 로그인
     @PostMapping("/login")
     public  ResponseEntity<?> authenticate(@RequestBody LoginDTO userDTO){
-        User user = userService.getByCredentials(
+        Auth auth = authService.getByCredentials(
                 userDTO.getEmail(),
                 userDTO.getPassword()
         );
-        if( user != null){
-            final String token = tokenProvider.create(user);
-            final UserDTO.LoginDTO responseUserDTO = UserDTO.LoginDTO.builder()
-                    .email(user.getEmail())
+        if( auth != null){
+            final String token = tokenProvider.create(auth);
+            final AuthDTO.LoginDTO responseUserDTO = AuthDTO.LoginDTO.builder()
+                    .email(auth.getEmail())
                     .token(token)
-                    .nickName(user.getNickName())
+                    .nickName(auth.getNickName())
                     .build();
             return ResponseEntity.ok().body(responseUserDTO);
         }
@@ -83,8 +83,8 @@ public class UserController {
     @GetMapping()
     public ResponseEntity<?> info() {
         try {
-            User loginUser = userService.getLoginUser();
-            UserDTO.ResponseDTO userDTO = userService.info(loginUser.getEmail());
+            Auth loginAuth = authService.getLoginUser();
+            AuthDTO.ResponseDTO userDTO = authService.info(loginAuth.getEmail());
             return ResponseEntity.ok(userDTO);
         } catch (BusinessLogicException e) {
             ResponseDTO responseDTO = ResponseDTO.builder().error("Login failed").build();
@@ -94,9 +94,9 @@ public class UserController {
 
     // 사용자 수정
     @PutMapping()
-    public ResponseEntity<?> modify(@RequestBody UserDTO.ResponseDTO userDTO) {
+    public ResponseEntity<?> modify(@RequestBody AuthDTO.ResponseDTO userDTO) {
         try {
-            userService.modify(userDTO);
+            authService.modify(userDTO);
             return ResponseEntity.ok(userDTO);
         } catch (BusinessLogicException e) {
             ResponseDTO responseDTO = ResponseDTO.builder().error("Login failed").build();
@@ -108,7 +108,7 @@ public class UserController {
     @PostMapping("/userStatus")
     public ResponseEntity<?> deleteUser() {
         try {
-            userService.deleteUser();
+            authService.deleteUser();
             return ResponseEntity.ok().body(true);
         } catch (BusinessLogicException e) {
             ResponseDTO responseDTO = ResponseDTO.builder().error("Login failed").build();
@@ -116,30 +116,13 @@ public class UserController {
         }
     }
 
-//    @PostMapping("/role")
-//    public ResponseEntity<?> roleModify(@RequestBody Map<String, String> request) {
-//        String password = request.get("password");
-//        log.info("Received password: " + password);
-//        if ("123456789".equals(password)) {  // Note: This is still not secure
-//            try {
-//                userService.roleModify();
-//                return ResponseEntity.ok().body("Roles updated successfully");
-//            } catch (BusinessLogicException e) {
-//                return ResponseEntity.badRequest().body(e.getMessage());
-//            }
-//        } else {
-//            ResponseDTO responseDTO = ResponseDTO.builder().error("Invalid admin passwordd").build();
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseDTO);
-//        }
-//    }
-
 
     // 비번 확인
     @PostMapping("/password")
     public ResponseEntity<Boolean> passwordModify(@RequestBody LoginDTO request) {
-        User user = userService.getByCredentials(request.getEmail(), request.getPassword());
+        Auth auth = authService.getByCredentials(request.getEmail(), request.getPassword());
 
-        if (user != null) {
+        if (auth != null) {
         //    log.info("Password successfully");
             return ResponseEntity.ok().body(true);
         } else {
@@ -150,7 +133,7 @@ public class UserController {
     // 비번 재설정
     @PostMapping("/find")
     public ResponseEntity<?> passwordFind(@RequestBody LoginDTO request) {
-        Boolean isPasswordUpdate = userService.newpassword(request);
+        Boolean isPasswordUpdate = authService.newpassword(request);
 
         if (isPasswordUpdate) {
             return ResponseEntity.ok().body(true);
@@ -161,8 +144,8 @@ public class UserController {
     
     // 이메일 찾기
     @PostMapping("/findemail")
-    public ResponseEntity<Map<String, Object>> emailFind(@RequestBody UserDTO.FindDTO phone) {
-        String email = userService.findEmail(phone.getPhone());
+    public ResponseEntity<Map<String, Object>> emailFind(@RequestBody AuthDTO.FindDTO phone) {
+        String email = authService.findEmail(phone.getPhone());
         Map<String, Object> response = new HashMap<>();
 
         if (email != null) {
@@ -180,7 +163,7 @@ public class UserController {
     @PostMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProfileImage(@RequestParam("profile") MultipartFile file) {
         try {
-            userService.updateProfileImage(file);
+            authService.updateProfileImage(file);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -190,8 +173,8 @@ public class UserController {
     @PostMapping(value = "/header-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateHeaderImage(@RequestParam("header") MultipartFile file) {
         try {
-            User loginUser = userService.getLoginUser();
-            userService.updateHeaderImage(file);
+            Auth loginAuth = authService.getLoginUser();
+            authService.updateHeaderImage(file);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

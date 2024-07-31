@@ -1,6 +1,6 @@
 package com.dotori.dotori.auth.jwt;
 
-import com.dotori.dotori.auth.entity.User;
+import com.dotori.dotori.auth.entity.Auth;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -21,11 +21,11 @@ public class TokenProvider {
     }
 
     // create 메서드에서 key 사용
-    public String create(User userEntity) {
+    public String create(Auth authEntity) {
         Date expiryDate = Date.from(Instant.now().plus(1, ChronoUnit.DAYS));
 
         return Jwts.builder()
-                .setSubject(userEntity.getEmail())
+                .setSubject(authEntity.getEmail())
                 .setIssuer("demo app")
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)

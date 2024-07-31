@@ -1,6 +1,6 @@
 package com.dotori.dotori.follow.entity;
 
-import com.dotori.dotori.auth.entity.User;
+import com.dotori.dotori.auth.entity.Auth;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,9 +18,9 @@ public class Follow {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "follower_id")
-    private User follower; // 팔로우 함
+    private Auth follower; // 팔로우 함
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "following_id")
-    private User following; // 팔로우 당함
+    private Auth following; // 팔로우 당함
 }

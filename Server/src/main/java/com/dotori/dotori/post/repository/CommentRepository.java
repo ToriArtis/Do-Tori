@@ -1,6 +1,6 @@
 package com.dotori.dotori.post.repository;
 
-import com.dotori.dotori.auth.entity.User;
+import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.post.entity.Comment;
 import com.dotori.dotori.post.entity.Post;
 import org.springframework.data.domain.Page;
@@ -17,7 +17,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     long countByPost(Post post);
 
-    List<Comment> findByUser(User user);
+    List<Comment> findByAuth(Auth auth);
 
-    void deleteByUser_Id(Long aid);
+    void deleteByAuth_Id(Long aid);
 }

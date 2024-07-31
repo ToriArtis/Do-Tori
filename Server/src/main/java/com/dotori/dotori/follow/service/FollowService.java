@@ -1,12 +1,12 @@
 package com.dotori.dotori.follow.service;
 
+import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.follow.dto.FollowDTO;
 import com.dotori.dotori.follow.entity.Follow;
 import com.dotori.dotori.follow.repository.FollowRepository;
 import com.dotori.dotori.auth.config.exception.BusinessLogicException;
 import com.dotori.dotori.auth.config.exception.ExceptionCode;
-import com.dotori.dotori.auth.entity.User;
-import com.dotori.dotori.auth.repository.UserRepository;
+import com.dotori.dotori.auth.repository.AuthRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,13 +19,13 @@ import org.springframework.stereotype.Service;
 public class FollowService {
 
     private final FollowRepository followRepository;
-    private final UserRepository userRepository;
+    private final AuthRepository authRepository;
 
     // 팔로우
     public void follow(Long followerId, Long followingId) {
-        User follower = userRepository.findById(followerId)
+        Auth follower = authRepository.findById(followerId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-        User following = userRepository.findById(followingId)
+        Auth following = authRepository.findById(followingId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
         // 자기 자신 팔로우XX
@@ -49,9 +49,9 @@ public class FollowService {
     // 언팔로우
     @Transactional
     public void unfollow(Long followerId, Long followingId) {
-        User follower = userRepository.findById(followerId)
+        Auth follower = authRepository.findById(followerId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-        User following = userRepository.findById(followingId)
+        Auth following = authRepository.findById(followingId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
         Follow follow = followRepository.findByFollowerAndFollowing(follower, following)
@@ -62,10 +62,10 @@ public class FollowService {
 
     // 팔로워 목록 조회
     public Page<FollowDTO> getFollowers(Long userId, Pageable pageable) {
-        User user = userRepository.findById(userId)
+        Auth auth = authRepository.findById(userId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
-        Page<Follow> followers = followRepository.findByFollowing(user, pageable);
+        Page<Follow> followers = followRepository.findByFollowing(auth, pageable);
         return followers.map(follow -> new FollowDTO(
                 follow.getFollower().getId(),
                 follow.getFollower().getNickName(),
@@ -75,10 +75,10 @@ public class FollowService {
 
     // 팔로잉 목록 조회
     public Page<FollowDTO> getFollowings(Long userId, Pageable pageable) {
-        User user = userRepository.findById(userId)
+        Auth auth = authRepository.findById(userId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
 
-        Page<Follow> followings = followRepository.findByFollower(user, pageable);
+        Page<Follow> followings = followRepository.findByFollower(auth, pageable);
         return followings.map(follow -> new FollowDTO(
                 follow.getFollowing().getId(),
                 follow.getFollowing().getNickName(),
@@ -88,16 +88,16 @@ public class FollowService {
 
     // 팔로워 수 조회
     public long getFollowerCount(Long userId) {
-        User user = userRepository.findById(userId)
+        Auth auth = authRepository.findById(userId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-        return followRepository.countByFollowing(user);
+        return followRepository.countByFollowing(auth);
     }
 
     // 팔로잉 수 조회
     public long getFollowingCount(Long userId) {
-        User user = userRepository.findById(userId)
+        Auth auth = authRepository.findById(userId)
                 .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-        return followRepository.countByFollower(user);
+        return followRepository.countByFollower(auth);
     }
 
 }
