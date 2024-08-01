@@ -1,24 +1,26 @@
-import React from 'react';
+import React from 'react';  
 import { TextField, Paper, Button, Grid } from '@mui/material';
 
 class AddTodo extends React.Component{
     constructor(props){
         super(props);
         this.state = {
-            item : {title: ""}  
+            item : {content: "", category:"", tododate:""},  
         };
         this.add = props.add;  //부모로부터 받은 것을 잘 담아둠
     }
 
     onInputChange = (e) => {
         const thisItem = this.state.item;
-        thisItem.title = e.target.value;
+        thisItem.content = e.target.value;
+        thisItem.category = document.getElementById("mySelect").value;
+        thisItem.tododate = new Date();
         this.setState({item:thisItem});
         console.log(thisItem);
     }
     onButtonClick = () =>{
         this.add(this.state.item);
-        this.setState({item:{title:""}});
+        this.setState({item:{content: "", category:"", tododate:""}});
     }
     enterKeyEventHandler = (e) => {
         if(e.key === 'Enter'){
@@ -30,11 +32,17 @@ class AddTodo extends React.Component{
             <Paper style={{ margin: 16, padding: 16}}>
                 <Grid container>
                     <Grid xs={11} md={11} item style={{ paddingRight:16}}>
+                        <select id="mySelect" name="category">
+                            <option value="1">Option 1</option>
+                            <option value="2">Option 2</option>
+                            <option value="3">Option 3</option>
+                        </select>
+
                         <TextField 
                         placeholder="Add Todo here" 
                         fullWidth
-                        onChange={this.onInputChange} //괄호 붙이면 안됨
-                        value={this.state.item.title}
+                        onChange={this.onInputChange} 
+                        value={this.state.item.content}
                         onKeyPress={this.enterKeyEventHandler}
                         />
                     </Grid>

@@ -2,17 +2,18 @@ import React from 'react';
 import {ListItem, ListItemText, InputBase, Checkbox, ListItemSecondaryAction, IconButton} from '@mui/material';
 import { DeleteOutlined } from '@mui/material';
 class Todo extends React.Component{
+
     constructor(props){
         super(props);
-        this.state = {item : props.item, readOnly:true        };
-        this.delete=props.delete;
+        this.state = {item : props.item, readOnly:true};
+        console.log(this.state.item);
+        this.delete = props.delete;
         this.update = props.update;
         
     }
+
     deleteEventHandler = () =>{
-        //app.js에서 실제로 작용 -> delete는 app.js에서 해야 함
         this.delete(this.state.item)
-        //여기서 delete 함수는 app.js에서 전달받은 함수이다.
     };
     offReadOnlyMode=()=>{
         this.setState({readOnly:false},()=>{
@@ -22,7 +23,7 @@ class Todo extends React.Component{
 
     editEventHandler=(e)=>{
         const thisItem = this.state.item;
-        thisItem.title = e.target.value;
+        thisItem.content = e.target.value;
         this.setState({item: thisItem});
     };
     enterkeyEventHandler = (e) =>{
@@ -38,21 +39,26 @@ class Todo extends React.Component{
         this.update(this.state.item);
     };
     render(){
+
         const item= this.state.item;
         return(
             <ListItem>
-                <Checkbox checked={item.done}
-                    onChange={this.checkboxEventHandler} />
+                <Checkbox checked={item.done} onChange={this.checkboxEventHandler} />
                 <ListItemText>
+                    <select id="mySelect" name="category">
+                        <option value="1">Option 1</option>
+                        <option value="2">Option 2</option>
+                        <option value="3">Option 3</option>
+                    </select>
                     <InputBase 
                         inputProps={{
                             "aria-label": "naked",
                             readOnly : this.state.readOnly,
                         }}
                         type="text"
-                        id={item.id}
-                        name={item.id}
-                        value={item.title}
+                        id={item.id.toString()}
+                        name={item.id.toString()}
+                        value={item.content}
                         multiline = {true}
                         fullWidth = {true}
                         onClick={this.offReadOnlyMode}
@@ -63,7 +69,8 @@ class Todo extends React.Component{
                 </ListItemText>
                 <ListItemSecondaryAction>
                     <IconButton aria-label="Delete Todo" onClick={this.deleteEventHandler}>
-                        <DeleteOutlined />
+                        <Checkbox /> 
+                        {/* 추후 수정 예정 */}
                     </IconButton>
                 </ListItemSecondaryAction>
             </ListItem>
