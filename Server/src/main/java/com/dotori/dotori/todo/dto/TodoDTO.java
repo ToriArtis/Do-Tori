@@ -13,9 +13,6 @@ import java.time.LocalDate;
 public class TodoDTO {
 
     private int id;
-    private String email;  // aid를 email로 변경
-    private String userNickName;
-
     @NotEmpty
     @Builder.Default
     private String category = "No category";
