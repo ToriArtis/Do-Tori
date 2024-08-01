@@ -42,13 +42,16 @@ public class SecurityConfig {
         http.cors(Customizer.withDefaults())  //cors 활성화
                 // CSRF 보호 비활성화
                 .csrf(csrf -> csrf.disable())
-
+                .cors(Customizer.withDefaults())
                 // HTTP 요청에 대한 인가 설정
                 .authorizeHttpRequests(auth -> auth
                         // 공개 접근 허용 경로
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts", "/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "post/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "todo/**").permitAll()
+                        .requestMatchers("/error").permitAll() // 에러 페이지 접근 허용
                         // 이 외엔 인증 필요
                         .anyRequest().authenticated()
                 )
