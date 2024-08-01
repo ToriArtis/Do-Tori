@@ -94,6 +94,7 @@ public class AuthService {
 
         loginAuth.setPhone(userDTO.getPhone());
         loginAuth.setNickName(userDTO.getNickName());
+        loginAuth.setBio(userDTO.getBio());
 
         loginAuth.setPassword(passwordEncoder.encode(userDTO.getPassword()));
 
@@ -104,7 +105,7 @@ public class AuthService {
     public Auth deleteUser(){
 
         Auth loginAuth = getLoginUser();
-        Long userId = loginAuth.getId();
+        Long authId = loginAuth.getId();
 
         loginAuth.setAuthStatus(AuthStatus.AUTH_WITHDRAWAL);
 

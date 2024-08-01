@@ -43,6 +43,9 @@ public class Auth {
     @Column(name = "header_image")
     private String headerImage;
 
+    @Column(name = "bio", length = 100)
+    private String bio;
+
     @Column(name = "created_at")
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

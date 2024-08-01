@@ -78,3 +78,58 @@ export async function signup(authDTO) {
     alert("회원가입 실패 했습니다. 다시 시도해 주세요.", error);
   }
 }
+
+// 탈퇴
+export async function deleteUser() {
+  try {
+    // console.log("deleteUser");
+    const response = await call("/auth", "POST");
+    return !!response; // response가 truthy면 true, falsy면 false 반환
+  } catch (error) {
+    // console.error("Error deleting user:", error);
+    return false;
+  }
+}
+
+// 사용자 정보 조회
+export function info() {
+  return call("/auth", "GET");
+}
+
+// 사용자 정보 수정
+export function modify(authDTO){
+  return call("/auth", "PUT", authDTO);
+}
+
+// 비밀번호 찾기
+export async function passwordFind(authDTO) {
+  try {
+    const response = await call("/auth/find", "POST", authDTO);
+    
+    if (response === true) {
+      alert("비밀번호가 재설정 되었습니다.");
+      navigation.navigate('login');
+    } else {
+      alert("비밀번호 재설정을 실패하였습니다. 입력한 정보를 확인해 주세요.");
+      return false;
+    }
+  } catch (error) {
+    alert("비밀번호 재설정 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.");
+    return false;
+  }
+}
+
+// 이메일 찾기
+export async function emailFind(phone) {
+  try {
+    const response = await call("/auth/findemail", "POST", { phone });
+    
+    if (response && response.email) {
+      return { success: true, email: response.email };
+    } else {
+      return { success: false, message: '이메일을 찾지 못했습니다.' };
+    }
+  } catch (error) {
+    throw error;
+  }
+}

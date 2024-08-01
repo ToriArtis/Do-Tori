@@ -28,7 +28,7 @@ export default function SignUpView() {
           style={styles.input} placeholder="전화번호" value={values.phone} onChangeText={(text) => handleChange('phone', text)}/>
         
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate(signup)}>
             <Text style={styles.buttonText}>취소</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={handleSubmit}>
