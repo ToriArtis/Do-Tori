@@ -17,7 +17,7 @@ import java.util.List;
 
 // TodoController.java
 @RestController
-@RequestMapping("/todos")
+@RequestMapping("/todo")
 @RequiredArgsConstructor
 @Log4j2
 public class TodoController {

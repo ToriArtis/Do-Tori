@@ -47,8 +47,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 공개 접근 허용 경로
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "posts/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "todos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "post/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "todo/**").permitAll()
                         // 이 외엔 인증 필요
                         .anyRequest().authenticated()
                 )
