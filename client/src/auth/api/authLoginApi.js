@@ -59,7 +59,6 @@ export default function Logout() {
   // 로컬 스토리지에 제거
   localStorage.removeItem(ACCESS_TOKEN);
   localStorage.removeItem(USER_NICKNAME);
-  localStorage.removeItem(USER_ROLESET);
   localStorage.removeItem(USER_EMAIL);
   localStorage.removeItem("PROVIDER");
   // 로그인 페이지로 리디렉션
