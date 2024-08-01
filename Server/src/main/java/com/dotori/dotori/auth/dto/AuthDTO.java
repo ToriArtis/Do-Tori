@@ -12,13 +12,13 @@ public class AuthDTO {
     @AllArgsConstructor
     public static  class ResponseDTO {
 
-        @NotBlank
-        private String email; // 사용자 이메일
+        @NotBlank private String email; // 사용자 이메일
         @NotBlank private String password; // 사용자 비밀번호
         @NotBlank private String nickName; // 사용자 닉네임
         @NotBlank private String phone; // 사용자 전화번호
         private String profileImage; // 프로필 이미지
         private String headerImage; // 헤더 이미지
+        private String bio; // 사용자 한줄소개
     }
 
     @Builder

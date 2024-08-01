@@ -20,31 +20,22 @@ export default function LoginView() {
       <View style={styles.form}>
         {error && <Text style={styles.error}>{error}</Text>}
         <TextInput
-          style={styles.input}
-          placeholder="이메일"
-          value={email}
-          onChangeText={(text) => handleChange('email', text)}
-        />
+          style={styles.input} placeholder="이메일" value={email} onChangeText={(text) => handleChange('email', text)}/>
         <TextInput
-          style={styles.input}
-          placeholder="비밀번호"
-          secureTextEntry
-          value={password}
-          onChangeText={(text) => handleChange('password', text)}
-        />
+          style={styles.input} placeholder="비밀번호" secureTextEntry value={password} onChangeText={(text) => handleChange('password', text)}/>
         
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>로그인</Text>
         </TouchableOpacity>
 
         <View style={styles.linkContainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+          <TouchableOpacity onPress={() => navigation.navigate('signup')}>
             <Text style={styles.link}>회원가입</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('EmailFind')}>
-            <Text style={styles.link}>아이디 찾기</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('emailFind')}>
+            <Text style={styles.link}>아이디(이메일) 찾기</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('PasswordFind')}>
+          <TouchableOpacity onPress={() => navigation.navigate('passwordFind')}>
             <Text style={styles.link}>비밀번호 찾기</Text>
           </TouchableOpacity>
         </View>
