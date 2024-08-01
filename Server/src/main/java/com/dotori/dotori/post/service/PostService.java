@@ -16,6 +16,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -48,18 +49,13 @@ public class PostService {
     // 로그인한 사용자 조회
     private Auth getLoginUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        Auth auth = authRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Not Found user email: " + email));
-
-        // 사용자의 계정 상태가 탈퇴(AUTH_WITHDRAWAL)인 경우 예외 발생
-        if (auth.getAuthStatus() == AuthStatus.AUTH_WITHDRAWAL) {
-            throw new RuntimeException("User account is withdrawn");
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
+            return null; // 로그인하지 않은 사용자의 경우 null 반환
         }
-
-        return auth;
+        String email = authentication.getName();
+        return authRepository.findByEmail(email)
+                .orElse(null); // 사용자를 찾지 못한 경우에도 null 반환
     }
-
     // 특정 사용자가 게시글의 작성자인지 확인하는 메서드
     public boolean isPostAuthor(Long postId, String email) {
         Post post = postRepository.findById(postId)
@@ -93,7 +89,6 @@ public class PostService {
         int totalCommentCount = postDTOS.stream()
                 .mapToInt(postDTO -> postDTO.getCommentCount().intValue())
                 .sum();
-
         // PageResponseDTO 객체 생성
         PageResponseDTO<PostDTO> pageResponseDTO = PageResponseDTO.<PostDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
@@ -145,14 +140,13 @@ public class PostService {
         return postRepository.save(post).getPid();
     }
 
-    // 특정 게시글 조회
+    // 특정 게시글 조회 (로그인하지 않은 사용자도 조회 가능)
     public PostDTO getPost(Long id) {
         Post result = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
-        Auth loginAuth = getLoginUser();
+        Auth loginAuth = getLoginUser(); // null일 수 있음
         return convertToPostDTO(result, loginAuth);
     }
-
     // 게시글 수정
     public void modifyPost(PostDTO postDTO, List<MultipartFile> files, List<String> deletedThumbnails) throws Exception {
         Auth auth = getLoginUser();
@@ -412,7 +406,7 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
-    // Post 엔티티를 PostDTO로 변환하는 메서드
+    // Post 엔티티를 PostDTO로 변환하는 메서드 (로그인하지 않은 사용자 고려)
     private PostDTO convertToPostDTO(Post post, Auth loginAuth) {
         // Post 엔티티를 PostDTO로 매핑
         PostDTO postDTO = modelMapper.map(post, PostDTO.class);
@@ -424,12 +418,20 @@ public class PostService {
             postDTO.setProfileImage(post.getAuth().getProfileImage());
         }
 
-        // 좋아요 수, 북마크 수, 댓글 수, 좋아요 여부, 북마크 여부 설정
+        // 좋아요 수, 북마크 수, 댓글 수 설정
         postDTO.setToriBoxCount(postLikeService.countLikes(post.getPid()));
         postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(post));
         postDTO.setCommentCount(commentRepository.countByPost(post));
-        postDTO.setLiked(postLikeService.isLikedByUser(post.getPid(), loginAuth.getId()));
-        postDTO.setBookmarked(postLikeService.isBookmarkedByUser(loginAuth.getEmail(), post.getPid()));
+
+        // 로그인한 사용자인 경우에만 좋아요와 북마크 여부 설정
+        if (loginAuth != null) {
+            postDTO.setLiked(postLikeService.isLikedByUser(post.getPid(), loginAuth.getId()));
+            postDTO.setBookmarked(postLikeService.isBookmarkedByUser(loginAuth.getEmail(), post.getPid()));
+        } else {
+            // 로그인하지 않은 사용자의 경우 false로 설정
+            postDTO.setLiked(false);
+            postDTO.setBookmarked(false);
+        }
 
         // 태그 정보 처리
         if (post.getTags() != null && !post.getTags().isEmpty()) {
