@@ -58,13 +58,19 @@ export async function login(userDTO) {
   }
   
   // 로그아웃 함수
+  export function logout() {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(ACCESS_TOKEN);
+      localStorage.removeItem(USER_NICKNAME);
+      localStorage.removeItem(USER_EMAIL);
+      localStorage.removeItem("PROVIDER");
+      window.location.href = "/login";
+    }
+  }
+  
   export default function Logout() {
-    // console.log("signout");
-    // 로컬 스토리지에 제거
-    localStorage.removeItem(ACCESS_TOKEN);
-    localStorage.removeItem(USER_NICKNAME);
-    localStorage.removeItem(USER_EMAIL);
-    localStorage.removeItem("PROVIDER");
-    // 로그인 페이지로 리디렉션
-    window.location.href = "/login";
+    if (typeof window !== 'undefined') {
+      logout();
+    }
+    return null;
   }
