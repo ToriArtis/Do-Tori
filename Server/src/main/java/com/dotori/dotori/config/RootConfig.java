@@ -29,11 +29,7 @@ public class RootConfig {
                 .setMatchingStrategy(MatchingStrategies.STRICT); // 매칭 전략을 STRICT로 설정
 
         // Todo 엔티티와 TodoDTO 간의 매핑 설정
-        modelMapper.createTypeMap(Todo.class, TodoDTO.class)
-                .addMappings(mapper -> {
-                    mapper.map(src -> src.getAuth().getEmail(), TodoDTO::setEmail); // Auth의 email을 TodoDTO의 email로 매핑
-                    mapper.map(src -> src.getAuth().getNickName(), TodoDTO::setUserNickName); // Auth의 nickName을 TodoDTO의 userNickName으로 매핑
-                });
+        modelMapper.createTypeMap(Todo.class, TodoDTO.class);
 
         // Post 엔티티와 PostDTO 간의 매핑 설정
         modelMapper.createTypeMap(Post.class, PostDTO.class)

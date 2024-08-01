@@ -9,9 +9,13 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,8 +29,7 @@ public class TodoService {
     private final AuthRepository authRepository;
 
     public TodoDTO addTodo(TodoDTO todoDTO) {
-        Auth auth = authRepository.findByEmail(todoDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        Auth auth = getLoginUser();
 
         Todo todo = modelMapper.map(todoDTO, Todo.class);
         todo.setAuth(auth);
@@ -34,71 +37,66 @@ public class TodoService {
         Todo savedTodo = todoRepository.save(todo);
 
         TodoDTO resultDTO = modelMapper.map(savedTodo, TodoDTO.class);
-        resultDTO.setEmail(auth.getEmail());
-        resultDTO.setUserNickName(auth.getNickName());
 
         return resultDTO;
     }
 
     public List<TodoDTO> getAllTodo() {
+        Auth auth = getLoginUser();
+        List<Todo> todos = todoRepository.findByAuth(auth);
         return todoRepository.findAll().stream()
                 .map(todo -> modelMapper.map(todo, TodoDTO.class))
                 .collect(Collectors.toList());
     }
 
-    public TodoDTO readOneTodo(int id) {
-        Todo todo = todoRepository.findById(id).orElseThrow();
-        return modelMapper.map(todo, TodoDTO.class);
-    }
 
     public TodoDTO updateTodo(TodoDTO todoDTO) {
+
+        // Fetch the existing Todo from the database
         Todo todo = todoRepository.findById(todoDTO.getId())
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
 
-        Auth auth = authRepository.findByEmail(todoDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // Fetch the currently logged-in user
+        Auth auth = getLoginUser();
 
+        // Check if the logged-in user has permission to update the Todo
         if (!todo.getAuth().getEmail().equals(auth.getEmail())) {
             throw new RuntimeException("You don't have permission to update this todo");
         }
 
+        // Update the Todo fields with the data from the provided TodoDTO
         todo.setCategory(todoDTO.getCategory());
         todo.setContent(todoDTO.getContent());
         todo.setDone(todoDTO.isDone());
         todo.setTodoDate(todoDTO.getTodoDate());
 
+        // Save the updated Todo entity to the database
         Todo updatedTodo = todoRepository.save(todo);
+        log.info("Updated todo: {}", updatedTodo);
 
+        // Map the updated Todo entity back to a TodoDTO
         TodoDTO resultDTO = modelMapper.map(updatedTodo, TodoDTO.class);
-        resultDTO.setEmail(auth.getEmail());
-        resultDTO.setUserNickName(auth.getNickName());
+        log.info("updatedTodo : {}", resultDTO.toString());
 
         return resultDTO;
     }
 
-    public void deleteTodo(int id, String email) {
+    public void deleteTodo(int id) {
+        Auth auth = getLoginUser();
         Todo todo = todoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
-        if (!todo.getAuth().getEmail().equals(email)) {
+        if (!todo.getAuth().equals(auth)) {
             throw new RuntimeException("You don't have permission to delete this todo");
         }
         todoRepository.delete(todo);
     }
 
-    public List<TodoDTO> getTodoByEmail(String email) {
-        Auth auth = authRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        List<Todo> todos = todoRepository.findByAuth(auth);
-        return todos.stream()
-                .map(todo -> TodoDTO.builder()
-                        .id(todo.getId())
-                        .email(todo.getAuth().getEmail())
-                        .category(todo.getCategory())
-                        .content(todo.getContent())
-                        .done(todo.isDone())
-                        .todoDate(todo.getTodoDate())
-                        .userNickName(todo.getAuth().getNickName())
-                        .build())
-                .collect(Collectors.toList());
+
+    public Auth getLoginUser(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String name = authentication.getName();
+        Optional<Auth> user = authRepository.findByEmail(name);
+        return user.orElseThrow(() -> new RuntimeException("user not found"));
     }
+
 }
