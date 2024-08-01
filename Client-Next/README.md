@@ -35,6 +35,7 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 
+
 ```
 Client-Next
 ├─ .eslintrc.json
@@ -43,6 +44,8 @@ Client-Next
 ├─ next.config.mjs
 ├─ package-lock.json
 ├─ package.json
+├─ pages
+│  └─ login.js
 ├─ postcss.config.mjs
 ├─ public
 │  ├─ next.svg
@@ -56,28 +59,53 @@ Client-Next
 │  │  └─ page.js
 │  ├─ auth
 │  │  ├─ api
+│  │  │  ├─ authApi.js
+│  │  │  └─ authLoginApi.js
 │  │  ├─ components
+│  │  │  ├─ css
+│  │  │  │  └─ users.css
+│  │  │  └─ Input.js
 │  │  ├─ hooks
+│  │  │  └─ useForm.js
 │  │  ├─ models
+│  │  │  └─ a
 │  │  ├─ viewmodels
+│  │  │  └─ useLoginViewModel.js
 │  │  └─ views
+│  │     └─ LoginView.js
 │  ├─ common
 │  │  ├─ components
+│  │  │  └─ a
 │  │  └─ hooks
+│  │     └─ a
+│  ├─ config
+│  │  └─ app-config.js
 │  ├─ post
 │  │  ├─ api
+│  │  │  └─ a
 │  │  ├─ components
+│  │  │  └─ a
 │  │  ├─ hooks
+│  │  │  └─ a
 │  │  ├─ models
+│  │  │  └─ a
 │  │  ├─ viewmodels
+│  │  │  └─ a
 │  │  └─ views
+│  │     └─ a
 │  └─ todo
 │     ├─ api
+│     │  └─ a
 │     ├─ components
+│     │  └─ a
 │     ├─ hooks
+│     │  └─ a
 │     ├─ models
+│     │  └─ a
 │     ├─ viewmodels
+│     │  └─ a
 │     └─ views
+│        └─ a
 └─ tailwind.config.js
 
 ```
