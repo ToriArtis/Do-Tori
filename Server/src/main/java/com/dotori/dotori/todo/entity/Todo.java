@@ -22,7 +22,7 @@ public class Todo {
     private int id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "auth_email", referencedColumnName = "email")
+    @JoinColumn(name = "aid", referencedColumnName = "id")
     private Auth auth;
 
     @Builder.Default

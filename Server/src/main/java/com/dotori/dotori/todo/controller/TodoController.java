@@ -25,34 +25,24 @@ public class TodoController {
     private final TodoService todoService;
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<TodoDTO>> getAllTodos(Principal principal) {
-        String email = principal.getName();
-        return ResponseEntity.ok(todoService.getTodoByEmail(email));
+    public ResponseEntity<List<TodoDTO>> getAllTodos() {
+        return ResponseEntity.ok(todoService.getAllTodo());
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<TodoDTO> addTodo(@Valid @RequestBody TodoDTO todo, Principal principal) {
-        String email = principal.getName();
-        todo.setEmail(email);
+    public ResponseEntity<TodoDTO> addTodo(@Valid @RequestBody TodoDTO todo) {
+
         return ResponseEntity.ok(todoService.addTodo(todo));
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<TodoDTO> modifyTodo(@PathVariable int id, @Valid @RequestBody TodoDTO todoDTO, Principal principal) {
-        String email = principal.getName();
-        todoDTO.setId(id);
-        todoDTO.setEmail(email);
+    @PutMapping()
+    public ResponseEntity<TodoDTO> modifyTodo(@Valid @RequestBody TodoDTO todoDTO) {
         return ResponseEntity.ok(todoService.updateTodo(todoDTO));
     }
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> deleteTodo(@PathVariable int id, Principal principal) {
-        String email = principal.getName();
-        todoService.deleteTodo(id, email);
+    @DeleteMapping()
+    public ResponseEntity<Void> deleteTodo(@Valid @RequestBody TodoDTO todoDTO) {
+        todoService.deleteTodo(todoDTO.getId());
         return ResponseEntity.ok().build();
     }
 }
