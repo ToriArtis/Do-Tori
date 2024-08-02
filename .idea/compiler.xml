@@ -27,5 +27,10 @@
         <module name="dotori.test" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="dotori" target="17" />
+      <module name="dotori.main" target="17" />
+      <module name="dotori.test" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>

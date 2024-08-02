@@ -1,3 +1,7 @@
+// 암호화
+import CryptoJS from 'crypto-js';
+const secretKey = 'Dotoriserver0802encryptionkey000';
+
 // app-config.js 파일에서 API_BASE_URL을 가져옵니다.
 import { API_BASE_URL, ACCESS_TOKEN } from "../../config/app-config";
 
@@ -32,10 +36,12 @@ export function call(api, method, request) {
     .then((response) =>
       response.json().then((json) => {
         if(response.status === 400){
+          console.error("Bad Request:", json);
 //          alert("다시 시도하시오")
           return json;
         }
         if (!response.ok) {
+          console.error("API Error:", json);
           // response.ok가 true이면 정상적인 응답, 아니면 에러 응답
           return Promise.reject(json);
         }
@@ -58,7 +64,12 @@ export function info() {
 }
 
 // 사용자 정보 수정
-export function modify(userDTO){
-  return call("/auth", "PUT", userDTO);
-}
 
+export function modify(authDTO) {
+  const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(authDTO), secretKey, {
+    mode: CryptoJS.mode.ECB,
+    padding: CryptoJS.pad.Pkcs7
+  }).toString();
+  console.log("Encrypted data:", encryptedData);
+  return call("/auth/update", "POST", { encryptedData });
+}
