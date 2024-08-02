@@ -4,16 +4,17 @@ import { API_BASE_URL } from "../../config/app-config";
 const ACCESS_TOKEN = "ACCESS_TOKEN";
 const USER_NICKNAME = "USER_NICKNAME";
 const USER_EMAIL ="USER_EMAIL";
+const authInfo = "authInfo";
 
 // 로그인
-export async function login(userDTO) {
+export async function login(authDTO) {
   
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
     const raw = JSON.stringify({
-      "email": userDTO.email,
-      "password": userDTO.password
+      "email": authDTO.email,
+      "password": authDTO.password
     });
 
     const requestOptions = {
@@ -63,6 +64,7 @@ export async function login(userDTO) {
       localStorage.removeItem(ACCESS_TOKEN);
       localStorage.removeItem(USER_NICKNAME);
       localStorage.removeItem(USER_EMAIL);
+      localStorage.removeItem(authInfo);
       localStorage.removeItem("PROVIDER");
       window.location.href = "/login";
     }

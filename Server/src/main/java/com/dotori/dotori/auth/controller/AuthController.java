@@ -7,6 +7,8 @@ import com.dotori.dotori.auth.dto.AuthDTO;
 import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.auth.jwt.TokenProvider;
 import com.dotori.dotori.auth.service.AuthService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +18,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.nio.charset.StandardCharsets;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,18 +41,18 @@ public class AuthController {
 
     // 사용자 등록
     @PostMapping()
-    public ResponseEntity<?> registerUser(@RequestBody AuthDTO.ResponseDTO userDTO){
+    public ResponseEntity<?> registerUser(@RequestBody AuthDTO.ResponseDTO authDTO){
         try {
             //서비스를 이용해 리포지터리에 사용자 저장
-            Auth registeredAuth = authService.join(userDTO);
-            AuthDTO.ResponseDTO responseUserDTO = userDTO.builder()
+            Auth registeredAuth = authService.join(authDTO);
+            AuthDTO.ResponseDTO responseAuthDTO = authDTO.builder()
                     .email(registeredAuth.getEmail())
                     .password(registeredAuth.getPassword())
                     .phone(registeredAuth.getPhone())
                     .nickName(registeredAuth.getNickName())
                     .build();
 
-            return ResponseEntity.ok().body(responseUserDTO);
+            return ResponseEntity.ok().body(responseAuthDTO);
         }catch (Exception e){
             ResponseDTO responseDTO = ResponseDTO.builder().error(e.getMessage()).build();
             return ResponseEntity
@@ -56,21 +63,21 @@ public class AuthController {
 
     // 사용자 로그인
     @PostMapping("/login")
-    public  ResponseEntity<?> authenticate(@RequestBody LoginDTO userDTO){
+    public  ResponseEntity<?> authenticate(@RequestBody LoginDTO authDTO){
         Auth auth = authService.getByCredentials(
-                userDTO.getEmail(),
-                userDTO.getPassword()
+                authDTO.getEmail(),
+                authDTO.getPassword()
         );
         if( auth != null){
             final String accessToken = tokenProvider.createAccessToken(auth);
             final String refreshToken = tokenProvider.createRefreshToken(auth);
-            final AuthDTO.LoginDTO responseUserDTO = AuthDTO.LoginDTO.builder()
+            final AuthDTO.LoginDTO responseAuthDTO = AuthDTO.LoginDTO.builder()
                     .email(auth.getEmail())
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .nickName(auth.getNickName())
                     .build();
-            return ResponseEntity.ok().body(responseUserDTO);
+            return ResponseEntity.ok().body(responseAuthDTO);
         }
         else{
             ResponseDTO responseDTO = ResponseDTO.builder().error("Login failed").build();
@@ -86,8 +93,8 @@ public class AuthController {
     public ResponseEntity<?> info() {
         try {
             Auth loginAuth = authService.getLoginUser();
-            AuthDTO.ResponseDTO userDTO = authService.info(loginAuth.getEmail());
-            return ResponseEntity.ok(userDTO);
+            AuthDTO.ResponseDTO authDTO = authService.info(loginAuth.getEmail());
+            return ResponseEntity.ok(authDTO);
         } catch (BusinessLogicException e) {
             ResponseDTO responseDTO = ResponseDTO.builder().error("Login failed").build();
             return ResponseEntity.badRequest().body(responseDTO);
@@ -96,15 +103,16 @@ public class AuthController {
 
     // 사용자 수정
     @PutMapping()
-    public ResponseEntity<?> modify(@RequestBody AuthDTO.ResponseDTO userDTO) {
+    public ResponseEntity<?> modify(@RequestBody AuthDTO.ResponseDTO authDTO) {
         try {
-            authService.modify(userDTO);
-            return ResponseEntity.ok(userDTO);
+            authService.modify(authDTO);
+            return ResponseEntity.ok(authDTO);
         } catch (BusinessLogicException e) {
             ResponseDTO responseDTO = ResponseDTO.builder().error("Login failed").build();
             return ResponseEntity.badRequest().body(responseDTO);
         }
     }
+
 
     // 계정 삭제
     @PostMapping("/userStatus")

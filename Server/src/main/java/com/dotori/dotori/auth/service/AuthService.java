@@ -33,10 +33,10 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     // 회원가입
-    public Auth join(AuthDTO.ResponseDTO userDTO) throws BusinessLogicException {
-        String email = userDTO.getEmail();
-        String nickName = userDTO.getNickName();
-        String phone = userDTO.getPhone();
+    public Auth join(AuthDTO.ResponseDTO authDTO) throws BusinessLogicException {
+        String email = authDTO.getEmail();
+        String nickName = authDTO.getNickName();
+        String phone = authDTO.getPhone();
 
         // 중복 확인
         if (authRepository.existsByPhone(phone)) {
@@ -52,7 +52,7 @@ public class AuthService {
             throw new BusinessLogicException(ExceptionCode.NICKNAME_TOO_LONG);
         }
 
-        Auth auth = modelMapper.map(userDTO, Auth.class);
+        Auth auth = modelMapper.map(authDTO, Auth.class);
         auth.setPassword(passwordEncoder.encode(auth.getPassword()));       //password는 암호화
 
         return authRepository.save(auth);
@@ -80,23 +80,23 @@ public class AuthService {
     public AuthDTO.ResponseDTO info(String email) {
         Optional<Auth> userOptional = authRepository.findByEmail(email);
         Auth auth = userOptional.orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
-        AuthDTO.ResponseDTO userDTO = modelMapper.map(auth, AuthDTO.ResponseDTO.class);
+        AuthDTO.ResponseDTO authDTO = modelMapper.map(auth, AuthDTO.ResponseDTO.class);
 
-        log.info("info AuthDTO : " + userDTO);
-        userDTO.setEmail(auth.getEmail());
-        return userDTO;
+        log.info("info AuthDTO : " + authDTO);
+        authDTO.setEmail(auth.getEmail());
+        return authDTO;
     }
 
     // 사용자 정보 수정
-    public void modify(AuthDTO.ResponseDTO userDTO) {
+    public void modify(AuthDTO.ResponseDTO authDTO) {
 
         Auth loginAuth = getLoginUser();
 
-        loginAuth.setPhone(userDTO.getPhone());
-        loginAuth.setNickName(userDTO.getNickName());
-        loginAuth.setBio(userDTO.getBio());
+        loginAuth.setPhone(authDTO.getPhone());
+        loginAuth.setNickName(authDTO.getNickName());
+        loginAuth.setBio(authDTO.getBio());
 
-        loginAuth.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        loginAuth.setPassword(passwordEncoder.encode(authDTO.getPassword()));
 
         authRepository.save(loginAuth);
     }
