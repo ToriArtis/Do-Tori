@@ -7,6 +7,7 @@ import com.dotori.dotori.auth.service.AuthService;
 import com.dotori.dotori.post.dto.*;
 import com.dotori.dotori.post.service.PostLikeService;
 import com.dotori.dotori.post.service.PostService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -74,13 +75,15 @@ public class PostController {
     // 게시글 수정 (작성자만 가능)
     @PreAuthorize("isAuthenticated() and @postService.isPostAuthor(#id, authentication.name)")
     @PutMapping("/{id}")
-    public ResponseEntity<PostDTO> modifyPost(@PathVariable Long id, @RequestBody PostDTO postDTO,
-                                              @RequestParam(required = false) List<MultipartFile> files,
-                                              @RequestParam(required = false) List<String> deletedThumbnails) throws Exception {
-        Auth loginAuth = getLoginUser();
-        postDTO.setEmail(loginAuth.getEmail());
+    public ResponseEntity<PostDTO> modifyPost(
+            @PathVariable Long id,
+            @RequestPart(value = "postDTO") String postDTOString,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @RequestPart(value = "deletedThumbnails", required = false) List<String> deletedThumbnails
+    ) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        PostDTO postDTO = objectMapper.readValue(postDTOString, PostDTO.class);
         postDTO.setPid(id);
-
         postService.modifyPost(postDTO, files, deletedThumbnails);
         PostDTO modifiedPost = postService.getPost(id);
         return ResponseEntity.ok(modifiedPost);
@@ -163,7 +166,7 @@ public class PostController {
     @PreAuthorize("isAuthenticated() and @postService.isCommentAuthor(#id, authentication.name)")
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
-        postService.removeComment(id);
+        postService.deleteComment(id);
         return ResponseEntity.ok().build();
     }
 

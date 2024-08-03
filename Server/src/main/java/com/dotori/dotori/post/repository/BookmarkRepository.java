@@ -15,7 +15,7 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     Optional<Bookmark> findByAuthAndPost(Auth auth, Post post);
     List<Bookmark> findByAuth(Auth auth);
     int countByPost(Post post);
-
+    void deleteByPost(Post post);
     Optional<Object> findByAuthEmailAndPost(String email, Post post);
 }
 

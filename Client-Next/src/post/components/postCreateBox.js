@@ -8,7 +8,7 @@ const PostCreateCard = styled.div`
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   padding: 20px;
   margin-bottom: 20px;
-  width: 50%;
+  width: 90%;
 `;
 
 const UserInfo = styled.div`
@@ -84,10 +84,35 @@ const ImageLabel = styled.label`
   margin-right: 10px;
 `;
 
+const TagInput = styled.input`
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+`;
+
+const TagList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+`;
+
+const Tag = styled.span`
+  background-color: #e0e0e0;
+  padding: 2px 5px;
+  border-radius: 3px;
+`;
+
+
+
 const PostCreateBox = ({ onPostCreated }) => {
   const [content, setContent] = useState('');
   const [nickName, setNickName] = useState('');
   const [images, setImages] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [newTag, setNewTag] = useState('');
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -104,6 +129,13 @@ const PostCreateBox = ({ onPostCreated }) => {
     setImages(prevImages => [...prevImages, ...files]);
   };
 
+  const handleAddTag = (e) => {
+    if (e.key === 'Enter' && newTag.trim() !== '') {
+      setTags([...tags, newTag.trim()]);
+      setNewTag('');
+    }
+  };
+
   const handleSubmit = async () => {
     if (!content || content.trim() === '') {
       alert('내용을 입력해주세요.');
@@ -116,9 +148,11 @@ const PostCreateBox = ({ onPostCreated }) => {
       images.forEach(image => {
         formData.append('files', image);
       });
+      formData.append('tags', JSON.stringify(tags));
       await createPost(formData);
       setContent('');
       setImages([]);
+      setTags([]);
       if (onPostCreated) {
         onPostCreated();
       }
@@ -135,6 +169,12 @@ const PostCreateBox = ({ onPostCreated }) => {
         <Avatar />
         <span>{nickName}</span>
       </UserInfo>
+      <TagInput
+        value={newTag}
+        onChange={(e) => setNewTag(e.target.value)}
+        onKeyPress={handleAddTag}
+        placeholder="태그 추가 (Enter)"
+      />
       <TextArea 
         placeholder="무슨 일이 있나요?"
         value={content}
@@ -145,6 +185,12 @@ const PostCreateBox = ({ onPostCreated }) => {
           <ImagePreview key={index} src={URL.createObjectURL(image)} alt={`Preview ${index}`} />
         ))}
       </ImagePreviewContainer>
+      
+      <TagList>
+        {tags.map((tag, index) => (
+          <Tag key={index}>{tag}</Tag>
+        ))}
+      </TagList>
       <ButtonRow>
         <ImageLabel>
           🖼️ 이미지 추가

@@ -58,6 +58,10 @@ public class Post{
     @Builder.Default
     private List<Tag> tags = new ArrayList<>();
 
+    // cascade 추가하여 연관된 엔티티 먼저 삭제
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
     public void changePost(String content, LocalDateTime modDate, List<PostThumbnail> thumbnails) {
         this.content = content;
         this.modDate = modDate;

@@ -1,4 +1,3 @@
-// src/post/views/postListView.js
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost } from '../api/postApi';
@@ -9,7 +8,7 @@ import Sidebar from '../../components/Sidebar';
 
 const PostListViewContainer = styled.div`
   display: flex;
-  width: 100%;
+  width: 60%;
   padding: 20px;
   gap: 20px;
   position: relative;
@@ -21,8 +20,8 @@ const MainContent = styled.div`
 
 const SideContent = styled.div`
   width: 200px;
+  margin-right: 20px;
 `;
-
 
 
 export default function PostListView() {
@@ -54,9 +53,10 @@ export default function PostListView() {
         loadPopularPosts();
         // 현재 사용자 정보 가져오기
         const userEmail = localStorage.getItem('USER_EMAIL');
-        setCurrentUser({ id: 'currentUserId', email: userEmail });
+        setCurrentUser(userEmail ? { email: userEmail } : null);
     }, []);
-    const handleLike = async (postId, isLiked) => {
+
+        const handleLike = async (postId, isLiked) => {
         try {
             await likePost(postId);
             setPosts(posts.map(post => 
@@ -87,7 +87,6 @@ export default function PostListView() {
         console.log(`댓글 작성: 게시글 ID ${postId}, 내용: ${content}`);
     };
 
-
     return (
         <PostListViewContainer>
             <Sidebar 
@@ -95,7 +94,7 @@ export default function PostListView() {
                 onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
             />
             <MainContent>
-                <PostCreateBox onPostCreated={loadPosts} />
+                {currentUser && <PostCreateBox onPostCreated={loadPosts} />}
                 {posts.map((post) => (
                     <PostItem 
                         key={post.pid} 
