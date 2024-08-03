@@ -3,22 +3,19 @@ import Todo from '@/todo/components/todo';
 import AddTodo from '@/todo/components/AddTodo';
 import React, { useState, useEffect } from 'react';
 import { Container, Paper, List, Grid, TextField, Select, MenuItem, Button, Typography, Checkbox, FormControlLabel } from '@mui/material';
-import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-
-import styles from './styles/Calendar.module.css';
-
+import MyCalendar from '@/todo/components/Calendar';
 
 function TodoPage() {
     const { items, addTodo, deleteTodo, updateTodo } = useTodoViewModel();
-    const [selectedDate, setSelectedDate] = useState('');
+    const [selectedDate, setSelectedDate] = useState(new Date());
     const [tutorialDone, setTutorialDone] = useState(true); // 튜토리얼 상태
     const [tutorialImage, setTutorialImage] = useState('/assets/1_MAIN.png');
 
     useEffect(() => {
         const currentDate = new Date();
         const formattedDate = `${currentDate.getMonth() + 1}월 ${currentDate.getDate()}일(${['일', '월', '화', '수', '목', '금', '토'][currentDate.getDay()]})`;
-        setSelectedDate(formattedDate);
+        setSelectedDate(currentDate);
     }, []);
 
     const changeTutorialImage = (direction) => {
@@ -30,18 +27,18 @@ function TodoPage() {
         // 서버에 튜토리얼 완료 상태 전송
     };
 
-    const [date, setDate] = useState(new Date());
-
-    const onChange = (date) => {
-      setDate(date);
+    const handleDateChange = (date) => {
+        setSelectedDate(date);
+        console.log('Selected date:', date);
     };
-    
+
     return (
-        <>
-        <div style={{ backgroundColor: '#F5F0EA' }}>
-        
-        <Container maxWidth="lg" >
-            
+        <Container maxWidth="lg">
+            <Typography variant="h4" gutterBottom>
+                Do-Tori
+            </Typography>
+            <a href="/posts" style={{ textDecoration: 'none', color: '#7D625B', flex: '1', textAlign: 'right'}}> go To-rest → </a>
+
             {!tutorialDone && (
                 <div className="tutorial-design">
                     <div className="tutorial-content">
@@ -59,24 +56,17 @@ function TodoPage() {
 
             <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
-                    <Paper elevation={3} style={{ padding: '30px', borderRadius: '5%', backgroundColor: '#ffffff', margin: '20px 20px 0px -20px', height: 'auto' }}>
-                        {/* 캘린더 컴포넌트 추가 */}
-                        
-                        <Calendar
-                            onChange={onChange}
-                            value={date}
-                            locale="ko-KR"
-                            className={styles.reactCalendar} />
-                        <p>Selected date: {date.toDateString()}</p>
-                        <div id="calendar"></div>
-                    </Paper>
+                    <Typography variant="h4" style={{ margin: '20px 0px 22px 0px', fontWeight: 'bolder' }}>
+                     {selectedDate.getFullYear()}
+                    </Typography>
+                    <MyCalendar onDateChange={handleDateChange} />
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <div className="todolist-container">
                         <Typography variant="h4" style={{ margin: '20px 0px 22px 0px', fontWeight: 'bolder' }}>
-                            {selectedDate}
+                            {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일({['일', '월', '화', '수', '목', '금', '토'][selectedDate.getDay()]})
                         </Typography>
-                        <AddTodo add={addTodo} />
+                        <AddTodo add={addTodo} todoDate={selectedDate}/>
                         <div className="todolist-content">
                             <List>
                                 {items.map((item) => (
@@ -102,8 +92,6 @@ function TodoPage() {
                 </Grid>
             </Grid>
         </Container>
-        </div>
-        </>
     );   
 }
 
