@@ -88,7 +88,7 @@ public class PostController {
         PostDTO modifiedPost = postService.getPost(id);
         return ResponseEntity.ok(modifiedPost);
     }
-
+    // 히히
     // 게시글 삭제 (작성자만 가능)
     @PreAuthorize("isAuthenticated() and @postService.isPostAuthor(#id, authentication.name)")
     @DeleteMapping("/{id}")
