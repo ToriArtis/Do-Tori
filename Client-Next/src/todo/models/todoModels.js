@@ -71,3 +71,4 @@ export function callApi(api, method, request) {
         return Promise.reject(error);
       });
 }
+export default { callApi, TodoModel };
