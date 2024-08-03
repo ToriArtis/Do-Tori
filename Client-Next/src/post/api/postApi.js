@@ -3,75 +3,57 @@
 import { API_BASE_URL, ACCESS_TOKEN } from "../../config/app-config";
 
 // API 호출을 위한 함수
-
 function call(api, method, request) {
-    let headers = new Headers({
-      "Content-Type": "application/json",
-    });
-  
-    const accessToken = localStorage.getItem("ACCESS_TOKEN");
-    if (accessToken && accessToken !== null) {
-      headers.append("Authorization", "Bearer " + accessToken);
-    }
-  
-    let options = {
-      headers: headers,
-      method: method,
-      credentials: 'include',
-    };
-  
-    let url = API_BASE_URL + api;
-  
-    if (method === 'GET' && request) {
-      const params = new URLSearchParams(request);
-      url += '?' + params.toString();
-    } else if (request) {
-      options.body = JSON.stringify(request);
-    }
+  let headers = new Headers();
 
-    return fetch(url, options)
+  const accessToken = localStorage.getItem("ACCESS_TOKEN");
+  if (accessToken && accessToken !== null) {
+    headers.append("Authorization", "Bearer " + accessToken);
+  }
+
+  let options = {
+    headers: headers,
+    method: method,
+    credentials: 'include',
+  };
+
+  if (request instanceof FormData) {
+    options.body = request;
+  } else if (method !== 'GET' && request) {
+    headers.append("Content-Type", "application/json");
+    options.body = JSON.stringify(request);
+  }
+
+  return fetch(API_BASE_URL + api, options)
     .then((response) => {
-        if (!response.ok) {
-            throw new Error('HTTP error! status: ' + response.status);
-        }
-        return response.text(); // JSON 대신 텍스트로 먼저 받습니다.
-    })
-    .then((text) => {
-        if (!text) {
-            return {}; // 빈 응답일 경우 빈 객체 반환
-        }
-        return JSON.parse(text); // 텍스트를 JSON으로 파싱
-    })
-    .catch((error) => {
-        console.error("API 호출 오류:", error);
-        console.error("요청 URL:", url);
-        console.error("요청 메소드:", options.method);
-        console.error("요청 데이터:", options.body);
-        throw error;
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+        });
+      }
+      return response.json();
     });
 }
 
 // 게시글 목록을 가져오는 함수
-export const fetchPosts = (pageRequestDTO) => {
-  return call("/posts", "GET", pageRequestDTO);
+export const fetchPosts = async () => {
+  try {
+      const response = await call("/posts", "GET");
+      return response;
+  } catch (error) {
+      console.error("게시물 가져오기 실패:", error);
+      return { postLists: [] };
+  }
 };
-
 // 특정 게시글을 가져오는 함수
 export const fetchPost = (id) => {
   return call(`/posts/${id}`, "GET");
 };
 
-// 새 게시글을 생성하는 함수
-export const createPost = (postDTO, files) => {
-  const formData = new FormData();
-  formData.append('postDTO', JSON.stringify(postDTO));
-  files.forEach((file) => {
-    formData.append('files', file);
-  });
-
+// 게시글을 등록하는 함수
+export const createPost = (formData) => {
   return call("/posts", "POST", formData);
 };
-
 // 게시글을 수정하는 함수
 export const updatePost = (id, postDTO, files, deletedThumbnails) => {
   const formData = new FormData();
@@ -107,6 +89,12 @@ export const createComment = (postId, commentDTO) => {
 };
 
 // 인기 게시물 5개를 가져오는 함수
-export const fetchPopularPosts = () => {
-  return call("/posts/popular", "GET");
+export const fetchPopularPosts = async () => {
+  try {
+      const response = await call("/posts/popular", "GET");
+      return response;
+  } catch (error) {
+      console.error("인기 게시물 가져오기 실패:", error);
+      return [];
+  }
 };

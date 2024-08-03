@@ -1,10 +1,11 @@
 import React from 'react';
-import postItem from './postItem';
-export default function postList({ posts, onPostUpdated }) {
+import PostItem from './PostItem';
+
+export default function PostList({ posts, onPostUpdated }) {
     return (
         <div>
             {posts.map(post => (
-                <postItem key={post.id} post={post} onPostUpdated={onPostUpdated} />
+                <PostItem key={post.id} post={post} onPostUpdated={onPostUpdated} />
             ))}
         </div>
     );
