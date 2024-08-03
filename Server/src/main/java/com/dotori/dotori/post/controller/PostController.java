@@ -55,9 +55,11 @@ public class PostController {
     }
 
     // 게시글 등록 (로그인 필요)
-    @PreAuthorize("isAuthenticated()")
     @PostMapping
-    public ResponseEntity<PostDTO> addPost(@RequestBody PostDTO postDTO, @RequestParam(required = false) List<MultipartFile> files) throws Exception {
+    public ResponseEntity<PostDTO> addPost(@RequestParam("content") String content,
+                                           @RequestParam(value = "files", required = false) List<MultipartFile> files) throws Exception {
+        PostDTO postDTO = new PostDTO();
+        postDTO.setContent(content);
         Long postId = postService.addPost(postDTO, files);
         PostDTO addedPost = postService.getPost(postId);
         return ResponseEntity.ok(addedPost);
