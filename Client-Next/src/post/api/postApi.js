@@ -45,6 +45,7 @@ export const fetchPosts = async () => {
       return { postLists: [] };
   }
 };
+
 // 특정 게시글을 가져오는 함수
 export const fetchPost = (id) => {
   return call(`/posts/${id}`, "GET");
@@ -54,17 +55,9 @@ export const fetchPost = (id) => {
 export const createPost = (formData) => {
   return call("/posts", "POST", formData);
 };
-// 게시글을 수정하는 함수
-export const updatePost = (id, postDTO, files, deletedThumbnails) => {
-  const formData = new FormData();
-  formData.append('postDTO', JSON.stringify(postDTO));
-  files.forEach((file) => {
-    formData.append('files', file);
-  });
-  deletedThumbnails.forEach((thumbnail) => {
-    formData.append('deletedThumbnails', thumbnail);
-  });
 
+// 게시글을 수정하는 함수
+export const updatePost = (id, formData) => {
   return call(`/posts/${id}`, "PUT", formData);
 };
 
@@ -72,7 +65,6 @@ export const updatePost = (id, postDTO, files, deletedThumbnails) => {
 export const deletePost = (id) => {
   return call(`/posts/${id}`, "DELETE");
 };
-
 // 게시글에 좋아요를 누르는 함수
 export const likePost = (id) => {
   return call(`/posts/${id}/like`, "POST");
@@ -97,4 +89,8 @@ export const fetchPopularPosts = async () => {
       console.error("인기 게시물 가져오기 실패:", error);
       return [];
   }
+};
+
+export const bookmarkPost = (id) => {
+  return call(`/posts/${id}/bookmark`, "POST");
 };

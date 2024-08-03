@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { createPost } from '../api/postApi';
 
@@ -57,36 +57,77 @@ const SubmitButton = styled.button`
   cursor: pointer;
 `;
 
+const ImagePreviewContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+`;
+
+const ImagePreview = styled.img`
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 5px;
+`;
+
+const ImageInput = styled.input`
+  display: none;
+`;
+
+const ImageLabel = styled.label`
+  cursor: pointer;
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  margin-right: 10px;
+`;
+
 const PostCreateBox = ({ onPostCreated }) => {
   const [content, setContent] = useState('');
   const [nickName, setNickName] = useState('');
+  const [images, setImages] = useState([]);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    // 로컬스토리지에서 닉네임 가져옴
     const userNickName = localStorage.getItem('USER_NICKNAME');
     setNickName(userNickName || '익명');
   }, []);
 
-const handleSubmit = async () => {
-  if (!content || content.trim() === '') {
-    alert('내용을 입력해주세요.');
-    return;
-  }
-  
-  try {
-    const formData = new FormData();
-    formData.append('content', content.trim());
-    await createPost(formData);
-    setContent('');
-    if (onPostCreated) {
-      onPostCreated();
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + images.length > 4) {
+      alert('최대 4장의 이미지만 첨부할 수 있습니다.');
+      return;
     }
-    alert('게시글이 등록되었습니다.');
-  } catch (error) {
-    console.error('게시글 등록 실패:', error);
-    alert('게시글 등록에 실패했습니다. 오류: ' + error.message);
-  }
-};
+    setImages(prevImages => [...prevImages, ...files]);
+  };
+
+  const handleSubmit = async () => {
+    if (!content || content.trim() === '') {
+      alert('내용을 입력해주세요.');
+      return;
+    }
+  
+    try {
+      const formData = new FormData();
+      formData.append('content', content.trim());
+      images.forEach(image => {
+        formData.append('files', image);
+      });
+      await createPost(formData);
+      setContent('');
+      setImages([]);
+      if (onPostCreated) {
+        onPostCreated();
+      }
+      alert('게시글이 등록되었습니다.');
+    } catch (error) {
+      console.error('게시글 등록 실패:', error);
+      alert('게시글 등록에 실패했습니다. 오류: ' + error.message);
+    }
+  };
 
   return (
     <PostCreateCard>
@@ -99,10 +140,22 @@ const handleSubmit = async () => {
         value={content}
         onChange={(e) => setContent(e.target.value)}
       />
+      <ImagePreviewContainer>
+        {images.map((image, index) => (
+          <ImagePreview key={index} src={URL.createObjectURL(image)} alt={`Preview ${index}`} />
+        ))}
+      </ImagePreviewContainer>
       <ButtonRow>
-        <ImageButton>
-          <span role="img" aria-label="Add Image">🖼️</span>
-        </ImageButton>
+        <ImageLabel>
+          🖼️ 이미지 추가
+          <ImageInput
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            ref={fileInputRef}
+          />
+        </ImageLabel>
         <SubmitButton onClick={handleSubmit}>등록</SubmitButton>
       </ButtonRow>
     </PostCreateCard>
