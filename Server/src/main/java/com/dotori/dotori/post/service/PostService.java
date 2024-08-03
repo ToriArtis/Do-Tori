@@ -105,6 +105,9 @@ public class PostService {
 
     // 게시글 등록
     public Long addPost(PostDTO postDTO, List<MultipartFile> files) throws Exception {
+        if (postDTO.getContent() == null || postDTO.getContent().trim().isEmpty()) {
+            throw new IllegalArgumentException("Content cannot be null or empty");
+        }
         Auth auth = getLoginUser();
         // PostDTO를 Post 엔티티로 변환
         Post post = modelMapper.map(postDTO, Post.class);
