@@ -26,8 +26,7 @@ import org.springframework.web.filter.CorsFilter;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private final JwtAuthenticationFilter jwtAuthenticationFilter; // jwt 필터 의존성 주입
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAuthDetailsService userDetailsService;
     //   private final OAuth2Service oAuth2Service;
     private final TokenProvider tokenProvider;
@@ -47,6 +46,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 공개 접근 허용 경로
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/images", "/api/images/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts", "/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "post/**").permitAll()
@@ -65,7 +65,7 @@ public class SecurityConfig {
 //                )
                 // 세션 관리 설정을 무상태(stateless)로 설정
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
 
         // JWT 인증 필터를 CORS 필터 이후에 추가

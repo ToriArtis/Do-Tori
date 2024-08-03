@@ -14,5 +14,6 @@ public interface ToriBoxRepository extends JpaRepository<ToriBox, Long> {
     Optional<ToriBox> findByAidAndPost(Long aid, Post post);
     int countByPost(Post post);
     List<ToriBox> findByAid(Long aid);
+    void deleteByPost(Post post);
     void deleteByAid(Long aid);
 }

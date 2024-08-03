@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -17,10 +19,9 @@ public class CommentDTO {
 
     @NotEmpty
     private String content;
-
     private Long parentId;
-
     private String email;
     private String nickName;
     private String profileImage;
+    private LocalDateTime regDate;
 }

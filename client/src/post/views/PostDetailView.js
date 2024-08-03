@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, StyleSheet } from 'react-native';
 import CommentList from '../components/CommentList';
-import { fetchPost, fetchComments } from '../api/Postapi';
+import { fetchPost, fetchComments } from '../src/post/api/postApi';
 
 // 게시글 상세 정보를 표시하는 뷰 컴포넌트
 const PostDetailView = ({ route }) => {

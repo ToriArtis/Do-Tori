@@ -19,10 +19,10 @@ public class Auth {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "nick_name", length = 20)
+    @Column(name = "nick_name", length = 20 , nullable = false, unique = true)
     private String nickName;
 
     @Column(name = "password")

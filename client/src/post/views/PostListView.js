@@ -1,57 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import PostCreateBox from '../components/PostCreateBox';
 import PostList from '../components/PostList';
-import { fetchPosts } from '../api/Postapi';
+import PopularPosts from '../components/PopularPosts';
+import { fetchPosts, fetchPopularPosts } from '../api/postapi';
+export default function PostListView() {
+    const [posts, setPosts] = useState([]);
+    const [popularPosts, setPopularPosts] = useState([]);
 
-// 게시글 목록을 표시하는 뷰 컴포넌트
-const PostListView = ({ navigation }) => {
-  // 상태 관리
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    useEffect(() => {
+        loadPosts();
+        loadPopularPosts();
+    }, []);
 
-  // 컴포넌트 마운트 시 게시글 로드
-  useEffect(() => {
-    loadPosts();
-  }, []);
+    const loadPosts = async () => {
+        const fetchedPosts = await fetchPosts();
+        setPosts(fetchedPosts);
+    };
 
-  // 게시글 로드 함수
-  const loadPosts = async () => {
-    try {
-      setLoading(true);
-      const response = await fetchPosts({ size: 10 });
-      setPosts(response.postLists);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadPopularPosts = async () => {
+        const fetchedPopularPosts = await fetchPopularPosts();
+        setPopularPosts(fetchedPopularPosts);
+    };
 
-  // 게시글 클릭 핸들러
-  const handlePostPress = (postId) => {
-    navigation.navigate('PostDetail', { postId });
-  };
+    return (
+        <View style={styles.container}>
+            <ScrollView style={styles.mainContent}>
+                <PostCreateBox onPostCreated={loadPosts} />
+                <PostList posts={posts} onPostUpdated={loadPosts} />
+            </ScrollView>
+            <View style={styles.sideContent}>
+                <PopularPosts posts={popularPosts} />
+            </View>
+        </View>
+    );
+}
 
-  // 로딩 중 표시
-  if (loading) return <Text>로딩 중...</Text>;
-  // 에러 표시
-  if (error) return <Text>에러: {error}</Text>;
-
-  // 게시글 목록 렌더링
-  return (
-    <View style={styles.container}>
-      <PostList posts={posts} onPostPress={handlePostPress} />
-    </View>
-  );
-};
-
-// 스타일 정의
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-  },
+    container: {
+        flex: 1,
+        flexDirection: 'row',
+    },
+    mainContent: {
+        flex: 3,
+    },
+    sideContent: {
+        flex: 1,
+        borderLeftWidth: 1,
+        borderLeftColor: '#e0e0e0',
+        padding: 10,
+    },
 });
-
-export default PostListView;

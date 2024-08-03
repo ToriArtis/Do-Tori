@@ -157,7 +157,7 @@ public class PostService {
                 .orElseThrow(() -> new Exception("Not Found post id: " + postDTO.getPid()));
 
         // 기본 필드 매핑
-        modelMapper.map(postDTO, post);
+        post.setContent(postDTO.getContent());
 
         // 닉네임 업데이트
         if (!post.getNickName().equals(auth.getNickName())) {
@@ -189,9 +189,26 @@ public class PostService {
         postRepository.save(post);
     }
 
-    // 게시글 삭제
+    @Transactional
     public void deletePost(Long id) {
-        postRepository.deleteById(id);
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
+
+        // 연관된 ToriBox 삭제
+        toriBoxRepository.deleteByPost(post);
+
+        // 연관된 Bookmark 삭제
+        bookmarkRepository.deleteByPost(post);
+
+        // 연관된 PostThumbnail 삭제
+        post.getThumbnails().clear();
+
+        // 연관된 Tag 관계 제거
+        post.getTags().clear();
+
+        // 게시글 삭제 (이때 cascade 옵션에 의해 연관된 Comment도 함께 삭제됨)
+        postRepository.delete(post);
+
     }
 
     // 게시글 이미지 업로드
@@ -204,11 +221,12 @@ public class PostService {
                 if (originalName != null && !originalName.isEmpty()) {
                     // 파일명 생성
                     String fileName = System.currentTimeMillis() + "_" + originalName;
-                    // 저장 경로 설정
-                    String savePath = System.getProperty("user.dir") + "/Server/src/main/resources/static/images/";
+                    // 저장 경로 설정 (절대 경로 사용)
+                    String savePath = System.getProperty("user.home") + "/dotori/images/";
                     // 폴더 없으면 생성
-                    if (!new File(savePath).exists()) {
-                        new File(savePath).mkdir();
+                    File saveDir = new File(savePath);
+                    if (!saveDir.exists()) {
+                        saveDir.mkdirs();
                     }
                     // 파일 저장
                     String filePath = savePath + fileName;
@@ -335,8 +353,16 @@ public class PostService {
     }
 
     // 댓글 삭제
-    public void removeComment(Long id) {
-        commentRepository.deleteById(id);
+    @Transactional
+    public void deleteComment(Long id) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found with id: " + id));
+
+        // 대댓글이 있는 경우 모두 삭제
+        comment.getChildren().clear();
+
+        // 댓글 삭제
+        commentRepository.delete(comment);
     }
 
     // Search 기능
