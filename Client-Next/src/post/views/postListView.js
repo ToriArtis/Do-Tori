@@ -1,41 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import PostCreateBox from '../components/postCreateBox';
-import PostList from '../components/postList';
-import PopularPosts from '../components/popularPosts';
+import styled from 'styled-components';
 import { fetchPosts, fetchPopularPosts } from '../api/postApi';
+import PostCreateBox from '../components/postCreateBox';
+
+const PostListViewContainer = styled.div`
+  width: 100%;
+  padding: 20px;
+`;
+
+const PostItem = styled.div`
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+  width: 50%;
+`;
 
 export default function PostListView() {
     const [posts, setPosts] = useState([]);
-    const [popularPosts, setPopularPosts] = useState([]);
+
+    const loadPosts = async () => {
+        try {
+            const fetchedPosts = await fetchPosts();
+            setPosts(fetchedPosts.postLists || []);
+        } catch (error) {
+            console.error("게시물 로딩 중 오류 발생:", error);
+        }
+    };
 
     useEffect(() => {
         loadPosts();
-        loadPopularPosts();
     }, []);
 
-    const loadPosts = async () => {
-        const fetchedPosts = await fetchPosts();
-        setPosts(fetchedPosts.postLists);
-    };
-
-    const loadPopularPosts = async () => {
-        const fetchedPopularPosts = await fetchPopularPosts();
-        // 좋아요 순으로 정렬
-        const sortedPopularPosts = fetchedPopularPosts.sort((a, b) => b.toriBoxCount - a.toriBoxCount);
-        setPopularPosts(sortedPopularPosts);
-    };
-
     return (
-        <div className="container mx-auto px-4 flex">
-            <div className="w-3/4 pr-4">
-                <div className="mb-6">
-                    <PostCreateBox onPostCreated={loadPosts} />
-                </div>
-                <PostList posts={posts} onPostUpdated={loadPosts} />
-            </div>
-            <div className="w-1/4">
-                <PopularPosts posts={popularPosts} />
-            </div>
-        </div>
+        <PostListViewContainer>
+            <PostCreateBox onPostCreated={loadPosts} />
+            <h1>게시물 목록</h1>
+            {posts.map((post) => (
+                <PostItem key={post.pid}>
+                    <h2>{post.content}</h2>
+                    <p>작성자: {post.nickName}</p>
+                    <p>작성일: {post.regDate}</p>
+                </PostItem>
+            ))}
+        </PostListViewContainer>
     );
 }

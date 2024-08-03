@@ -1,42 +1,112 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
 import { createPost } from '../api/postApi';
 
-export default function PostCreateBox({ onPostCreated }) {
-    const [content, setContent] = useState('');
+const PostCreateCard = styled.div`
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+  width: 50%;
+`;
 
-    const handleSubmit = async () => {
-        try {
-            await createPost({ content });
-            setContent('');
-            onPostCreated();
-        } catch (error) {
-            console.error('게시물 생성 실패:', error);
-        }
-    };
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+`;
 
-    return (
-        <div className="bg-white rounded-lg shadow p-4 mb-4">
-            <div className="flex items-center mb-2">
-                <img src="/default-avatar.png" alt="Profile" className="w-10 h-10 rounded-full mr-2" />
-                <input
-                    type="text"
-                    placeholder="무슨 일이 있나요?"
-                    className="flex-grow p-2 border rounded"
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                />
-            </div>
-            <div className="flex justify-between">
-                <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded">
-                    <span role="img" aria-label="Image">🖼️</span>
-                </button>
-                <button
-                    className="bg-blue-500 text-white px-4 py-2 rounded"
-                    onClick={handleSubmit}
-                >
-                    등록
-                </button>
-            </div>
-        </div>
-    );
-}
+const Avatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #ddd;
+  margin-right: 10px;
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  height: 100px;
+  border: none;
+  resize: none;
+  font-size: 16px;
+  margin-bottom: 10px;
+  &:focus {
+    outline: none;
+  }
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+`;
+
+const ImageButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+`;
+
+const SubmitButton = styled.button`
+  background-color: #ccbfb2;
+  color: black;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 16px;
+  cursor: pointer;
+`;
+
+const PostCreateBox = ({ onPostCreated }) => {
+  const [content, setContent] = useState('');
+  const [nickName, setNickName] = useState('');
+
+  useEffect(() => {
+    // 로컬스토리지에서 닉네임 가져옴
+    const userNickName = localStorage.getItem('USER_NICKNAME');
+    setNickName(userNickName || '익명');
+  }, []);
+
+const handleSubmit = async () => {
+  if (!content || content.trim() === '') {
+    alert('내용을 입력해주세요.');
+    return;
+  }
+  
+  try {
+    const formData = new FormData();
+    formData.append('content', content.trim());
+    await createPost(formData);
+    setContent('');
+    if (onPostCreated) {
+      onPostCreated();
+    }
+    alert('게시글이 등록되었습니다.');
+  } catch (error) {
+    console.error('게시글 등록 실패:', error);
+    alert('게시글 등록에 실패했습니다. 오류: ' + error.message);
+  }
+};
+
+  return (
+    <PostCreateCard>
+      <UserInfo>
+        <Avatar />
+        <span>{nickName}</span>
+      </UserInfo>
+      <TextArea 
+        placeholder="무슨 일이 있나요?"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+      />
+      <ButtonRow>
+        <ImageButton>
+          <span role="img" aria-label="Add Image">🖼️</span>
+        </ImageButton>
+        <SubmitButton onClick={handleSubmit}>등록</SubmitButton>
+      </ButtonRow>
+    </PostCreateCard>
+  );
+};
+
+export default PostCreateBox;
