@@ -8,7 +8,7 @@ export function useTodoViewModel() {
         try {
             const response = await callApi("/todo", "GET", null);
             if (Array.isArray(response)) {
-                setItems(response.map(item => new TodoModel(item.id, item.content, item.category, item.done)));
+                setItems(response.map(item => new TodoModel(item.id, item.content, item.category, item.done, item.todoDate)));
             } else {
                 console.error("Unexpected response structure:", response);
                 setItems([]);

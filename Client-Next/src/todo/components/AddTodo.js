@@ -13,6 +13,18 @@ class AddTodo extends React.Component {
         this.add = props.add;
     }
 
+    componentDidUpdate(prevProps) {
+        // Update state when todoDate prop changes
+        if (prevProps.todoDate !== this.props.todoDate) {
+            this.setState({
+                item: {
+                    ...this.state.item,
+                    todoDate: this.props.todoDate,
+                },
+            });
+        }
+    }
+
     handleChange = (e) => {
         const { name, value } = e.target;
         this.setState((prevState) => ({
@@ -39,6 +51,12 @@ class AddTodo extends React.Component {
         const { content, category } = this.state.item;
         return (
             <form onSubmit={this.handleSubmit}>
+                <select name="category" value={category} onChange={this.handleChange} className="form-control" style={{ width: "18%" }}>
+                    <option value="No category">No category</option>
+                    <option value="Schedule">Schedule</option>
+                    <option value="Study">Study</option>
+                    <option value="Habit">Habit</option>
+                </select>
                 <input
                     type="text"
                     name="content"
@@ -46,14 +64,7 @@ class AddTodo extends React.Component {
                     onChange={this.handleChange}
                     placeholder="Add todo"
                 />
-                <input
-                    type="text"
-                    name="category"
-                    value={category}
-                    onChange={this.handleChange}
-                    placeholder="Category"
-                />
-                <button type="submit">Add</button>
+                <button type="submit" style={{ marginLeft: "10px", border: "none", background: "white", cursor: "pointer" }}>➕</button>
             </form>
         );
     }
