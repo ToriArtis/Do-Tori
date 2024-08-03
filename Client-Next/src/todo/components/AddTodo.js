@@ -1,62 +1,60 @@
-import React from 'react';  
-import { TextField, Paper, Button, Grid } from '@mui/material';
+import React from 'react';
 
-class AddTodo extends React.Component{
-    constructor(props){
+class AddTodo extends React.Component {
+    constructor(props) {
         super(props);
         this.state = {
-            item : {content: "", category:"", tododate:""},  
+            item: {
+                content: "",
+                category: "",
+                todoDate: props.todoDate, // Initialize with Date object
+            },
         };
-        this.add = props.add;  //부모로부터 받은 것을 잘 담아둠
+        this.add = props.add;
     }
 
-    onInputChange = (e) => {
-        const thisItem = this.state.item;
-        thisItem.content = e.target.value;
-        thisItem.category = document.getElementById("mySelect").value;
-        thisItem.tododate = new Date();
-        this.setState({item:thisItem});
-        console.log(thisItem);
-    }
-    onButtonClick = () =>{
+    handleChange = (e) => {
+        const { name, value } = e.target;
+        this.setState((prevState) => ({
+            item: {
+                ...prevState.item,
+                [name]: value,
+            },
+        }));
+    };
+
+    handleSubmit = (e) => {
+        e.preventDefault();
         this.add(this.state.item);
-        this.setState({item:{content: "", category:"", tododate:""}});
-    }
-    enterKeyEventHandler = (e) => {
-        if(e.key === 'Enter'){
-            this.onButtonClick();
-        }
-    }
-    render(){
-        return(
-            <Paper style={{ margin: 16, padding: 16}}>
-                <Grid container>
-                    <Grid xs={11} md={11} item style={{ paddingRight:16}}>
-                        <select id="mySelect" name="category">
-                            <option value="1">Option 1</option>
-                            <option value="2">Option 2</option>
-                            <option value="3">Option 3</option>
-                        </select>
+        this.setState({
+            item: {
+                content: "",
+                category: "",
+                todoDate: this.props.todoDate, // Reset to Date object
+            },
+        });
+    };
 
-                        <TextField 
-                        placeholder="Add Todo here" 
-                        fullWidth
-                        onChange={this.onInputChange} 
-                        value={this.state.item.content}
-                        onKeyPress={this.enterKeyEventHandler}
-                        />
-                    </Grid>
-                    <Grid xs={1} md={1} item>
-                        <Button 
-                        fullWidth color = "secondary" 
-                        variant="contained"
-                        onClick={this.onButtonClick}
-                        >
-                        +
-                            </Button>
-                    </Grid>
-                </Grid>
-            </Paper>
+    render() {
+        const { content, category } = this.state.item;
+        return (
+            <form onSubmit={this.handleSubmit}>
+                <input
+                    type="text"
+                    name="content"
+                    value={content}
+                    onChange={this.handleChange}
+                    placeholder="Add todo"
+                />
+                <input
+                    type="text"
+                    name="category"
+                    value={category}
+                    onChange={this.handleChange}
+                    placeholder="Category"
+                />
+                <button type="submit">Add</button>
+            </form>
         );
     }
 }

@@ -45,7 +45,7 @@ class Todo extends React.Component{
             <ListItem>
                 <Checkbox checked={item.done} onChange={this.checkboxEventHandler} />
                 <ListItemText>
-                    <select id="mySelect" name="category">
+                    <select id="mySelect" name="category" value={item.category}>
                         <option value="1">Option 1</option>
                         <option value="2">Option 2</option>
                         <option value="3">Option 3</option>
