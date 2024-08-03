@@ -4,6 +4,7 @@ import MyCalendar from '@/todo/components/Calendar';
 import Todo from '@/todo/components/todo';
 import AddTodo from '@/todo/components/AddTodo';
 import { useTodoViewModel } from '@/todo/viewmodels/todoViewModels';
+import Sidebar from '@/components/Sidebar';
 
 function TodoPage() {
     const { items, addTodo, deleteTodo, updateTodo } = useTodoViewModel();
@@ -11,6 +12,8 @@ function TodoPage() {
     const [tutorialDone, setTutorialDone] = useState(true);
     const [tutorialImage, setTutorialImage] = useState('/assets/1_MAIN.png');
 
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    
     useEffect(() => {
         // Example setup if needed
     }, []);
@@ -39,17 +42,30 @@ function TodoPage() {
 
     return (
         <Container maxWidth="lg">
+            <Sidebar 
+                isOpen={isSidebarOpen} 
+                onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
+            />
+            
+            {/* Tutorial component omitted for brevity */}
+            <Grid item xs={12} md={6}>
             <Typography variant="h4" gutterBottom>
                 Do-Tori
             </Typography>
-
-            {/* Tutorial component omitted for brevity */}
+            </Grid>
+            <Grid item xs={12} md={6}>
+                <Typography  gutterBottom>
+                    <a href='/posts'>go To-rest →</a>
+                </Typography>
+            </Grid>
 
             <Grid container spacing={2}>
+                
                 <Grid item xs={12} md={6}>
                     <Typography variant="h4" style={{ margin: '20px 0px 22px 0px', fontWeight: 'bolder' }}>
                         {selectedDate.getFullYear()}
                     </Typography>
+
                     <MyCalendar onDateChange={handleDateChange} />
                 </Grid>
                 <Grid item xs={12} md={6}>
