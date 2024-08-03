@@ -81,7 +81,7 @@ public class TodoService {
         return resultDTO;
     }
 
-    public void deleteTodo(int id) {
+    public TodoDTO deleteTodo(int id) {
         Auth auth = getLoginUser();
         Todo todo = todoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
@@ -89,6 +89,7 @@ public class TodoService {
             throw new RuntimeException("You don't have permission to delete this todo");
         }
         todoRepository.delete(todo);
+        return TodoDTO.builder().id(id).build();
     }
 
 

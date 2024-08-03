@@ -1,80 +1,85 @@
 import React from 'react';
-import {ListItem, ListItemText, InputBase, Checkbox, ListItemSecondaryAction, IconButton} from '@mui/material';
-import { DeleteOutlined } from '@mui/material';
-class Todo extends React.Component{
+import { ListItem, ListItemText, InputBase, Checkbox, ListItemSecondaryAction, IconButton } from '@mui/material';
+import { DeleteOutlined } from '@mui/icons-material'; // Corrected import for DeleteOutlined
 
-    constructor(props){
+class Todo extends React.Component {
+    constructor(props) {
         super(props);
-        this.state = {item : props.item, readOnly:true};
-        console.log(this.state.item);
+        this.state = {
+            item: props.item,
+            readOnly: true
+        };
         this.delete = props.delete;
         this.update = props.update;
-        
     }
 
-    deleteEventHandler = () =>{
-        this.delete(this.state.item)
-    };
-    offReadOnlyMode=()=>{
-        this.setState({readOnly:false},()=>{
-            console.log("ReadOnly?", this.state.readOnly)
-        });
+    deleteEventHandler = () => {
+        this.delete(this.state.item);
     };
 
-    editEventHandler=(e)=>{
-        const thisItem = this.state.item;
-        thisItem.content = e.target.value;
-        this.setState({item: thisItem});
+    offReadOnlyMode = () => {
+        this.setState({ readOnly: false });
     };
-    enterkeyEventHandler = (e) =>{
-        if(e.key ==="Enter") {
-            this.setState({readOnly: true});
+
+    editEventHandler = (e) => {
+        const updatedItem = { ...this.state.item, [e.target.name]: e.target.value };
+        this.setState({ item: updatedItem });
+    };
+
+    enterkeyEventHandler = (e) => {
+        if (e.key === "Enter") {
+            this.setState({ readOnly: true });
             this.update(this.state.item);
         }
     };
-    checkboxEventHandler = (e)=>{
-        const thisItem = this.state.item;
-        thisItem.done= !thisItem.done;
-        this.setState({item:thisItem});
-        this.update(this.state.item);
-    };
-    render(){
 
-        const item= this.state.item;
-        return(
+    checkboxEventHandler = (e) => {
+        const updatedItem = { ...this.state.item, done: !this.state.item.done };
+        this.setState({ item: updatedItem });
+        this.update(updatedItem);
+    };
+
+    render() {
+        const { item, readOnly } = this.state;
+
+        return (
             <ListItem>
-                <Checkbox checked={item.done} onChange={this.checkboxEventHandler} />
+                <InputBase
+                    inputProps={{ "aria-label": "Todo category", readOnly }}
+                    type="text"
+                    name="category"
+                    value={item.category}
+                    multiline={false}
+                    onClick={this.offReadOnlyMode}
+                    onChange={this.editEventHandler}
+                    onKeyPress={this.enterkeyEventHandler}
+                />
+                <Checkbox
+                    checked={item.done}
+                    onChange={this.checkboxEventHandler}
+                />
                 <ListItemText>
-                    <select id="mySelect" name="category">
-                        <option value="1">Option 1</option>
-                        <option value="2">Option 2</option>
-                        <option value="3">Option 3</option>
-                    </select>
-                    <InputBase 
-                        inputProps={{
-                            "aria-label": "naked",
-                            readOnly : this.state.readOnly,
-                        }}
+                    <InputBase
+                        inputProps={{ "aria-label": "Todo content", readOnly }}
                         type="text"
-                        id={item.id.toString()}
-                        name={item.id.toString()}
+                        name="content"
                         value={item.content}
-                        multiline = {true}
-                        fullWidth = {true}
+                        multiline={true}
+                        fullWidth={true}
                         onClick={this.offReadOnlyMode}
                         onChange={this.editEventHandler}
                         onKeyPress={this.enterkeyEventHandler}
                     />
-
+                    <p>{item.todoDate}</p>
                 </ListItemText>
                 <ListItemSecondaryAction>
                     <IconButton aria-label="Delete Todo" onClick={this.deleteEventHandler}>
-                        <Checkbox /> 
-                        {/* 추후 수정 예정 */}
+                        <DeleteOutlined />
                     </IconButton>
                 </ListItemSecondaryAction>
             </ListItem>
-        )
+        );
     }
 }
+
 export default Todo;
