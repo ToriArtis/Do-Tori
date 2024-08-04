@@ -24,7 +24,7 @@ public class TokenProvider {
 
     // create 메서드에서 key 사용
     public String createAccessToken(Auth authEntity) {
-        Date expiryDate = Date.from(Instant.now().plus(30, ChronoUnit.MINUTES));  // 30분동안 실행되게 함
+        Date expiryDate = Date.from(Instant.now().plus(1, ChronoUnit.HOURS));  // 1시간동안
 
         return Jwts.builder()
                 .setSubject(authEntity.getEmail())
