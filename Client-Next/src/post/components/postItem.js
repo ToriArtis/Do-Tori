@@ -33,18 +33,19 @@ const PostContent = styled.p`
   margin-bottom: 10px;
 `;
 
-const PostImages = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
+const PostImage = styled.img`
+  width: 100%; // 부모 컨테이너의 전체 너비를 사용
+  height: 400px; // 높이를 늘림 (필요에 따라 조정)
+  object-fit: cover; // 이미지 비율을 유지하면서 컨테이너를 채움
+  border-radius: 5px;
+  margin-bottom: 10px; // 이미지 간 간격
 `;
 
-const PostImage = styled.img`
-  width: calc(25% - 7.5px);
-  height: 150px;
-  object-fit: cover;
-  border-radius: 5px;
+const PostImages = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); // 반응형 그리드 레이아웃
+  gap: 10px;
+  margin-bottom: 20px;
 `;
 
 const PostActions = styled.div`
@@ -231,6 +232,7 @@ const Tag = styled.span`
   border-radius: 3px;
 `;
 
+// 기본 아바타 SVG 컴포넌트
 const DefaultAvatar = ({ size = 40, color = "#cccccc" }) => (
   <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="20" cy="20" r="20" fill={color} />
@@ -238,25 +240,28 @@ const DefaultAvatar = ({ size = 40, color = "#cccccc" }) => (
     <path d="M8 36C8 28.268 13.268 22 21 22C28.732 22 34 28.268 34 36" fill="white" />
   </svg>
 );
-// 1px 빈 이미지
+
+// 1px 빈 이미지 (이미지 로드 실패 시 대체 이미지로 사용)
 const placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
+
 export default function PostItem({ post, isCurrentUser, onPostUpdated, onLike, onBookmark, onComment }) {
-    // 상태 정의
-    const [isDetailView, setIsDetailView] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editContent, setEditContent] = useState(post.content);
-    const [commentContent, setCommentContent] = useState('');
-    const [editImages, setEditImages] = useState(post.thumbnails || []);
-    const [editTags, setEditTags] = useState(post.tags || []);
-    const [newTag, setNewTag] = useState('');
-    const fileInputRef = useRef(null);
-    const [comments, setComments] = useState([]);
-    const [replyingTo, setReplyingTo] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [currentUser, setCurrentUser] = useState(null);
-    const [deletedThumbnails, setDeletedThumbnails] = useState([]);
+  // 상태 정의
+  const [isDetailView, setIsDetailView] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [commentContent, setCommentContent] = useState('');
+  const [editImages, setEditImages] = useState(post.thumbnails || []);
+  const [editTags, setEditTags] = useState(post.tags || []);
+  const [newTag, setNewTag] = useState('');
+  const fileInputRef = useRef(null);
+  const [comments, setComments] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [deletedThumbnails, setDeletedThumbnails] = useState([]);
+
 
 
     // 게시글 수정 핸들러
@@ -447,7 +452,34 @@ export default function PostItem({ post, isCurrentUser, onPostUpdated, onLike, o
       }
       setEditImages(prev => prev.filter((_, i) => i !== index));
     };
-
+       // 이미지 렌더링 함수
+       const renderImages = (images) => {
+        return images && images.map((image, index) => {
+          // image가 문자열(파일 이름)인지 확인
+          const imageUrl = typeof image === 'string' 
+            ? `${API_BASE_URL}/images/${encodeURIComponent(image)}`
+            : placeholderImage;
+          
+          console.log("Image URL:", imageUrl); // 디버깅을 위한 로그 추가
+          
+          return (
+            <div key={index}>
+              <PostImage 
+                src={imageUrl}
+                alt={`Thumbnail ${index + 1}`} 
+                onError={(e) => {
+                  console.error("Image load error for URL:", imageUrl);
+                  e.target.src = placeholderImage;
+                }}
+              />
+              {isEditing && (
+                <button onClick={() => handleDeleteImage(index)}>삭제</button>
+              )}
+            </div>
+          );
+        });
+      };
+    
     // 태그 추가 핸들러
     const handleAddTag = (e) => {
       if (e.key === 'Enter' && newTag.trim() !== '') {
@@ -459,167 +491,132 @@ export default function PostItem({ post, isCurrentUser, onPostUpdated, onLike, o
     // 렌더링
     return (
       <PostItemContainer onClick={() => setIsDetailView(true)}>
-        <PostHeader>
-          <UserInfo>
-            {post.profileImage ? (
-              <Avatar src={post.profileImage} alt={post.nickName} />
-            ) : (
-              <DefaultAvatar />
-            )}
-            <div>
-              <h3>{post.nickName}</h3>
-              <p>{formatDate(post.regDate)}</p>
-            </div>
-          </UserInfo>
-          {isCurrentUser && (
-            <div>
-              <EditButton onClick={handleEdit}>
-                {isEditing ? '저장' : '수정'}
-              </EditButton>
-              <DeleteButton onClick={handleDelete}>삭제</DeleteButton>
-            </div>
-          )}
-        </PostHeader>
-        {isEditing ? (
-          <>
-            <textarea
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-            />
-            <ImageLabel onClick={(e) => e.stopPropagation()}>
-              🖼️ 이미지 추가
-              <ImageInput
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageUpload}
-                ref={fileInputRef}
-              />
-            </ImageLabel>
-            <PostImages>
-              {editImages.map((image, index) => (
-                <div key={index}>
-                  <PostImage 
-                    src={image instanceof File ? URL.createObjectURL(image) : `${API_BASE_URL}/api/images/${image}`}
-                    alt={`Thumbnail ${index + 1}`} 
-                    onError={(e) => {
-                      console.error("Image load error:", e);
-                      e.target.src = placeholderImage;
-                    }}
-                  />
-                  <button onClick={() => handleDeleteImage(index)}>삭제</button>
-                </div>
-              ))}
-            </PostImages>
-            <TagInput
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              onKeyPress={handleAddTag}
-              placeholder="태그 추가 (Enter로 추가)"
-            />
-            <TagList>
-              {editTags.map((tag, index) => (
-                <Tag key={index}>{tag}</Tag>
-              ))}
-            </TagList>
-          </>
-        ) : (
-          <>
-            <PostContent>{post.content}</PostContent>
-            <PostImages>
-              {editImages.map((image, index) => (
-                <div key={index}>
-                  <PostImage 
-                    src={image instanceof File ? URL.createObjectURL(image) : `${API_BASE_URL}/api/images/${image}`}
-                    alt={`Thumbnail ${index + 1}`} 
-                    onError={(e) => {
-                      console.error("Image load error:", e);
-                      e.target.src = placeholderImage;
-                    }}
-                  />
-                  <button onClick={() => handleDeleteImage(index)}>삭제</button>
-                </div>
-              ))}
-            </PostImages>
-            <TagList>
-              {post.tags && post.tags.map((tag, index) => (
-                <Tag key={index}>{tag}</Tag>
-              ))}
-            </TagList>
-          </>
-        )}
-        <PostActions>
-          <ActionButton onClick={handleLike}>
-            {post.liked ? '❤️' : '🤍'} {post.toriBoxCount}
-          </ActionButton>
-          <ActionButton>💬 {post.commentCount}</ActionButton>
-          <ActionButton onClick={handleBookmark}>
-            {post.bookmarked ? '🔖' : '🏷️'} {post.bookmarkCount}
-          </ActionButton>
-        </PostActions>
-        {isDetailView && (
-          <Modal onClick={() => setIsDetailView(false)}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-              <CloseButton onClick={() => setIsDetailView(false)}>&times;</CloseButton>
-              <h2>{post.nickName}의 게시글</h2>
-              <p>{post.content}</p>
-              <PostImages>
-                {editImages.map((image, index) => (
-                  <div key={index}>
-                    <PostImage 
-                      src={image instanceof File ? URL.createObjectURL(image) : `${API_BASE_URL}/api/images/${image}`}
-                      alt={`Thumbnail ${index + 1}`} 
-                      onError={(e) => {
-                        console.error("Image load error:", e);
-                        e.target.src = placeholderImage;
-                      }}
-                    />
-                    <button onClick={() => handleDeleteImage(index)}>삭제</button>
+          <PostHeader>
+              <UserInfo>
+                  {post.profileImage ? (
+                      <Avatar src={post.profileImage} alt={post.nickName} />
+                  ) : (
+                      <DefaultAvatar />
+                  )}
+                  <div>
+                      <h3>{post.nickName}</h3>
+                      <p>{formatDate(post.regDate)}</p>
                   </div>
-                ))}
-              </PostImages>
-              <TagList>
-                {post.tags && post.tags.map((tag, index) => (
-                  <Tag key={index}>{tag}</Tag>
-                ))}
-              </TagList>
-              <PostActions>
-                <ActionButton onClick={handleLike}>
-                  {post.liked ? '❤️' : '🤍'} {post.toriBoxCount}
-                </ActionButton>
-                <ActionButton>💬 {post.commentCount}</ActionButton>
-                <ActionButton onClick={handleBookmark}>
-                  {post.bookmarked ? '🔖' : '🏷️'} {post.bookmarkCount}
-                </ActionButton>
-              </PostActions>
-  
-              <CommentSection>
-                <h3>댓글</h3>
-                <CommentInput
-                  value={commentContent}
-                  onChange={(e) => setCommentContent(e.target.value)}
-                  placeholder="댓글을 입력하세요..."
+              </UserInfo>
+              {isCurrentUser && (
+                  <div>
+                      <EditButton onClick={handleEdit}>
+                          {isEditing ? '저장' : '수정'}
+                      </EditButton>
+                      <DeleteButton onClick={handleDelete}>삭제</DeleteButton>
+                  </div>
+              )}
+          </PostHeader>
+          {isEditing ? (
+            <>
+                <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
                 />
-                <CommentButton onClick={(e) => handleComment(e)}>댓글 작성</CommentButton>
-                <CommentList>
-                  {renderComments(comments)}
-                </CommentList>
-                <PaginationContainer>
-                  {[...Array(totalPages).keys()].map(number => (
-                    <PageButton
-                      key={number}
-                      active={currentPage === number + 1}
-                      onClick={() => loadComments(number + 1)}
-                    >
-                      {number + 1}
-                    </PageButton>
-                  ))}
-                </PaginationContainer>
-              </CommentSection>
-            </ModalContent>
-          </Modal>
-        )}
+                <ImageLabel onClick={(e) => e.stopPropagation()}>
+                    🖼️ 이미지 추가
+                    <ImageInput
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageUpload}
+                        ref={fileInputRef}
+                    />
+                </ImageLabel>
+                <PostImages>
+                    {renderImages(editImages)}
+                </PostImages>
+                  <TagInput
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyPress={handleAddTag}
+                      placeholder="태그 추가 (Enter로 추가)"
+                  />
+                  <TagList>
+                      {editTags.map((tag, index) => (
+                          <Tag key={index}>{tag}</Tag>
+                      ))}
+                  </TagList>
+              </>
+          ) : (
+              <>
+                  <PostContent>{post.content}</PostContent>
+                  <PostImages>
+                      {renderImages(post.thumbnails)}
+                  </PostImages>
+                  <TagList>
+                      {post.tags && post.tags.map((tag, index) => (
+                          <Tag key={index}>{tag}</Tag>
+                      ))}
+                  </TagList>
+              </>
+          )}
+          <PostActions>
+              <ActionButton onClick={handleLike}>
+                  {post.liked ? '❤️' : '🤍'} {post.toriBoxCount}
+              </ActionButton>
+              <ActionButton>💬 {post.commentCount}</ActionButton>
+              <ActionButton onClick={handleBookmark}>
+                  {post.bookmarked ? '🔖' : '🏷️'} {post.bookmarkCount}
+              </ActionButton>
+          </PostActions>
+          {isDetailView && (
+              <Modal onClick={() => setIsDetailView(false)}>
+                  <ModalContent onClick={(e) => e.stopPropagation()}>
+                      <CloseButton onClick={() => setIsDetailView(false)}>&times;</CloseButton>
+                      <h2>{post.nickName}의 게시글</h2>
+                      <p>{post.content}</p>
+                      <PostImages>
+                          {renderImages(post.thumbnails)}
+                      </PostImages>
+                      <TagList>
+                          {post.tags && post.tags.map((tag, index) => (
+                              <Tag key={index}>{tag}</Tag>
+                          ))}
+                      </TagList>
+                      <PostActions>
+                          <ActionButton onClick={handleLike}>
+                              {post.liked ? '❤️' : '🤍'} {post.toriBoxCount}
+                          </ActionButton>
+                          <ActionButton>💬 {post.commentCount}</ActionButton>
+                          <ActionButton onClick={handleBookmark}>
+                              {post.bookmarked ? '🔖' : '🏷️'} {post.bookmarkCount}
+                          </ActionButton>
+                      </PostActions>
+
+                      {/* 댓글 섹션 */}
+                      <CommentSection>
+                          <h3>댓글</h3>
+                          <CommentInput
+                              value={commentContent}
+                              onChange={(e) => setCommentContent(e.target.value)}
+                              placeholder="댓글을 입력하세요..."
+                          />
+                          <CommentButton onClick={(e) => handleComment(e)}>댓글 작성</CommentButton>
+                          <CommentList>
+                              {renderComments(comments)}
+                          </CommentList>
+                          <PaginationContainer>
+                              {[...Array(totalPages).keys()].map(number => (
+                                  <PageButton
+                                      key={number}
+                                      active={currentPage === number + 1}
+                                      onClick={() => loadComments(number + 1)}
+                                  >
+                                      {number + 1}
+                                  </PageButton>
+                              ))}
+                          </PaginationContainer>
+                      </CommentSection>
+                  </ModalContent>
+              </Modal>
+          )}
       </PostItemContainer>
-    );
-  }
+  );
+}

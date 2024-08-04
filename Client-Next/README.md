@@ -35,6 +35,7 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 
+
 ```
 Client-Next
 ├─ .eslintrc.json
@@ -108,6 +109,9 @@ Client-Next
 │  └─ todo
 │     ├─ components
 │     │  ├─ AddTodo.js
+│     │  ├─ Calendar.js
+│     │  ├─ css
+│     │  │  └─ Calendar.module.css
 │     │  └─ todo.js
 │     ├─ models
 │     │  └─ todoModels.js
