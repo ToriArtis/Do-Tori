@@ -46,12 +46,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 공개 접근 허용 경로
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/images", "/api/images/").permitAll()
+                        .requestMatchers("/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll() // 이 줄을 추가
                         .requestMatchers(HttpMethod.GET, "/posts", "/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "post/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "todo/**").permitAll()
-                        .requestMatchers("/error").permitAll() // 에러 페이지 접근 허용
+                        .requestMatchers("/error").permitAll()
                         // 이 외엔 인증 필요
                         .anyRequest().authenticated()
                 )

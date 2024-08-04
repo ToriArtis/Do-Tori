@@ -233,7 +233,6 @@ public class PostService {
                     file.transferTo(new File(filePath));
                     // 썸네일 엔티티 생성 및 설정
                     PostThumbnail postThumbnail = new PostThumbnail(fileName);
-                    postThumbnail.setPost(post);
                     thumbnails.add(postThumbnail);
                 }
             }
@@ -451,6 +450,11 @@ public class PostService {
         postDTO.setToriBoxCount(postLikeService.countLikes(post.getPid()));
         postDTO.setBookmarkCount((long) bookmarkRepository.countByPost(post));
         postDTO.setCommentCount(commentRepository.countByPost(post));
+        // 썸네일 정보 설정
+        postDTO.setThumbnails(post.getThumbnails().stream()
+                .map(PostThumbnail::getThumbnail)
+                .collect(Collectors.toList()));
+
 
         // 로그인한 사용자인 경우에만 좋아요와 북마크 여부 설정
         if (loginAuth != null) {
