@@ -43,6 +43,7 @@ export default function SettingView() {
 
     // 프로필 업데이트
     updateProfile(updates)
+    window.location.reload();
 
   };
 
