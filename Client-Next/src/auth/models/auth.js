@@ -65,6 +65,7 @@ class Auth {
   export {
     Auth,
     isValidEmail,
+    createAuth,
     isValidPassword,
     loginAuth,
     authToPlainObject

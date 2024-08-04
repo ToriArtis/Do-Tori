@@ -42,6 +42,10 @@ export default function ProfileView() {
     e.preventDefault();
     await updateProfile(values);
     setIsModalOpen(false);
+
+    // 프로필 업데이트 후 페이지 새로고침
+  // 이렇게 하면 헤더 컴포넌트 등에서 변경된 닉네임을 즉시 반영할 수 있습니다.
+  window.location.reload();
   };
 
   return (

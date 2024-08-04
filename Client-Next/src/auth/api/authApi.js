@@ -1,7 +1,3 @@
-// 암호화
-import CryptoJS from 'crypto-js';
-const secretKey = 'Dotoriserver0802encryptionkey000';
-
 // app-config.js 파일에서 API_BASE_URL을 가져옵니다.
 import { API_BASE_URL, ACCESS_TOKEN } from "../../config/app-config";
 
@@ -58,18 +54,80 @@ export function call(api, method, request) {
     });
 }
 
+// 회원가입 
+export async function signup(authDTO) {
+  try {
+    const response = await call("/auth", "POST", authDTO);
+    
+    // console.log("회원가입 성공:", response);
+    if (response && response.email) {
+      alert("회원가입이 성공적으로 완료되었습니다.");
+      window.location.href = "/login";
+    } else {
+      alert("회원가입에 실패했습니다. 다시 시도해 주세요.");
+      // 에러 메시지가 있다면 표시
+      if (response && response.message) {
+      }
+    }
+  } catch (error) {
+    alert("회원가입 실패 했습니다. 다시 시도해 주세요.", error);
+  }
+}
+
 // 사용자 정보 조회
 export function info() {
   return call("/auth", "GET");
 }
 
 // 사용자 정보 수정
+export function modify(authDTO){
+  return call("/auth", "PUT", authDTO);
+}
 
-export function modify(authDTO) {
-  const encryptedData = CryptoJS.AES.encrypt(JSON.stringify(authDTO), secretKey, {
-    mode: CryptoJS.mode.ECB,
-    padding: CryptoJS.pad.Pkcs7
-  }).toString();
-  console.log("Encrypted data:", encryptedData);
-  return call("/auth/update", "POST", { encryptedData });
+// 비밀번호 찾기
+export async function passwordFind(authDTO) {
+  try {
+    const response = await call("/auth/find", "POST", authDTO);
+    
+    if (response === true) {
+      alert("비밀번호 재설정 이메일이 성공적으로 발송되었습니다.");
+      // 1초 후에 로그인 페이지로 리다이렉트
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 1000);
+    } else {
+      alert("비밀번호 찾기에 실패했습니다. 입력한 정보를 확인해 주세요.");
+      return false;
+    }
+  } catch (error) {
+    alert("비밀번호 찾기 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.");
+    return false;
+  }
+}
+
+// 이메일 찾기
+export async function emailFind(phone) {
+  try {
+    const response = await call("/auth/findemail", "POST", { phone });
+  
+    if (response && response.email) {
+      return { success: true, email: response.email };
+    } else {
+      return { success: false, message: '이메일을 찾지 못했습니다.' };
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 회원탈퇴
+export async function deleteUser() {
+  try {
+    // console.log("deleteUser");
+    const response = await call("/auth", "POST");
+    return !!response; // response가 truthy면 true, falsy면 false 반환
+  } catch (error) {
+    // console.error("Error deleting user:", error);
+    return false;
+  }
 }

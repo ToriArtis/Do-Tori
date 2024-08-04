@@ -4,59 +4,68 @@ import { API_BASE_URL } from "../../config/app-config";
 const ACCESS_TOKEN = "ACCESS_TOKEN";
 const USER_NICKNAME = "USER_NICKNAME";
 const USER_EMAIL ="USER_EMAIL";
-const authInfo = "authInfo";
 
 // 로그인
 export async function login(authDTO) {
+  console.log('Login attempt with:', authDTO);
   
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
 
-    const raw = JSON.stringify({
-      "email": authDTO.email,
-      "password": authDTO.password
-    });
+  const raw = JSON.stringify({
+    "email": authDTO.email,
+    "password": authDTO.getPassword
+  });
 
-    const requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow"
-    };
-  
-    try {
-      const response = await fetch(API_BASE_URL + "/auth/login", requestOptions);
-      
-      if (!response.ok) {
-        // HTTP 오류 상태 처리 (400, 401, 403 등)
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-  
-      const result = await response.json();
-      // console.log("로그인 성공:", result);
-  
-      if (result.accessToken) {
-        localStorage.setItem(ACCESS_TOKEN, result.accessToken);
-        localStorage.setItem(USER_NICKNAME, result.nickName);
-        localStorage.setItem(USER_EMAIL, result.email);
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: raw,
+    redirect: "follow"
+  };
+
+  try {
+    const response = await fetch(API_BASE_URL + "/auth/login", requestOptions);
+    console.log('Login response:', response);
     
-        if(result.refreshToken) localStorage.setItem("REFRESH_TOKEN", result.refreshToken);
-        if(result.provider) localStorage.setItem("PROVIDER", result.provider);
+    const responseData = await response.text();
+    console.log('Raw response:', responseData);
 
-        if(window.history.back() === '/logout') window.location.href = "/";
-        else window.history.back();
-        
-      } else {
-        throw new Error("토큰이 없습니다.");
+    if (!response.ok) {
+      let errorMessage;
+      try {
+        const errorData = JSON.parse(responseData);
+        errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+      } catch {
+        errorMessage = `HTTP error! status: ${response.status}`;
       }
-  
-      return result;
-    } catch (error) {
-      // console.error("로그인 오류:", error);
-      throw error;  // 오류를 상위로 전파하여 컴포넌트에서 처리할 수 있게 함
+      throw new Error(errorMessage);
     }
+
+    const result = JSON.parse(responseData);
+    console.log("Login success:", result);
+
+    if (result.accessToken) {
+      localStorage.setItem(ACCESS_TOKEN, result.accessToken);
+      localStorage.setItem(USER_NICKNAME, result.nickName);
+      localStorage.setItem(USER_EMAIL, result.email);
+  
+      if(result.refreshToken) localStorage.setItem("REFRESH_TOKEN", result.refreshToken);
+      if(result.provider) localStorage.setItem("PROVIDER", result.provider);
+
+      if(window.history.back() === '/logout') window.location.href = "/";
+      else window.history.back();
+      
+    } else {
+      throw new Error("토큰이 없습니다.");
+    }
+
+    return result;
+  } catch (error) {
+    console.error("로그인 오류:", error);
+    throw error;
   }
+}
   
   // 로그아웃 함수
   export function logout() {
@@ -64,7 +73,6 @@ export async function login(authDTO) {
       localStorage.removeItem(ACCESS_TOKEN);
       localStorage.removeItem(USER_NICKNAME);
       localStorage.removeItem(USER_EMAIL);
-      localStorage.removeItem(authInfo);
       localStorage.removeItem("PROVIDER");
       window.location.href = "/login";
     }

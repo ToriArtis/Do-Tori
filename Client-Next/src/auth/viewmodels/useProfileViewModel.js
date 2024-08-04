@@ -28,6 +28,10 @@ export function useProfileViewModel() {
       const updatedAuth = { ...authInfo, ...updatedInfo };
       await modify(updatedAuth);
       setAuthInfo(updatedAuth);
+       // 로컬 스토리지 업데이트
+       if (updatedInfo.nickName) {
+        localStorage.setItem('USER_NICKNAME', updatedInfo.nickName);
+      }
     } catch (err) {
       setError('Failed to update profile');
     }
