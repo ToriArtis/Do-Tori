@@ -150,3 +150,8 @@ export function fetchPopularPosts() {
       throw error;
     });
 }
+
+// 게시글 검색 함수
+export function searchPosts(types, keyword) {
+  return call(`/posts/search?types=${types.join(',')}&keyword=${keyword}`, "GET");
+}

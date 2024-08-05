@@ -215,10 +215,9 @@ const ImageLabel = styled.label`
 
 const TagInput = styled.input`
   margin-top: 10px;
-  width: 100%;
   padding: 5px;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 3px;
 `;
 
 const TagList = styled.div`
@@ -230,8 +229,36 @@ const TagList = styled.div`
 
 const Tag = styled.span`
   background-color: #e0e0e0;
-  padding: 2px 5px;
+  padding: 5px 10px;
+  margin-right: 5px;
+  margin-bottom: 5px;
   border-radius: 3px;
+  display: flex;
+  align-items: center;
+`;
+
+const TagContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+`;
+
+const DeleteTagButton = styled.button`
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  &:hover {
+    background-color: #d32f2f;
+  }
 `;
 
 // 기본 아바타 SVG 컴포넌트
@@ -264,6 +291,10 @@ export default function PostItem({ post, onPostUpdated, onLike, onBookmark, onCo
     const [deletedThumbnails, setDeletedThumbnails] = useState([]);
     const [anchorEl, setAnchorEl] = useState(null);
 
+    const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(0);
+    const [size, setSize] = useState(10);
+
     const isCurrentUser = post.aid === post.currentUserAid; // 백엔드에서 제공하는 currentUserAid 사용
 
     const handleMenuOpen = (event) => {
@@ -286,7 +317,7 @@ const handleSaveEdit = async () => {
     formData.append('postDTO', JSON.stringify({
       pid: post.pid,
       content: editContent,
-      tags: editTags
+      tags: editTags // 수정된 태그 배열 포함
     }));
     
     // 유지할 기존 이미지
@@ -362,7 +393,7 @@ const handleSaveEdit = async () => {
     // 댓글 불러오기
     useEffect(() => {
       if (isDetailView) {
-        loadComments(1);
+        loadComments();
       }
       const userId = localStorage.getItem('USER_ID');
       const userNickName = localStorage.getItem('USER_NICKNAME');
@@ -371,13 +402,12 @@ const handleSaveEdit = async () => {
     }, [isDetailView, post.pid]);
     
     // 댓글 로딩 함수
-    const loadComments = async (page) => {
+    const loadComments = async () => {
       try {
-        const response = await fetchComments(post.pid, { page: page - 1, size: 10 });
+        const response = await fetchComments(post.pid, { page: 0, size: 10 });
         if (response && response.postLists) {
           setComments(response.postLists);
-          setTotalPages(response.totalPages || 1);
-          setCurrentPage(page);
+          setHasMore(response.commentCount > 10);
         } else {
           console.error('Invalid comments response:', response);
         }
@@ -385,6 +415,22 @@ const handleSaveEdit = async () => {
         console.error('댓글 로딩 실패:', error);
       }
     };
+
+    // 댓글 더보기 핸들러
+  const handleLoadMore = async () => {
+    try {
+      const response = await fetchComments(post.pid, { page: page + 1, size: size });
+      if (response && response.postLists) {
+        setComments(prevComments => [...prevComments, ...response.postLists]);
+        setPage(prevPage => prevPage + 1);
+        setHasMore(response.postLists.length === size);
+      } else {
+        console.error('Invalid comments response:', response);
+      }
+    } catch (error) {
+      console.error('댓글 더보기 실패:', error);
+    }
+  };
 
     // 댓글 작성 핸들러
     const handleComment = async (e) => {
@@ -436,11 +482,11 @@ const handleReply = async (e, parentId) => {
       }
     };
     // 댓글 렌더링 함수 (대댓글 포함)
-    const renderComments = (commentList, parentId = null, depth = 0) => {
+    const renderComments = (commentList, parentId = null) => {
       return commentList
         .filter(comment => comment.parentId === parentId)
         .map(comment => (
-          <CommentItem key={comment.id} isReply={depth > 0} style={{ marginLeft: `${depth * 20}px` }}>
+          <CommentItem key={comment.id} isReply={parentId !== null}>
             <CommentHeader>
               <CommentAuthor>{comment.nickName}</CommentAuthor>
               <CommentDate>{formatDate(comment.regDate)}</CommentDate>
@@ -450,23 +496,25 @@ const handleReply = async (e, parentId) => {
               {currentUser && currentUser.id.toString() === comment.aid.toString() && (
                 <DeleteButton onClick={() => handleDeleteComment(comment.id)}>삭제</DeleteButton>
               )}
-              {!comment.parentId && (
+              {!parentId && ( // 부모 댓글에만 답글 버튼 표시
                 <ReplyButton onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}>
                   {replyingTo === comment.id ? '답글 취소' : '답글'}
                 </ReplyButton>
               )}
             </CommentActions>
             {replyingTo === comment.id && (
-              <ReplyForm onSubmit={(e) => handleReply(e, comment.id)}>
+              <ReplyForm>
                 <CommentInput
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                   placeholder="답글을 입력하세요..."
                 />
-                <CommentButton type="submit">답글 작성</CommentButton>
+                <CommentButton onClick={(e) => handleReply(e, comment.id)}>
+                  답글 작성
+                </CommentButton>
               </ReplyForm>
             )}
-            {renderComments(commentList, comment.id, depth + 1)}
+            {renderComments(commentList, comment.id)} {/* 대댓글 렌더링 */}
           </CommentItem>
         ));
     };
@@ -525,9 +573,15 @@ const handleReply = async (e, parentId) => {
     // 태그 추가 핸들러
     const handleAddTag = (e) => {
       if (e.key === 'Enter' && newTag.trim() !== '') {
-        setEditTags([...editTags, newTag.trim()]);
+        if (!editTags.includes(newTag.trim())) {
+          setEditTags([...editTags, newTag.trim()]);
+        }
         setNewTag('');
       }
+    };
+
+    const handleDeleteTag = (tagToDelete) => {
+      setEditTags(editTags.filter(tag => tag !== tagToDelete));
     };
   
     // 렌더링
@@ -566,7 +620,7 @@ const handleReply = async (e, parentId) => {
                 <PostImages>
                     {renderImages(editImages)}
                 </PostImages>
-                  <TagInput
+                <TagInput
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyPress={handleAddTag}
@@ -584,41 +638,20 @@ const handleReply = async (e, parentId) => {
                   <PostImages>
                       {renderImages(post.thumbnails)}
                   </PostImages>
-                  <TagList>
-                      {post.tags && post.tags.map((tag, index) => (
-                          <Tag key={index}>{tag}</Tag>
-                      ))}
-                  </TagList>
+                  <TagContainer>
+                    {post.tags && post.tags.map((tag, index) => (
+                      <Tag key={index}>{tag}</Tag>
+                    ))}
+                  </TagContainer>
               </>
           )}
-        {/* <PostImages>
-          {post.thumbnails && post.thumbnails.map((thumbnail, index) => {
-            console.log("Loading image:", `${API_BASE_URL}/api/images/${thumbnail}`);
-            return (
-              <PostImage
-                key={index}
-                src={`${API_BASE_URL}/api/images/${thumbnail}`}
-                alt={`Thumbnail ${index + 1}`}
-                onError={(e) => {
-                  console.error("Image load error:", e.target.src);
-                  e.target.src = placeholderImage;
-                }}
-              />
-            );
-          })}
-        </PostImages> */}
-        {/* <TagList>
-          {post.tags && post.tags.map((tag, index) => (
-              <Tag key={index}>{tag}</Tag>
-          ))}
-        </TagList> */}
         <PostActions>
           <ActionButton onClick={handleLike}>
             {post.liked ? '❤️' : '🤍'} {post.toriBoxCount}
           </ActionButton>
           <ActionButton>💬 {post.commentCount}</ActionButton>
           <ActionButton onClick={handleBookmark}>
-            {post.bookmarked ? '🔖' : '🏷️'} {post.bookmarkCount}
+            {post.bookmarked ? '🏷️' : '🔖'} {post.bookmarkCount}
           </ActionButton>
         </PostActions>
         {isDetailView && (
@@ -656,7 +689,7 @@ const handleReply = async (e, parentId) => {
                 </ActionButton>
                 <ActionButton>💬 {post.commentCount}</ActionButton>
                 <ActionButton onClick={handleBookmark}>
-                  {post.bookmarked ? '🔖' : '🏷️'} {post.bookmarkCount}
+                  {post.bookmarked ? '🏷️' : '🔖'} {post.bookmarkCount}
                 </ActionButton>
               </PostActions>
     
@@ -674,6 +707,9 @@ const handleReply = async (e, parentId) => {
               <CommentList>
                 {renderComments(comments)}
               </CommentList>
+              {hasMore && (
+                <button onClick={handleLoadMore}>더보기</button>
+              )}
               <PaginationContainer>
                 {[...Array(totalPages).keys()].map(number => (
                   <PageButton
@@ -722,17 +758,26 @@ const handleReply = async (e, parentId) => {
                   </div>
                 ))}
               </PostImages>
-              <TagInput
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                onKeyPress={handleAddTag}
-                placeholder="태그 추가 (Enter로 추가)"
-              />
-              <TagList>
-                {editTags.map((tag, index) => (
-                  <Tag key={index}>{tag}</Tag>
-                ))}
-              </TagList>
+              <TagContainer>
+                  {editTags.map((tag, index) => (
+                    <React.Fragment key={index}>
+                      <Tag>{tag}</Tag>
+                      <DeleteTagButton onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTag(tag);
+                      }}>
+                        X
+                      </DeleteTagButton>
+                    </React.Fragment>
+                  ))}
+                </TagContainer>
+                <TagInput
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyPress={handleAddTag}
+                  placeholder="새 태그 추가 (Enter로 추가)"
+                  onClick={(e) => e.stopPropagation()}
+                />
               <button onClick={handleSaveEdit}>저장</button>
               <button onClick={handleCancelEdit}>취소</button>
             </ModalContent>
