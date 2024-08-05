@@ -1,5 +1,5 @@
 import React from 'react';
-import PostItem from './PostItem'; 
+import PostItem from './postItem'; 
 
 export default function PopularPosts({ posts }) {
     return (

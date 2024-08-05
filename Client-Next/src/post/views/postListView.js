@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost } from '../api/postApi';
 import PostCreateBox from '../components/postCreateBox';
-import PostItem from '../components/PostItem';
+import PostItem from '../components/postItem';
 import PopularPosts from '../components/popularPosts';
 import Sidebar from '../../components/Sidebar';
 
@@ -49,43 +49,44 @@ export default function PostListView() {
     };
 
     useEffect(() => {
+        const userId = localStorage.getItem('USER_ID');
+        const userNickName = localStorage.getItem('USER_NICKNAME');
+        setCurrentUser(userId ? { id: userId, nickName: userNickName } : null);
+    
         loadPosts();
         loadPopularPosts();
-        // 현재 사용자 정보 가져오기
-        const userEmail = localStorage.getItem('USER_EMAIL');
-        setCurrentUser(userEmail ? { email: userEmail } : null);
-    }, []);
+    
+        const intervalId = setInterval(() => {
+          loadPopularPosts();
+        }, 10000);
+    
+        return () => clearInterval(intervalId);
+      }, []);
 
-        const handleLike = async (postId, isLiked) => {
-        try {
-            await likePost(postId);
-            setPosts(posts.map(post => 
-                post.pid === postId 
-                    ? { ...post, liked: isLiked, toriBoxCount: post.toriBoxCount + (isLiked ? 1 : -1) }
-                    : post
-            ));
-        } catch (error) {
-            console.error('좋아요 처리 실패:', error);
-        }
+    const handleLike = async (postId, isLiked, likeCount) => {
+        setPosts(posts.map(post => 
+            post.pid === postId 
+                ? { ...post, liked: isLiked, toriBoxCount: likeCount }
+                : post
+        ));
     };
 
-    const handleBookmark = async (postId, isBookmarked) => {
-        try {
-            await bookmarkPost(postId);
-            setPosts(posts.map(post => 
-                post.pid === postId 
-                    ? { ...post, bookmarked: isBookmarked, bookmarkCount: post.bookmarkCount + (isBookmarked ? 1 : -1) }
-                    : post
-            ));
-        } catch (error) {
-            console.error('북마크 처리 실패:', error);
-        }
+    const handleBookmark = async (postId, isBookmarked, bookmarkCount) => {
+        setPosts(posts.map(post => 
+            post.pid === postId 
+                ? { ...post, bookmarked: isBookmarked, bookmarkCount: bookmarkCount }
+                : post
+        ));
     };
 
     const handleComment = (postId, content) => {
         // 여기에 댓글 작성 API 호출 로직을 추가하세요
         console.log(`댓글 작성: 게시글 ID ${postId}, 내용: ${content}`);
     };
+
+    const onPostUpdated = useCallback(() => {
+        loadPosts();
+      }, []);
 
     return (
         <PostListViewContainer>
@@ -94,16 +95,16 @@ export default function PostListView() {
                 onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
             />
             <MainContent>
-                {currentUser && <PostCreateBox onPostCreated={loadPosts} />}
+                <PostCreateBox onPostCreated={loadPosts} />
                 {posts.map((post) => (
                     <PostItem 
                         key={post.pid} 
                         post={post} 
-                        isCurrentUser={currentUser && currentUser.email === post.email}
-                        onPostUpdated={loadPosts}
+                        onPostUpdated={onPostUpdated}
                         onLike={handleLike}
                         onBookmark={handleBookmark}
                         onComment={handleComment}
+                        currentUser={currentUser}
                     />
                 ))}
             </MainContent>

@@ -105,7 +105,53 @@ const Tag = styled.span`
   border-radius: 3px;
 `;
 
+const CharacterCounter = styled.div`
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+`;
 
+const CharacterCounterSvg = styled.svg`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px; /* stroke-width의 영향을 고려하여 4px을 추가 */
+  height: 44px; /* stroke-width의 영향을 고려하여 4px을 추가 */
+  transform: rotate(-90deg);
+`;
+
+const CharacterCounterCircle = styled.circle`
+  fill: none;
+  stroke: #f0f0f0;
+  stroke-width: 4;
+  cx: 22;
+  cy: 22;
+  r: 20;
+`;
+
+const CharacterCounterFillCircle = styled.circle`
+  fill: none;
+  stroke: black;
+  stroke-width: 4;
+  cx: 22;
+  cy: 22;
+  r: 20;
+  stroke-dasharray: 126; /* 2 * Math.PI * radius (2 * 3.14 * 20) */
+  stroke-dashoffset: ${props => 126 - (props.percentage / 100) * 126};
+  transition: stroke-dashoffset 0.3s ease;
+`;
+
+const CharacterCountText = styled.span`
+  position: relative;
+  z-index: 1;
+  font-size: 12px;
+`;
+
+const MAX_CHARACTERS = 500; // 최대 글자 수
 
 const PostCreateBox = ({ onPostCreated }) => {
   const [content, setContent] = useState('');
@@ -114,11 +160,18 @@ const PostCreateBox = ({ onPostCreated }) => {
   const [tags, setTags] = useState([]);
   const [newTag, setNewTag] = useState('');
   const fileInputRef = useRef(null);
+  const [characterCount, setCharacterCount] = useState(0);
 
   useEffect(() => {
     const userNickName = localStorage.getItem('USER_NICKNAME');
     setNickName(userNickName || '익명');
   }, []);
+
+  useEffect(() => {
+    setCharacterCount(content.length);
+  }, [content]);
+
+  const getPercentage = () => (characterCount / MAX_CHARACTERS) * 100;
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -131,7 +184,7 @@ const PostCreateBox = ({ onPostCreated }) => {
 
   const handleAddTag = (e) => {
     if (e.key === 'Enter' && newTag.trim() !== '') {
-      setTags([...tags, newTag.trim()]);
+      setTags(prevTags => [...prevTags, newTag.trim()]); // 배열에 문자열만 추가
       setNewTag('');
     }
   };
@@ -148,7 +201,9 @@ const PostCreateBox = ({ onPostCreated }) => {
       images.forEach(image => {
         formData.append('files', image);
       });
-      formData.append('tags', JSON.stringify(tags));
+      tags.forEach(tag => {
+        formData.append('tags', tag); // 각 태그를 개별적으로 추가
+      });
       await createPost(formData);
       setContent('');
       setImages([]);
@@ -178,8 +233,20 @@ const PostCreateBox = ({ onPostCreated }) => {
       <TextArea 
         placeholder="무슨 일이 있나요?"
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e) => {
+          if (e.target.value.length <= MAX_CHARACTERS) {
+            setContent(e.target.value);
+          }
+        }}
+        maxLength={MAX_CHARACTERS}
       />
+      <CharacterCounter>
+        <CharacterCounterSvg viewBox="0 0 44 44">
+          <CharacterCounterCircle />
+          <CharacterCounterFillCircle percentage={getPercentage()} />
+        </CharacterCounterSvg>
+        <CharacterCountText>{characterCount}</CharacterCountText>
+      </CharacterCounter>
       <ImagePreviewContainer>
         {images.map((image, index) => (
           <ImagePreview key={index} src={URL.createObjectURL(image)} alt={`Preview ${index}`} />
