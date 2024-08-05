@@ -27,7 +27,7 @@ public class Post{
     private Long pid;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "auth_email", referencedColumnName = "email")
+    @JoinColumn(name = "auth_id")
     private Auth auth;
 
     @Column(name = "nickName")
@@ -60,6 +60,7 @@ public class Post{
 
     // cascade 추가하여 연관된 엔티티 먼저 삭제
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
     public void changePost(String content, LocalDateTime modDate, List<PostThumbnail> thumbnails) {

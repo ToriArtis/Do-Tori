@@ -1,6 +1,5 @@
 package com.dotori.dotori.post.service;
 
-import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.auth.repository.AuthRepository;
 import com.dotori.dotori.post.dto.ToriBoxDTO;
 import com.dotori.dotori.post.entity.Post;
@@ -24,33 +23,33 @@ public class PostLikeService {
     // 특정 사용자가 게시글에 좋아요를 눌렀는지 확인
     public boolean isLikedByUser(Long pid, Long aid) {
         Post post = postRepository.findById(pid)
-                .orElseThrow(() -> new RuntimeException("Not Found post id :" + pid));
+                .orElseThrow(() -> new RuntimeException("Post not found"));
         return toriBoxRepository.findByAidAndPost(aid, post).isPresent();
     }
 
     // 특정 사용자가 게시글을 북마크했는지 확인
-    public boolean isBookmarkedByUser(String email, Long postId) {
+    public boolean isBookmarkedByUser(Long authId, Long postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Not Found post id :" + postId));
-        return bookmarkRepository.findByAuthEmailAndPost(email, post).isPresent();
+                .orElseThrow(() -> new RuntimeException("Not Found post id: " + postId));
+        return bookmarkRepository.findByAuth_IdAndPost(authId, post).isPresent();
     }
 
     // 게시글의 좋아요 개수 조회
     public Long countLikes(Long pid) {
         Post post = postRepository.findById(pid)
-                .orElseThrow(() -> new RuntimeException("Not Found post id :" + pid));
+                .orElseThrow(() -> new RuntimeException("Post not found"));
         return (long) toriBoxRepository.countByPost(post);
     }
 
     // 게시글 좋아요 토글 기능
     public boolean toriBoxPost(ToriBoxDTO toriBoxDTO) {
-        Auth auth = authRepository.findById(toriBoxDTO.getAid())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+//        Auth auth = authRepository.findById(toriBoxDTO.getAid())
+//                .orElseThrow(() -> new RuntimeException("User not found"));
         Post post = postRepository.findById(toriBoxDTO.getPid())
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         // 사용자와 게시글로 기존의 좋아요 조회
-        Optional<ToriBox> existingLike = toriBoxRepository.findByAidAndPost(auth.getId(), post);
+        Optional<ToriBox> existingLike = toriBoxRepository.findByAidAndPost(toriBoxDTO.getAid(), post);
 
         if (existingLike.isPresent()) {
             // 이미 좋아요가 존재하면 좋아요 취소
@@ -60,8 +59,7 @@ public class PostLikeService {
             // 좋아요가 없으면 새로운 좋아요 생성 및 저장
             ToriBox toriBox = ToriBox.builder()
                     .post(post)
-                    .pid(post.getPid())
-                    .aid(auth.getId())
+                    .aid(toriBoxDTO.getAid())
                     .build();
             toriBoxRepository.save(toriBox);
             return true;

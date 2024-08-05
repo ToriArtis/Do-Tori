@@ -4,7 +4,9 @@ import com.dotori.dotori.auth.entity.Auth;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +26,8 @@ public class Comment {
     @ManyToOne(fetch = FetchType.LAZY)
     private Post post;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "aid")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "auth_id")
     private Auth auth;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -38,6 +40,12 @@ public class Comment {
 
     @NotNull
     private String content;
+
+    private String nickName;
+
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime regDate;
 
     public void setPost(Post post) {
         this.post = post;

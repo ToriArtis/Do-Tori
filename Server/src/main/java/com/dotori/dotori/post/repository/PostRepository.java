@@ -25,7 +25,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostSearch {
             "GROUP BY p.pid ORDER BY COUNT(t.id) DESC")
     Page<Post> findTopPostsByToriBoxCount(Pageable pageable);
 
-    List<Post> findByAuth_Email(String email);
+    List<Post> findByAuth_Id(Long authId);
 
     List<Post> findByAuthIdIn(List<Long> userIds);
 

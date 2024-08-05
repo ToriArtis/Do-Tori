@@ -116,10 +116,9 @@ public class PostService {
         post.setNickName(auth.getNickName());
 
         // 태그 처리
-        List<String> tagNames = postDTO.getTags();
-        if (tagNames != null && !tagNames.isEmpty()) {
+        if (postDTO.getTags() != null && !postDTO.getTags().isEmpty()) {
             // 태그 이름 리스트를 Tag 엔티티 리스트로 변환
-            List<Tag> tags = tagNames.stream()
+            List<Tag> tags = postDTO.getTags().stream()
                     .map(tagName -> tagRepository.findByName(tagName)
                             .orElseGet(() -> tagRepository.save(new Tag(null, tagName, new ArrayList<>())))
                     )
@@ -145,33 +144,33 @@ public class PostService {
 
     // 특정 게시글 조회 (로그인하지 않은 사용자도 조회 가능)
     public PostDTO getPost(Long id) {
-        Post result = postRepository.findById(id)
+        Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
-        Auth loginAuth = getLoginUser(); // null일 수 있음
-        return convertToPostDTO(result, loginAuth);
+        PostDTO postDTO = modelMapper.map(post, PostDTO.class);
+        postDTO.setThumbnails(post.getThumbnails().stream()
+                .map(PostThumbnail::getThumbnail)
+                .collect(Collectors.toList()));
+        return postDTO;
     }
+
     // 게시글 수정
-    public void modifyPost(PostDTO postDTO, List<MultipartFile> files, List<String> deletedThumbnails) throws Exception {
-        Auth auth = getLoginUser();
+    public void modifyPost(PostDTO postDTO, List<MultipartFile> newFiles, List<String> retainedImages, List<String> deletedThumbnails) throws Exception {
         Post post = postRepository.findById(postDTO.getPid())
                 .orElseThrow(() -> new Exception("Not Found post id: " + postDTO.getPid()));
 
-        // 기본 필드 매핑
         post.setContent(postDTO.getContent());
-
-        // 닉네임 업데이트
-        if (!post.getNickName().equals(auth.getNickName())) {
-            post.setNickName(auth.getNickName());
-        }
 
         // 삭제된 썸네일 처리
         if (deletedThumbnails != null && !deletedThumbnails.isEmpty()) {
             post.getThumbnails().removeIf(thumbnail -> deletedThumbnails.contains(thumbnail.getThumbnail()));
         }
 
+        // 유지할 이미지만 남기기
+        post.getThumbnails().removeIf(thumbnail -> !retainedImages.contains(thumbnail.getThumbnail()));
+
         // 새 파일 추가
-        if (files != null && !files.isEmpty()) {
-            List<PostThumbnail> thumbnails = uploadImages(files, post);
+        if (newFiles != null && !newFiles.isEmpty()) {
+            List<PostThumbnail> thumbnails = uploadImages(newFiles, post);
             post.getThumbnails().addAll(thumbnails);
         }
 
@@ -223,6 +222,10 @@ public class PostService {
                     String fileName = System.currentTimeMillis() + "_" + originalName;
                     // 저장 경로 설정 (절대 경로 사용)
                     String savePath = System.getProperty("user.home") + "/dotori/images/";
+
+                    // 로그 추가
+                    log.info("Image save path: " + savePath);
+
                     // 폴더 없으면 생성
                     File saveDir = new File(savePath);
                     if (!saveDir.exists()) {
@@ -231,8 +234,13 @@ public class PostService {
                     // 파일 저장
                     String filePath = savePath + fileName;
                     file.transferTo(new File(filePath));
+
+                    // 로그 추가
+                    log.info("Image saved at: " + filePath);
+
                     // 썸네일 엔티티 생성 및 설정
                     PostThumbnail postThumbnail = new PostThumbnail(fileName);
+                    postThumbnail.setPost(post);
                     thumbnails.add(postThumbnail);
                 }
             }
@@ -257,6 +265,11 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    // 좋아요 수 조회
+    public long getLikeCount(Long postId) {
+        return postLikeService.countLikes(postId);
+    }
+
     // 북마크 기능
     // 북마크 토글
     public boolean bookmarkPost(Long postId) {
@@ -265,7 +278,7 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Not Found post id :" + postId));
 
         // 사용자와 게시글로 기존의 북마크 조회
-        Optional<Bookmark> existingBookmark = bookmarkRepository.findByAuthAndPost(auth, post);
+        Optional<Bookmark> existingBookmark = bookmarkRepository.findByAuth_IdAndPost(auth.getId(), post);
 
         if (existingBookmark.isPresent()) {
             // 이미 북마크가 존재하면 북마크 삭제
@@ -289,6 +302,13 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    // 북마크 수 조회
+    public long getBookmarkCount(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+        return bookmarkRepository.countByPost(post);
+    }
+
     // Comment 기능
     // 댓글 목록 조회
     public PageResponseDTO<CommentDTO> getListOfComment(Long postId, PageRequestDTO pageRequestDTO) {
@@ -310,25 +330,32 @@ public class PostService {
     }
 
     // 댓글 등록
-    public Long registerComment(CommentDTO commentDTO, Long postId) throws Exception {
+    public CommentDTO registerComment(CommentDTO commentDTO, Long postId) {
         Auth auth = getLoginUser();
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Not Found post id :" + postId));
+                .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        Comment comment = new Comment();
-        comment.setContent(commentDTO.getContent());
-        comment.setPost(post);
-        comment.setAuth(auth);
+        Comment comment = Comment.builder()
+                .content(commentDTO.getContent())
+                .post(post)
+                .auth(auth)
+                .nickName(auth.getNickName())
+                .regDate(LocalDateTime.now())
+                .build();
 
-        // 부모 댓글 ID가 존재하면 부모 댓글 엔티티 조회 및 설정
         if (commentDTO.getParentId() != null) {
             Comment parent = commentRepository.findById(commentDTO.getParentId())
-                    .orElseThrow(() -> new RuntimeException("Not Found parent comment id :" + commentDTO.getParentId()));
+                    .orElseThrow(() -> new RuntimeException("Parent comment not found"));
             comment.setParent(parent);
         }
 
         Comment savedComment = commentRepository.save(comment);
-        return savedComment.getId();
+
+        CommentDTO savedCommentDTO = modelMapper.map(savedComment, CommentDTO.class);
+        savedCommentDTO.setAid(auth.getId());
+        savedCommentDTO.setNickName(auth.getNickName());
+
+        return savedCommentDTO;
     }
 
     // 특정 댓글 조회
@@ -341,7 +368,7 @@ public class PostService {
 
         // 작성자 정보가 존재하면 CommentDTO에 설정
         if (comment.getAuth() != null) {
-            dto.setEmail(comment.getAuth().getEmail());
+            dto.setAid(comment.getAuth().getId());
             dto.setNickName(comment.getAuth().getNickName());
             dto.setProfileImage(comment.getAuth().getProfileImage());
         }
@@ -358,10 +385,11 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("Comment not found with id: " + id));
 
         // 대댓글이 있는 경우 모두 삭제
-        comment.getChildren().clear();
+//        comment.getChildren().clear();
+        comment.setContent("삭제된 댓글입니다.");
 
         // 댓글 삭제
-        commentRepository.delete(comment);
+        commentRepository.save(comment);
     }
 
     // Search 기능
@@ -379,19 +407,19 @@ public class PostService {
 
     // 기타 기능
     // 내가 쓴 글 모아보기
-    public List<PostDTO> getPostsByEmail() {
-        Auth auth = getLoginUser();
-        List<Post> posts = postRepository.findByAuth_Email(auth.getEmail());
-        // 조회한 게시글 리스트를 PostDTO 리스트로 변환하여 반환
+    public List<PostDTO> getPostsByAuthId(Long authId) {
+        List<Post> posts = postRepository.findByAuth_Id(authId);
+        Auth auth = authRepository.findById(authId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         return posts.stream()
                 .map(post -> convertToPostDTO(post, auth))
                 .collect(Collectors.toList());
     }
 
     // 내가 쓴 댓글 모아보기
-    public List<CommentDTO> getCommentsByEmail() {
+    public List<CommentDTO> getCommentsByAuthId() {
         Auth auth = getLoginUser();
-        List<Comment> comments = commentRepository.findByAuth(auth);
+        List<Comment> comments = commentRepository.findByAuth_Id(auth.getId());
         // 조회한 댓글 리스트를 CommentDTO 리스트로 변환하여 반환
         return comments.stream()
                 .map(this::convertToCommentDTO)
@@ -441,7 +469,7 @@ public class PostService {
 
         // 작성자 정보가 존재하면 PostDTO에 설정
         if (post.getAuth() != null) {
-            postDTO.setEmail(post.getAuth().getEmail());
+            postDTO.setAid(post.getAuth().getId());  // aid 설정
             postDTO.setNickName(post.getAuth().getNickName());
             postDTO.setProfileImage(post.getAuth().getProfileImage());
         }
@@ -455,15 +483,20 @@ public class PostService {
                 .map(PostThumbnail::getThumbnail)
                 .collect(Collectors.toList()));
 
-
         // 로그인한 사용자인 경우에만 좋아요와 북마크 여부 설정
         if (loginAuth != null) {
             postDTO.setLiked(postLikeService.isLikedByUser(post.getPid(), loginAuth.getId()));
-            postDTO.setBookmarked(postLikeService.isBookmarkedByUser(loginAuth.getEmail(), post.getPid()));
+            postDTO.setBookmarked(postLikeService.isBookmarkedByUser(loginAuth.getId(), post.getPid()));
         } else {
             // 로그인하지 않은 사용자의 경우 false로 설정
             postDTO.setLiked(false);
             postDTO.setBookmarked(false);
+        }
+
+        if (post.getThumbnails() != null && !post.getThumbnails().isEmpty()) {
+            postDTO.setThumbnails(post.getThumbnails().stream()
+                    .map(PostThumbnail::getThumbnail)
+                    .collect(Collectors.toList()));
         }
 
         // 태그 정보 처리
@@ -478,8 +511,17 @@ public class PostService {
 
     // Comment 엔티티를 CommentDTO로 변환하는 메서드
     private CommentDTO convertToCommentDTO(Comment comment) {
-        // ModelMapper를 사용하여 Comment 엔티티를 CommentDTO로 매핑
-        return modelMapper.map(comment, CommentDTO.class);
+        CommentDTO dto = modelMapper.map(comment, CommentDTO.class);
+
+        if (comment.getAuth() != null) {
+            dto.setAid(comment.getAuth().getId());
+            dto.setNickName(comment.getAuth().getNickName());
+            dto.setProfileImage(comment.getAuth().getProfileImage());
+        }
+
+        dto.setParentId(comment.getParent() != null ? comment.getParent().getId() : null);
+
+        return dto;
     }
 
 }

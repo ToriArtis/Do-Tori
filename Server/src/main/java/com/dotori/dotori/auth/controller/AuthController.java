@@ -76,6 +76,7 @@ public class AuthController {
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .nickName(auth.getNickName())
+                    .id(auth.getId())  // auth의 id 값을 추가
                     .build();
             return ResponseEntity.ok().body(responseAuthDTO);
         }
