@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost } from '../api/postApi';
+import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost, searchPosts } from '../api/postApi';
 import PostCreateBox from '../components/postCreateBox';
 import PostItem from '../components/postItem';
 import PopularPosts from '../components/popularPosts';
@@ -29,6 +29,8 @@ export default function PostListView() {
     const [popularPosts, setPopularPosts] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [searchTypes, setSearchTypes] = useState([]);
+    const [searchKeyword, setSearchKeyword] = useState('');
 
     const loadPosts = async () => {
         try {
@@ -47,6 +49,15 @@ export default function PostListView() {
             console.error("인기 게시물 로딩 중 오류 발생:", error);
         }
     };
+
+    const handleSearch = async () => {
+        try {
+          const searchResults = await searchPosts(searchTypes, searchKeyword);
+          setPosts(searchResults.content || []);
+        } catch (error) {
+          console.error("게시물 검색 중 오류 발생:", error);
+        }
+      };
 
     useEffect(() => {
         const userId = localStorage.getItem('USER_ID');
@@ -95,6 +106,24 @@ export default function PostListView() {
                 onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
             />
             <MainContent>
+            <div>
+                <input
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder="검색어를 입력하세요"
+                />
+                <select
+                multiple
+                value={searchTypes}
+                onChange={(e) => setSearchTypes(Array.from(e.target.selectedOptions, option => option.value))}
+                >
+                <option value="c">내용</option>
+                <option value="w">작성자</option>
+                <option value="t">태그</option>
+                </select>
+                <button onClick={handleSearch}>검색</button>
+            </div>
                 <PostCreateBox onPostCreated={loadPosts} />
                 {posts.map((post) => (
                     <PostItem 
