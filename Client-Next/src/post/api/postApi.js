@@ -38,15 +38,15 @@ function call(api, method, request) {
     return Promise.reject(error);
   });
 }
-// 로그인 함수
-export function signin(userDTO) {
-  return call("/auth/signin", "POST", userDTO);
-}
+// // 로그인 함수
+// export function signin(userDTO) {
+//   return call("/auth/signin", "POST", userDTO);
+// }
 
-// 회원가입 함수
-export function signup(userDTO) {
-  return call("/auth/signup", "POST", userDTO);
-}
+// // 회원가입 함수
+// export function signup(userDTO) {
+//   return call("/auth/signup", "POST", userDTO);
+// }
 
 // 게시글 생성 함수
 export function createPost(formData) {
@@ -116,7 +116,11 @@ export function bookmarkPost(id) {
 
 // 댓글 생성 함수
 export function createComment(postId, commentDTO) {
-  return call(`/posts/${postId}/comments`, "POST", commentDTO);
+  return call(`/posts/${postId}/comments`, "POST", commentDTO)
+    .then(response => {
+      console.log('Created comment:', response);
+      return response;
+    });
 }
 // 댓글 삭제 함수
 export function deleteComment(commentId) {

@@ -3,7 +3,7 @@ export class Post {
     constructor(data) {
       this.pid = data.pid; // 게시글 ID
       this.content = data.content; // 게시글 내용
-      this.email = data.email; // 작성자 이메일
+      this.aid = data.aid; // 작성자 ID (변경)
       this.nickName = data.nickName; // 작성자 닉네임
       this.profileImage = data.profileImage; // 작성자 프로필 이미지
       this.regDate = new Date(data.regDate); // 게시글 등록 날짜

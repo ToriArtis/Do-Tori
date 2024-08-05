@@ -4,6 +4,7 @@ import { API_BASE_URL } from "../../config/app-config";
 const ACCESS_TOKEN = "ACCESS_TOKEN";
 const USER_NICKNAME = "USER_NICKNAME";
 const USER_EMAIL ="USER_EMAIL";
+const USER_ID = "USER_ID";
 
 // 로그인
 export async function login(authDTO) {
@@ -14,7 +15,7 @@ export async function login(authDTO) {
 
   const raw = JSON.stringify({
     "email": authDTO.email,
-    "password": authDTO.getPassword
+    "password": authDTO.password
   });
 
   const requestOptions = {
@@ -49,6 +50,7 @@ export async function login(authDTO) {
       localStorage.setItem(ACCESS_TOKEN, result.accessToken);
       localStorage.setItem(USER_NICKNAME, result.nickName);
       localStorage.setItem(USER_EMAIL, result.email);
+      localStorage.setItem(USER_ID, result.id);
   
       if(result.refreshToken) localStorage.setItem("REFRESH_TOKEN", result.refreshToken);
       if(result.provider) localStorage.setItem("PROVIDER", result.provider);
@@ -73,6 +75,7 @@ export async function login(authDTO) {
       localStorage.removeItem(ACCESS_TOKEN);
       localStorage.removeItem(USER_NICKNAME);
       localStorage.removeItem(USER_EMAIL);
+      localStorage.removeItem(USER_ID);
       localStorage.removeItem("PROVIDER");
       window.location.href = "/login";
     }
