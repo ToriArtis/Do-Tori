@@ -4,7 +4,6 @@ import { modify } from '../api/authApi';
 import "../components/css/setting.css";
 
 export default function SettingView() {
-  // useInfoViewModel 사용자 정보 가져옴
   const userInfo = useInfoViewModel();
   
   const [editedPhone, setEditedPhone] = useState(userInfo.phone || '');
@@ -24,7 +23,7 @@ export default function SettingView() {
 
     setIsSubmitting(true);
     try {
-      // 전화번호와 비밀번호만 변경
+      // 전화번호 비밀번호만 변경
       await modify({ phone: editedPhone, password: editedPassword });
       alert('변경사항이 저장되었습니다.');
       window.location.reload();

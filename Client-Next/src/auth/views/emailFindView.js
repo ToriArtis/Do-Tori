@@ -1,8 +1,6 @@
 import React, { useEffect } from "react";
-import { Container, Typography, Grid, Link, Button } from '@mui/material';
-import Input from "../components/Input";
 import { useEmailFindViewModel } from "../viewmodels/useEmailFindViewModel";
-
+import "../components/css/emailfind.css";
 
 function EmailFindView() {
   if(localStorage.getItem("ACCESS_TOKEN")) {
@@ -27,52 +25,35 @@ function EmailFindView() {
   }, [email]);
 
   return (
-    <>
-      <Container component="main" maxWidth="xs" sx={{ marginTop: "8%" }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Typography component="h1" variant="h5" style={{ textAlign: "center" }}>
-              <b>이메일 찾기</b>
-            </Typography>
-          </Grid>
-        </Grid>
-
-        <br />
-        <form onSubmit={handleSubmit} >
-          <Input
-            label="전화번호"
-            type="phone"
-            name="phone"
-            value={phone}
-            onChange={(e) => handleChange('phone', e.target.value)}
-            required
-          />
-          <Grid>
-            {error && (
-              <Typography color="error" style={{ marginTop: '10px' }}>{error}</Typography>
-            )}
-            {email && (
-              <Typography color="primary" style={{ marginTop: '10px' }}>
-                이메일을 찾았습니다. 곧 로그인 페이지로 이동합니다...
-              </Typography>
-            )}
-          </Grid>
-
-          <Button 
-            className="reset-button" 
-            type="reset" 
-            btnName={"취소"}
-            onClick={() => window.history.back()} 
-          />
-          <Button 
-            className="signup-button" 
-            type="submit" 
-            btnName={"확인"}
-          />
-        </form>
-      </Container>
-      <Container sx={{ marginTop: "8%" }}></Container>
-    </>
+    <div className="container">
+      <div className="content">
+        <div className="image-container">
+          <img src="/tori.png" alt="tori" className="image" />
+        </div>
+        <div className="form-container">
+          <form onSubmit={handleSubmit} className="form">
+            <h1 className="form-title">이메일 찾기</h1>
+            <div className="input-container">
+              <label className="input-label">전화번호</label>
+              <input
+                className="input-field"
+                type="tel"
+                name="phone"
+                value={phone}
+                onChange={(e) => handleChange('phone', e.target.value)}
+                required
+              />
+            </div>
+            {error && <p className="error">{error}</p>}
+            {email && <p className="success">이메일을 찾았습니다. 곧 로그인 페이지로 이동합니다...</p>}
+            <div className="button-container">
+              <button type="button" className="cancel-button" onClick={() => window.history.back()}>취소</button>
+              <button type="submit" className="confirm-button">확인</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }
 

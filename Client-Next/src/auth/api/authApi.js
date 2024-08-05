@@ -90,7 +90,7 @@ export async function passwordFind(authDTO) {
     const response = await call("/auth/find", "POST", authDTO);
     
     if (response === true) {
-      alert("비밀번호 재설정 이메일이 성공적으로 발송되었습니다.");
+      alert("비밀번호 재설정 되었습니다.");
       // 1초 후에 로그인 페이지로 리다이렉트
       setTimeout(() => {
         window.location.href = "/login";

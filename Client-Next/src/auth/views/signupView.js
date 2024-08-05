@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
-import { Box, Button, Container, Grid, TextField, Typography } from "@mui/material";
 import { useSignUpViewModel } from '@/auth/viewmodels/useSignUpViewModel';
-import Input from '../components/Input';
 import "../components/css/signup.css";
 
 function SignUpView() {
