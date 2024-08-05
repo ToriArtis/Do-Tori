@@ -88,17 +88,26 @@ public class AuthService {
     }
 
     // 사용자 정보 수정
+    @Transactional
     public void modify(AuthDTO.ResponseDTO authDTO) {
-
         Auth loginAuth = getLoginUser();
 
-        loginAuth.setPhone(authDTO.getPhone());
-        loginAuth.setNickName(authDTO.getNickName());
-        loginAuth.setBio(authDTO.getBio());
+        if (authDTO.getPhone() != null) {
+            loginAuth.setPhone(authDTO.getPhone());
+        }
+        if (authDTO.getNickName() != null) {
+            loginAuth.setNickName(authDTO.getNickName());
+        }
+        if (authDTO.getBio() != null) {
+            loginAuth.setBio(authDTO.getBio());
+        }
 
-        loginAuth.setPassword(passwordEncoder.encode(authDTO.getPassword()));
+        if (authDTO.getPassword() != null && !authDTO.getPassword().isEmpty()) {
+            String encodedPassword = passwordEncoder.encode(authDTO.getPassword());
+            loginAuth.setPassword(encodedPassword);
+        }
 
-        authRepository.save(loginAuth);
+ //       Auth updatedAuth = authRepository.save(loginAuth);
     }
 
     // 계정 삭제
