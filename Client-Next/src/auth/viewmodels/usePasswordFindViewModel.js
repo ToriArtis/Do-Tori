@@ -32,7 +32,7 @@ export function usePasswordFindViewModel() {
     if (!validateForm()) return;
 
     try {
-        const user = loginAuth(
+        const auth = loginAuth(
           values.email,
           values.password
         )

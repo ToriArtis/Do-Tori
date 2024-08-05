@@ -3,7 +3,7 @@ import { Container, Typography, Grid, Link, Button } from '@mui/material';
 import "../components/css/auth.css";
 import Input from "../components/Input";
 import { useLoginViewModel } from "../viewmodels/useLoginViewModel";
-// import { googleKey, naverKey, kakaoKey, redirectUri } from "../../Config";
+import { googleKey, naverKey, kakaoKey, redirectUri } from "../../Config";
 
 function LoginView() {
 
@@ -16,27 +16,27 @@ function LoginView() {
   } = useLoginViewModel();
 
 
-// const handleSocialLogin = (provider) => {
-//   const state = Math.random().toString(36).substring(2, 15);
-//   sessionStorage.setItem('oauth_state', state);
-//   sessionStorage.setItem('oauth_provider', provider);
+const handleSocialLogin = (provider) => {
+  const state = Math.random().toString(36).substring(2, 15);
+  sessionStorage.setItem('oauth_state', state);
+  sessionStorage.setItem('oauth_provider', provider);
 
-//   let authUrl;
-//   switch(provider) {
-//     case 'google':
-//       authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleKey}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=email%20profile&state=${state}`;
-//       break;
-//     case 'naver':
-//       authUrl = `https://nid.naver.com/oauth2.0/authorize?client_id=${naverKey}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
-//       break;
-//     case 'kakao':
-//       authUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${kakaoKey}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
-//       break;
-//     default:
-//       return;
-//     }
-//     window.location.href = authUrl;
-//   };
+  let authUrl;
+  switch(provider) {
+    case 'google':
+      authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleKey}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=email%20profile&state=${state}`;
+      break;
+    case 'naver':
+      authUrl = `https://nid.naver.com/oauth2.0/authorize?client_id=${naverKey}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+      break;
+    case 'kakao':
+      authUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${kakaoKey}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${state}`;
+      break;
+    default:
+      return;
+    }
+    window.location.href = authUrl;
+  };
 
 
   return (
@@ -82,14 +82,14 @@ function LoginView() {
           </Link>
           
           &nbsp;
-          <Link href="/emailFind" variant="body2" style={{ color: "#8A8A8A" }}>
+          <Link href="/emailfind" variant="body2" style={{ color: "#8A8A8A" }}>
             아이디/</Link>
-          <Link href="/passwordFind" variant="body2" style={{ color: "#8A8A8A" }}>
+          <Link href="/passwordfind" variant="body2" style={{ color: "#8A8A8A" }}>
           비밀번호 찾기</Link>
         </Grid>
       </Grid>
 
-      {/* <div className="hr-sect">&nbsp; 또는 &nbsp;</div>
+      <div className="hr-sect">&nbsp; 또는 &nbsp;</div>
        <div className="btns">
           {['kakao', 'naver', 'google'].map((provider) => (
             <Button 
@@ -100,12 +100,12 @@ function LoginView() {
             >
               <img
                 style={{ width: "60%", height: 'auto' }}
-                src={`/assets/${provider}.png`}
+                src={`/${provider}.png`}
                 alt={`${provider} login`}
               />
             </Button>
           ))}
-        </div> */}
+        </div>
       </Container>
       <Container sx={{ marginTop: "8%" }}></Container>
     </>

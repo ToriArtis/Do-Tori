@@ -1,6 +1,6 @@
 .profile-container {
     width: 100%;
-    max-width: 600px;
+    max-width: 750px;
     margin: 0 auto;
     background-color: #fff;
     border-radius: 8px;
@@ -102,3 +102,37 @@
     cursor: pointer;
     align-self: flex-start;
   }
+
+  /* 작성글/마음함 tab */
+  .tab-container {
+    max-width: 750px;
+    margin: 20px auto;
+    background-color: #fff;  
+  }
+  
+  .tab-menu {
+    display: flex;
+    border-bottom: 1px solid #e1e8ed;
+  }
+  
+  .tab-menu button {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 15px 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #657786;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  
+  .tab-menu button.active {
+    color: #1da1f2;
+    border-bottom: 2px solid #1da1f2;
+  }
+  
+  .tab-content {
+    padding: 20px;
+  }
+  
