@@ -28,7 +28,7 @@ public class PostDTO {
     @Size(min = 1, max = 500)
     private String content;
 
-    private String email;
+    private Long aid;  // email 대신 aid(Auth ID)를 사용
     private String nickName;
     private String profileImage;
 

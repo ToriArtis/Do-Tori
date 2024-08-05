@@ -12,10 +12,10 @@ import java.util.Optional;
 @Repository
 public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
-    Optional<Bookmark> findByAuthAndPost(Auth auth, Post post);
+    Optional<Bookmark> findByAuth_IdAndPost(Long authId, Post post);
     List<Bookmark> findByAuth(Auth auth);
     int countByPost(Post post);
     void deleteByPost(Post post);
-    Optional<Object> findByAuthEmailAndPost(String email, Post post);
+//    Optional<Object> findByAuthEmailAndPost(String email, Post post);
 }
 

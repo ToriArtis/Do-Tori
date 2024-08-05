@@ -22,7 +22,7 @@ public class Bookmark {
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "auth_email", referencedColumnName = "email")
+    @JoinColumn(name = "auth_id")
     private Auth auth;
 
 }

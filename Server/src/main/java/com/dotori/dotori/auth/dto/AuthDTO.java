@@ -12,6 +12,7 @@ public class AuthDTO {
     @AllArgsConstructor
     public static  class ResponseDTO {
 
+        private Long id;
         @NotBlank private String email; // 사용자 이메일
         @NotBlank private String password; // 사용자 비밀번호
         @NotBlank private String nickName; // 사용자 닉네임
@@ -31,6 +32,7 @@ public class AuthDTO {
         private String refreshToken;
         private String provider;
 
+        private Long id;
         @NotBlank private String email; // 사용자 이메일
         @NotBlank private String nickName; // 사용자 닉네임
     }

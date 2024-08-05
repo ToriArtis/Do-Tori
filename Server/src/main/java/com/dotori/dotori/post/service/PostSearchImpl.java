@@ -79,10 +79,10 @@ public class PostSearchImpl extends QuerydslRepositorySupport implements PostSea
                 .leftJoin(toriBox).on(toriBox.post.eq(post))
                 .leftJoin(bookmark).on(bookmark.post.eq(post))
                 .leftJoin(post.tags, tag)
-                .groupBy(post.pid, post.auth.email, post.content, post.auth.nickName, post.auth.profileImage, post.regDate, post.modDate)
+                .groupBy(post.pid, post.auth.id, post.content, post.auth.nickName, post.auth.profileImage, post.regDate, post.modDate)
                 .select(Projections.constructor(PostListCommentCountDTO.class,
                         post.pid,
-                        post.auth.email,
+                        post.auth.id,  // email 대신 id 사용
                         post.content,
                         post.auth.nickName,
                         post.auth.profileImage,

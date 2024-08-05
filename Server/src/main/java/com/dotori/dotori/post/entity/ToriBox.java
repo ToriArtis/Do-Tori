@@ -1,5 +1,6 @@
 package com.dotori.dotori.post.entity;
 
+import com.dotori.dotori.auth.entity.Auth;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,8 +20,6 @@ public class ToriBox {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Post post;
-
-    private Long pid;
 
     private Long aid;
 

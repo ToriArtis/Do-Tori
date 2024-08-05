@@ -34,24 +34,24 @@ public class RootConfig {
         // Post 엔티티와 PostDTO 간의 매핑 설정
         modelMapper.createTypeMap(Post.class, PostDTO.class)
                 .addMappings(mapper -> {
-                    mapper.map(src -> src.getAuth().getNickName(), PostDTO::setNickName); // Auth의 nickName을 PostDTO의 nickName으로 매핑
-                    mapper.map(src -> src.getAuth().getEmail(), PostDTO::setEmail); // Auth의 email을 PostDTO의 email로 매핑
-                    mapper.map(src -> src.getAuth().getProfileImage(), PostDTO::setProfileImage); // Auth의 profileImage를 PostDTO의 profileImage로 매핑
+                    mapper.map(src -> src.getAuth().getNickName(), PostDTO::setNickName);
+                    mapper.map(src -> src.getAuth().getId(), PostDTO::setAid); // email 대신 id(aid)를 매핑
+                    mapper.map(src -> src.getAuth().getProfileImage(), PostDTO::setProfileImage);
                     mapper.map(src -> Optional.ofNullable(src.getTags())
-                            .map(tags -> tags.stream().map(Tag::getName).collect(Collectors.toList())) // Tag의 name을 리스트로 수집
-                            .orElse(Collections.emptyList()), PostDTO::setTags); // Tag 리스트를 PostDTO의 tags로 매핑, 없을 경우 빈 리스트로 설정
+                            .map(tags -> tags.stream().map(Tag::getName).collect(Collectors.toList()))
+                            .orElse(Collections.emptyList()), PostDTO::setTags);
                     mapper.map(src -> Optional.ofNullable(src.getThumbnails())
-                            .map(thumbnails -> thumbnails.stream().map(PostThumbnail::getThumbnail).collect(Collectors.toList())) // PostThumbnail의 thumbnail을 리스트로 수집
-                            .orElse(Collections.emptyList()), PostDTO::setThumbnails); // PostThumbnail 리스트를 PostDTO의 thumbnails로 매핑, 없을 경우 빈 리스트로 설정
+                            .map(thumbnails -> thumbnails.stream().map(PostThumbnail::getThumbnail).collect(Collectors.toList()))
+                            .orElse(Collections.emptyList()), PostDTO::setThumbnails);
                 });
 
         // Comment 엔티티와 CommentDTO 간의 매핑 설정
         modelMapper.createTypeMap(Comment.class, CommentDTO.class)
                 .addMappings(mapper -> {
-                    mapper.map(src -> src.getAuth().getEmail(), CommentDTO::setEmail); // Auth의 email을 CommentDTO의 email로 매핑
-                    mapper.map(src -> src.getAuth().getNickName(), CommentDTO::setNickName); // Auth의 nickName을 CommentDTO의 nickName으로 매핑
-                    mapper.map(src -> src.getAuth().getProfileImage(), CommentDTO::setProfileImage); // Auth의 profileImage를 CommentDTO의 profileImage로 매핑
-                    mapper.map(src -> src.getParent() != null ? src.getParent().getId() : null, CommentDTO::setParentId); // 부모 댓글이 있을 경우 부모 댓글의 ID를 CommentDTO의 parentId로 매핑, 없을 경우 null로 설정
+                    mapper.map(src -> src.getAuth().getId(), CommentDTO::setAid); // email 대신 id(aid)를 매핑
+                    mapper.map(src -> src.getAuth().getNickName(), CommentDTO::setNickName);
+                    mapper.map(src -> src.getAuth().getProfileImage(), CommentDTO::setProfileImage);
+                    mapper.map(src -> src.getParent() != null ? src.getParent().getId() : null, CommentDTO::setParentId);
                 });
 
         return modelMapper;
