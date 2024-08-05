@@ -63,12 +63,9 @@ public class AuthController {
 
     // 사용자 로그인
     @PostMapping("/login")
-    public  ResponseEntity<?> authenticate(@RequestBody LoginDTO authDTO){
-        Auth auth = authService.getByCredentials(
-                authDTO.getEmail(),
-                authDTO.getPassword()
-        );
-        if( auth != null){
+    public ResponseEntity<?> authenticate(@RequestBody LoginDTO authDTO) {
+        Auth auth = authService.getByCredentials(authDTO.getEmail(), authDTO.getPassword());
+        if (auth != null) {
             final String accessToken = tokenProvider.createAccessToken(auth);
             final String refreshToken = tokenProvider.createRefreshToken(auth);
             final AuthDTO.LoginDTO responseAuthDTO = AuthDTO.LoginDTO.builder()
@@ -76,16 +73,11 @@ public class AuthController {
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .nickName(auth.getNickName())
-                    .id(auth.getId())  // auth의 id 값을 추가
                     .build();
             return ResponseEntity.ok().body(responseAuthDTO);
-        }
-        else{
+        } else {
             ResponseDTO responseDTO = ResponseDTO.builder().error("Login failed").build();
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(responseDTO);
+            return ResponseEntity.badRequest().body(responseDTO);
         }
     }
 
