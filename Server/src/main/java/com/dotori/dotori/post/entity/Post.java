@@ -9,7 +9,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -63,6 +65,15 @@ public class Post{
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "post_mentions",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "auth_id")
+    )
+    @Builder.Default
+    private Set<Auth> mentionedUsers = new HashSet<>();
+
     public void changePost(String content, LocalDateTime modDate, List<PostThumbnail> thumbnails) {
         this.content = content;
         this.modDate = modDate;
@@ -76,6 +87,18 @@ public class Post{
     public void addThumbnail(PostThumbnail postThumbnail) {
         this.thumbnails.add(postThumbnail);
         postThumbnail.setPost(this);
+    }
+
+    public void addMention(Auth user) {
+        this.mentionedUsers.add(user);
+    }
+
+    public void removeMention(Auth user) {
+        this.mentionedUsers.remove(user);
+    }
+
+    public Set<Auth> getMentionedUsers() {
+        return this.mentionedUsers;
     }
 
 

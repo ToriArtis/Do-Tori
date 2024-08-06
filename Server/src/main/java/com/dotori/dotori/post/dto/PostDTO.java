@@ -6,7 +6,9 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -44,6 +46,9 @@ public class PostDTO {
 
     @Builder.Default
     private List<String> tags = new ArrayList<>();
+
+    @Builder.Default
+    private Set<Long> mentionedUserIds = new HashSet<>();
 
     public void setToriBoxCount(Long toriBoxCount) {
         this.toriBoxCount = toriBoxCount;
