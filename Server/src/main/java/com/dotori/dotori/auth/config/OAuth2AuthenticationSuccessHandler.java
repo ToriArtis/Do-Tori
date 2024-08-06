@@ -1,9 +1,9 @@
 package com.dotori.dotori.auth.config;
 
-import com.dotori.dotori.auth.entity.User;
-import com.dotori.dotori.auth.entity.UserStatus;
+import com.dotori.dotori.auth.entity.Auth;
+import com.dotori.dotori.auth.entity.AuthStatus;
 import com.dotori.dotori.auth.jwt.TokenProvider;
-import com.dotori.dotori.auth.repository.UserRepository;
+import com.dotori.dotori.auth.repository.AuthRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +22,7 @@ import java.io.IOException;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final TokenProvider tokenProvider;
-    private final UserRepository userRepository;
+    private final AuthRepository authRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -35,24 +35,24 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         String registrationId = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
 
-        User user = userRepository.findByEmail(email)
+        Auth auth = authRepository.findByEmail(email)
                 .map(existingUser -> {
                     existingUser.setNickName(name);
                     existingUser.setProvider(registrationId); // provider 정보 업데이트
-                    return userRepository.save(existingUser);
+                    return authRepository.save(existingUser);
                 })
                 .orElseGet(() -> {
-                    User newUser = User.builder()
+                    Auth newUser = Auth.builder()
                             .email(email)
                             .nickName(name)
                             .provider(registrationId)
-                            .userStatus(UserStatus.USER_ACTIVE)
+                            .authStatus(AuthStatus.AUTH_ACTIVE)
                             .password(passwordEncoder.encode("1111"))  // 초기 비밀번호를 "1111"로 설정하고 인코딩
                             .build();
-                    return userRepository.save(newUser);
+                    return authRepository.save(newUser);
                 });
 
-        String token = tokenProvider.create(user);
+        String token = tokenProvider.createAccessToken(auth);
 
         getRedirectStrategy().sendRedirect(request, response, "/oauth2/redirect?token=" + token);
     }
