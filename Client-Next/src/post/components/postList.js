@@ -7,6 +7,6 @@ export default function PostList({ posts, onPostUpdated }) {
             {posts.map(post => (
                 <PostItem key={post.id} post={post} onPostUpdated={onPostUpdated} />
             ))}
-        </div>
+        </div>  
     );
 }
