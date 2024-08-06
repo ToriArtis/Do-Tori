@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost, fetchFollowingPosts } from '../api/postApi';
+import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost, fetchFollowingPosts, searchPosts } from '../api/postApi';
 import PostCreateBox from '../components/postCreateBox';
 import PostItem from '../components/postItem';
 import PopularPosts from '../components/popularPosts';
 import Sidebar from '../../components/Sidebar';
+import PostList from '../components/postList';
 
 const PostListViewContainer = styled.div`
   display: flex;

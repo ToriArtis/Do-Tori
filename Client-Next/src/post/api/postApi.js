@@ -1,5 +1,3 @@
-/ src/post/api/postApi.js
-
 import { API_BASE_URL } from "../../config/app-config";
 
 // API 호출을 위한 기본 함수
