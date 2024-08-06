@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost, searchPosts } from '../api/postApi';
+import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost, fetchFollowingPosts } from '../api/postApi';
 import PostCreateBox from '../components/postCreateBox';
 import PostItem from '../components/postItem';
 import PopularPosts from '../components/popularPosts';
@@ -23,6 +23,24 @@ const SideContent = styled.div`
   margin-right: 20px;
 `;
 
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
+
+const Button = styled.button`
+  padding: 10px 15px;
+  background-color: ${props => props.active ? '#4CAF50' : '#ddd'};
+  color: ${props => props.active ? 'white' : 'black'};
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  &:hover {
+    background-color: ${props => props.active ? '#45a049' : '#ccc'};
+  }
+`;
+
 
 export default function PostListView() {
     const [posts, setPosts] = useState([]);
@@ -31,15 +49,18 @@ export default function PostListView() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [searchTypes, setSearchTypes] = useState([]);
     const [searchKeyword, setSearchKeyword] = useState('');
+    const [viewMode, setViewMode] = useState('all'); // 'all' or 'following'
 
-    const loadPosts = async () => {
+    const loadPosts = useCallback(async () => {
         try {
-            const fetchedPosts = await fetchPosts();
-            setPosts(fetchedPosts.postLists || []);
+            const fetchedPosts = viewMode === 'following'
+                ? await fetchFollowingPosts()
+                : await fetchPosts();
+            setPosts(Array.isArray(fetchedPosts) ? fetchedPosts : fetchedPosts.postLists || []);
         } catch (error) {
             console.error("게시물 로딩 중 오류 발생:", error);
         }
-    };
+    }, [viewMode]);
 
     const loadPopularPosts = async () => {
         try {
@@ -72,7 +93,7 @@ export default function PostListView() {
         }, 10000);
     
         return () => clearInterval(intervalId);
-      }, []);
+    }, [loadPosts]);
 
     const handleLike = async (postId, isLiked, likeCount) => {
         setPosts(posts.map(post => 
@@ -97,7 +118,11 @@ export default function PostListView() {
 
     const onPostUpdated = useCallback(() => {
         loadPosts();
-      }, []);
+    }, [loadPosts]);
+
+    const setPostsView = (mode) => {
+        setViewMode(mode);
+    };
 
     return (
         <PostListViewContainer>
@@ -125,17 +150,27 @@ export default function PostListView() {
                 <button onClick={handleSearch}>검색</button>
             </div>
                 <PostCreateBox onPostCreated={loadPosts} />
-                {posts.map((post) => (
-                    <PostItem 
-                        key={post.pid} 
-                        post={post} 
-                        onPostUpdated={onPostUpdated}
-                        onLike={handleLike}
-                        onBookmark={handleBookmark}
-                        onComment={handleComment}
-                        currentUser={currentUser}
-                    />
-                ))}
+                <ButtonContainer>
+                    <Button 
+                        onClick={() => setPostsView('all')} 
+                        active={viewMode === 'all'}
+                    >
+                        모든 게시글 보기
+                    </Button>
+                    <Button 
+                        onClick={() => setPostsView('following')} 
+                        active={viewMode === 'following'}
+                    >
+                        팔로우한 사용자 게시글 보기
+                    </Button>
+                </ButtonContainer>
+                <PostList 
+                    posts={posts}
+                    onPostUpdated={onPostUpdated}
+                    onLike={handleLike}
+                    onBookmark={handleBookmark}
+                    onComment={handleComment}
+                />
             </MainContent>
             <SideContent>
                 <PopularPosts posts={popularPosts} />

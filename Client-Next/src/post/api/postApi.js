@@ -1,4 +1,4 @@
-// src/post/api/postApi.js
+/ src/post/api/postApi.js
 
 import { API_BASE_URL } from "../../config/app-config";
 
@@ -130,8 +130,12 @@ export function deleteComment(commentId) {
 export function fetchComments(postId, pageRequestDTO) {
   return call(`/posts/${postId}/comments?page=${pageRequestDTO.page}&size=${pageRequestDTO.size}`, "GET")
     .then(response => {
-      console.log('Fetched comments:', response); // 디버깅을 위해 로그 추가
-      return response;
+      console.log('Fetched comments:', response);
+      return {
+        comments: response.postLists || [],
+        total: response.total,
+        hasMore: response.total > (pageRequestDTO.page + 1) * pageRequestDTO.size
+      };
     })
     .catch(error => {
       console.error('Error fetching comments:', error);
@@ -154,4 +158,9 @@ export function fetchPopularPosts() {
 // 게시글 검색 함수
 export function searchPosts(types, keyword) {
   return call(`/posts/search?types=${types.join(',')}&keyword=${keyword}`, "GET");
+}
+
+// 팔로우한 사용자의 게시글 가져오기
+export function fetchFollowingPosts() {
+  return call("/posts/following", "GET");
 }
