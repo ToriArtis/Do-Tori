@@ -20,13 +20,13 @@ import java.util.Map;
 @RestController
 @RequestMapping("/oauth")
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
-public class OauthUserController {
+public class OauthAuthController {
 
     private final OAuth2Service oAuth2Service;
     private final TokenProvider tokenProvider;
 
     @Autowired
-    public OauthUserController(OAuth2Service oAuth2Service, TokenProvider tokenProvider) {
+    public OauthAuthController(OAuth2Service oAuth2Service, TokenProvider tokenProvider) {
         this.oAuth2Service = oAuth2Service;
         this.tokenProvider = tokenProvider;
     }

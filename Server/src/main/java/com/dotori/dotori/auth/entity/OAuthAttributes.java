@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashMap;
 import java.util.Map;
+
 @Log4j2
 @Getter
 public class OAuthAttributes {
@@ -93,8 +94,8 @@ public class OAuthAttributes {
     }
 
     // OAuthAttributes 객체를 User 엔티티로 변환
-    public User toEntity(PasswordEncoder passwordEncoder) {
-        return User.builder()
+    public Auth toEntity(PasswordEncoder passwordEncoder) {
+        return Auth.builder()
                 .email(email)
                 .nickName(name)
                 .provider(provider)

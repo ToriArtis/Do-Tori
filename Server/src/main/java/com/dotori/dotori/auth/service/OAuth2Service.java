@@ -1,8 +1,8 @@
 package com.dotori.dotori.auth.service;
 
+import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.auth.entity.OAuthAttributes;
-import com.dotori.dotori.auth.entity.User;
-import com.dotori.dotori.auth.repository.UserRepository;
+import com.dotori.dotori.auth.repository.AuthRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,7 +28,7 @@ import java.util.Collections;
 public class OAuth2Service {
 
     private final ClientRegistrationRepository clientRegistrationRepository;
-    private final UserRepository userRepository;
+    private final AuthRepository authRepository;
     private final PasswordEncoder passwordEncoder;
 
     // OAuth2 인증 코드를 처리하고 OAuth2User를 반환
@@ -77,7 +77,7 @@ public class OAuth2Service {
                     .getUserInfoEndpoint().getUserNameAttributeName();
 
             OAuthAttributes attributes = OAuthAttributes.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
-            User user = saveOrUpdate(attributes);
+            Auth auth = saveOrUpdate(attributes);
 
             // DefaultOAuth2User 객체 반환
             return new DefaultOAuth2User(
@@ -91,11 +91,11 @@ public class OAuth2Service {
     }
 
     // 사용자 정보를 저장하거나 업데이트
-    public User saveOrUpdate(OAuthAttributes attributes) {
-        User user = userRepository.findByEmail(attributes.getEmail())
-                .map(entity -> entity.updateUser(attributes.getEmail(), attributes.getProvider()))
+    public Auth saveOrUpdate(OAuthAttributes attributes) {
+        Auth user = authRepository.findByEmail(attributes.getEmail())
+                .map(entity -> entity.updateAuth(attributes.getName(), attributes.getEmail(), attributes.getProvider()))
                 .orElseGet(() -> attributes.toEntity(passwordEncoder));
 
-        return userRepository.save(user);
+        return authRepository.save(user);
     }
 }

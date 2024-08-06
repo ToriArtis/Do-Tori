@@ -4,6 +4,7 @@ import com.dotori.dotori.auth.jwt.JwtAuthenticationFilter;
 import com.dotori.dotori.auth.jwt.TokenProvider;
 import com.dotori.dotori.auth.repository.AuthRepository;
 import com.dotori.dotori.auth.service.CustomAuthDetailsService;
+import com.dotori.dotori.auth.service.OAuth2Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.web.filter.CorsFilter;
 
 @Configuration
@@ -28,12 +31,11 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAuthDetailsService userDetailsService;
-    //   private final OAuth2Service oAuth2Service;
+    private final OAuth2Service oAuth2Service;
     private final TokenProvider tokenProvider;
     private final AuthRepository authRepository;
-    //    private final OAuth2UserService oAuth2UserService;
+    private final OAuth2UserService oAuth2UserService;
     private final PasswordEncoder passwordEncoder;
-
 
 
     @Bean
@@ -45,7 +47,7 @@ public class SecurityConfig {
                 // HTTP 요청에 대한 인가 설정
                 .authorizeHttpRequests(auth -> auth
                         // 공개 접근 허용 경로
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/**", "/oauth/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll() // 이 줄을 추가
                         .requestMatchers(HttpMethod.GET, "/posts", "/posts/**").permitAll()
@@ -55,14 +57,14 @@ public class SecurityConfig {
                         // 이 외엔 인증 필요
                         .anyRequest().authenticated()
                 )
-//                // HTTP 기본 인증 비활성화
+                // HTTP 기본 인증 비활성화
                 .httpBasic(httpBasic -> httpBasic.disable())
-//                .oauth2Login(oauth2 -> oauth2
-//                        .userInfoEndpoint(userInfo -> userInfo
-//                                .userService(oAuth2UserService)
-//                        )
-//                        .successHandler(oAuth2AuthenticationSuccessHandler())
-//                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(oAuth2UserService)
+                        )
+                        .successHandler(oAuth2AuthenticationSuccessHandler())
+                )
                 // 세션 관리 설정을 무상태(stateless)로 설정
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -82,9 +84,9 @@ public class SecurityConfig {
         return http.build();
     }
 
-//    @Bean
-//    public AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
-//        return new OAuth2AuthenticationSuccessHandler(tokenProvider, userRepository, passwordEncoder);
-//    }
+    @Bean
+    public AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
+        return new OAuth2AuthenticationSuccessHandler(tokenProvider, authRepository, passwordEncoder);
+    }
 
 }
