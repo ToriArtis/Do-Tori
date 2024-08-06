@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { updatePost, deletePost, likePost, bookmarkPost, createComment, fetchComments, deleteComment } from '../api/postApi';
 import { format } from 'date-fns';
@@ -291,9 +291,9 @@ export default function PostItem({ post, onPostUpdated, onLike, onBookmark, onCo
     const [deletedThumbnails, setDeletedThumbnails] = useState([]);
     const [anchorEl, setAnchorEl] = useState(null);
 
-    const [hasMore, setHasMore] = useState(true);
-    const [page, setPage] = useState(0);
-    const [size, setSize] = useState(10);
+    const [totalComments, setTotalComments] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
+    const [commentSize, setCommentSize] = useState(10);
 
     const isCurrentUser = post.aid === post.currentUserAid; // 백엔드에서 제공하는 currentUserAid 사용
 
@@ -389,48 +389,34 @@ const handleSaveEdit = async () => {
         console.error('북마크 처리 실패:', error);
       }
     };
+
+     // 댓글 로딩 함수
+     const loadComments = useCallback(async (size = 10) => {
+      try {
+        const response = await fetchComments(post.pid, { page: 0, size });
+        setComments(response.comments || []); // response.comments가 undefined일 경우 빈 배열 사용
+        setTotalComments(response.total);
+        setHasMore(response.total > size);
+      } catch (error) {
+        console.error('댓글 로딩 실패:', error);
+      }
+    }, [post.pid]);
   
     // 댓글 불러오기
     useEffect(() => {
       if (isDetailView) {
-        loadComments();
+        loadComments(commentSize);
       }
       const userId = localStorage.getItem('USER_ID');
       const userNickName = localStorage.getItem('USER_NICKNAME');
       setCurrentUser(userId ? { id: userId, nickName: userNickName } : null);
       console.log('Current user updated:', currentUser);
-    }, [isDetailView, post.pid]);
-    
-    // 댓글 로딩 함수
-    const loadComments = async () => {
-      try {
-        const response = await fetchComments(post.pid, { page: 0, size: 10 });
-        if (response && response.postLists) {
-          setComments(response.postLists);
-          setHasMore(response.commentCount > 10);
-        } else {
-          console.error('Invalid comments response:', response);
-        }
-      } catch (error) {
-        console.error('댓글 로딩 실패:', error);
-      }
-    };
+    }, [isDetailView, post.pid, commentSize, loadComments]);
 
     // 댓글 더보기 핸들러
-  const handleLoadMore = async () => {
-    try {
-      const response = await fetchComments(post.pid, { page: page + 1, size: size });
-      if (response && response.postLists) {
-        setComments(prevComments => [...prevComments, ...response.postLists]);
-        setPage(prevPage => prevPage + 1);
-        setHasMore(response.postLists.length === size);
-      } else {
-        console.error('Invalid comments response:', response);
-      }
-    } catch (error) {
-      console.error('댓글 더보기 실패:', error);
-    }
-  };
+    const handleLoadMore = () => {
+      setCommentSize(prevSize => prevSize + 10);
+    };
 
     // 댓글 작성 핸들러
     const handleComment = async (e) => {
@@ -449,15 +435,13 @@ const handleSaveEdit = async () => {
 const handleReply = async (e, parentId) => {
   e.preventDefault();
   try {
-    const newReply = await createComment(post.pid, { 
+    await createComment(post.pid, { 
       content: replyContent, 
       parentId: parentId 
     });
-    console.log('New reply:', newReply);
     setReplyContent('');
     setReplyingTo(null);
-    await loadComments(currentPage);
-    onPostUpdated();
+    loadComments(commentSize); // 댓글 목록 갱신
   } catch (error) {
     console.error('답글 작성 실패:', error);
   }
@@ -483,6 +467,9 @@ const handleReply = async (e, parentId) => {
     };
     // 댓글 렌더링 함수 (대댓글 포함)
     const renderComments = (commentList, parentId = null) => {
+      if (!commentList || commentList.length === 0) {
+        return null;
+      }
       return commentList
         .filter(comment => comment.parentId === parentId)
         .map(comment => (
@@ -496,7 +483,7 @@ const handleReply = async (e, parentId) => {
               {currentUser && currentUser.id.toString() === comment.aid.toString() && (
                 <DeleteButton onClick={() => handleDeleteComment(comment.id)}>삭제</DeleteButton>
               )}
-              {!parentId && ( // 부모 댓글에만 답글 버튼 표시
+              {!parentId && (
                 <ReplyButton onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}>
                   {replyingTo === comment.id ? '답글 취소' : '답글'}
                 </ReplyButton>
@@ -695,33 +682,22 @@ const handleReply = async (e, parentId) => {
     
               {/* 댓글 섹션 */}
               <CommentSection>
-              <h3>댓글</h3>
-              <form onSubmit={handleComment}>
-                <CommentInput
-                  value={commentContent}
-                  onChange={(e) => setCommentContent(e.target.value)}
-                  placeholder="댓글을 입력하세요..."
-                />
-                <CommentButton type="submit">댓글 작성</CommentButton>
-              </form>
-              <CommentList>
-                {renderComments(comments)}
-              </CommentList>
-              {hasMore && (
-                <button onClick={handleLoadMore}>더보기</button>
-              )}
-              <PaginationContainer>
-                {[...Array(totalPages).keys()].map(number => (
-                  <PageButton
-                    key={number}
-                    active={currentPage === number + 1}
-                    onClick={() => loadComments(number + 1)}
-                  >
-                    {number + 1}
-                  </PageButton>
-                ))}
-              </PaginationContainer>
-            </CommentSection>
+                <h3>댓글 ({totalComments})</h3>
+                <form onSubmit={handleComment}>
+                  <CommentInput
+                    value={commentContent}
+                    onChange={(e) => setCommentContent(e.target.value)}
+                    placeholder="댓글을 입력하세요..."
+                  />
+                  <CommentButton type="submit">댓글 작성</CommentButton>
+                </form>
+                <CommentList>
+                  {renderComments(comments)}
+                </CommentList>
+                {hasMore && (
+                  <button onClick={handleLoadMore}>더보기</button>
+                )}
+              </CommentSection>
             </ModalContent>
           </Modal>
         )}

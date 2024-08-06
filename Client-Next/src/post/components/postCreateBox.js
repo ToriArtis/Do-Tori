@@ -198,12 +198,16 @@ const PostCreateBox = ({ onPostCreated }) => {
     try {
       const formData = new FormData();
       formData.append('content', content.trim());
-      images.forEach(image => {
-        formData.append('files', image);
-      });
-      tags.forEach(tag => {
-        formData.append('tags', tag); // 각 태그를 개별적으로 추가
-      });
+      if (images.length > 0) {
+        images.forEach(image => {
+          formData.append('files', image);
+        });
+      }
+      if (tags.length > 0) {
+        tags.forEach(tag => {
+          formData.append('tags', tag);
+        });
+      }
       await createPost(formData);
       setContent('');
       setImages([]);
