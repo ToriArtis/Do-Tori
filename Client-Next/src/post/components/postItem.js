@@ -394,7 +394,7 @@ const handleSaveEdit = async () => {
      const loadComments = useCallback(async (size = 10) => {
       try {
         const response = await fetchComments(post.pid, { page: 0, size });
-        setComments(response.comments || []); // response.comments가 undefined일 경우 빈 배열 사용
+        setComments(response.comments || []);
         setTotalComments(response.total);
         setHasMore(response.total > size);
       } catch (error) {
@@ -424,7 +424,7 @@ const handleSaveEdit = async () => {
       try {
         await createComment(post.pid, { content: commentContent });
         setCommentContent('');
-        await loadComments(currentPage);
+        loadComments(commentSize);
         onPostUpdated();
       } catch (error) {
         console.error('댓글 작성 실패:', error);
