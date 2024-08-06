@@ -73,6 +73,7 @@ public class AuthController {
                     .accessToken(accessToken)
                     .refreshToken(refreshToken)
                     .nickName(auth.getNickName())
+                    .id(auth.getId())
                     .build();
             return ResponseEntity.ok().body(responseAuthDTO);
         } else {
