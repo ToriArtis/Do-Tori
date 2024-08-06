@@ -1,6 +1,5 @@
 package com.dotori.dotori.post.repository;
 
-import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.post.entity.Comment;
 import com.dotori.dotori.post.entity.Post;
 import org.springframework.data.domain.Page;

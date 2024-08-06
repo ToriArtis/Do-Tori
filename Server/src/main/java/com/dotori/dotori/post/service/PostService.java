@@ -1,10 +1,8 @@
 package com.dotori.dotori.post.service;
 
 import com.dotori.dotori.auth.entity.Auth;
-import com.dotori.dotori.auth.entity.AuthStatus;
 import com.dotori.dotori.auth.repository.AuthRepository;
 import com.dotori.dotori.follow.dto.FollowDTO;
-import com.dotori.dotori.follow.repository.FollowRepository;
 import com.dotori.dotori.follow.service.FollowService;
 import com.dotori.dotori.post.dto.*;
 import com.dotori.dotori.post.entity.*;
@@ -312,16 +310,13 @@ public class PostService {
     // Comment 기능
     // 댓글 목록 조회
     public PageResponseDTO<CommentDTO> getListOfComment(Long postId, PageRequestDTO pageRequestDTO) {
-        // 페이징 정보 설정
         Pageable pageable = pageRequestDTO.getPageable("id");
         Page<Comment> result = commentRepository.listOfPost(postId, pageable);
 
-        // 조회한 댓글 엔티티 리스트를 CommentDTO 리스트로 변환
         List<CommentDTO> dtoList = result.getContent().stream()
                 .map(this::convertToCommentDTO)
                 .collect(Collectors.toList());
 
-        // 페이징 정보와 변환된 CommentDTO 리스트로 PageResponseDTO 생성 및 반환
         return PageResponseDTO.<CommentDTO>withAll()
                 .pageRequestDTO(pageRequestDTO)
                 .postLists(dtoList)

@@ -1,8 +1,6 @@
 package com.dotori.dotori.post.controller;
 
 import com.dotori.dotori.auth.entity.Auth;
-import com.dotori.dotori.auth.entity.AuthStatus;
-import com.dotori.dotori.auth.repository.AuthRepository;
 import com.dotori.dotori.auth.service.AuthService;
 import com.dotori.dotori.post.dto.*;
 import com.dotori.dotori.post.service.PostLikeService;
@@ -10,17 +8,14 @@ import com.dotori.dotori.post.service.PostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,12 +38,18 @@ public class PostController {
 
     // 게시글 등록 (로그인 필요)
     @PostMapping
-    public ResponseEntity<PostDTO> addPost(@RequestParam("content") String content,
-                                           @RequestParam("tags") List<String> tags,
-                                           @RequestParam(value = "files", required = false) List<MultipartFile> files) throws Exception {
+    public ResponseEntity<PostDTO> addPost(
+            @RequestParam("content") String content,
+            @RequestParam(value = "tags", required = false) List<String> tags,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files) throws Exception {
+
         PostDTO postDTO = new PostDTO();
         postDTO.setContent(content);
-        postDTO.setTags(tags);
+        if (tags != null && !tags.isEmpty()) {
+            postDTO.setTags(tags);
+        } else {
+            postDTO.setTags(new ArrayList<>()); // 태그가 없을 경우 빈 리스트 설정
+        }
         Long postId = postService.addPost(postDTO, files);
         PostDTO addedPost = postService.getPost(postId);
         return ResponseEntity.ok(addedPost);
