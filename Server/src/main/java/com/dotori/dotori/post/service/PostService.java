@@ -125,6 +125,15 @@ public class PostService {
             post.setTags(tags);
         }
 
+        // 멘션 처리
+        if (postDTO.getMentionedUserIds() != null && !postDTO.getMentionedUserIds().isEmpty()) {
+            for (Long userId : postDTO.getMentionedUserIds()) {
+                Auth mentionedUser = authRepository.findById(userId)
+                        .orElseThrow(() -> new RuntimeException("Mentioned user not found"));
+                post.addMention(mentionedUser);
+            }
+        }
+
         // 파일 처리 (기존 로직 유지)
         if (files != null && !files.isEmpty()) {
             // 첨부 파일 개수가 허용된 썸네일 개수를 초과하는 경우 예외 발생
