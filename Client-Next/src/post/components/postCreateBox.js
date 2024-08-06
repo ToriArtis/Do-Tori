@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { createPost } from '../api/postApi';
+import { createPost, fetchFollowingUsers } from '../api/postApi';
 
 const PostCreateCard = styled.div`
   background-color: white;
@@ -153,6 +153,29 @@ const CharacterCountText = styled.span`
 
 const MAX_CHARACTERS = 500; // 최대 글자 수
 
+const MentionList = styled.ul`
+  list-style-type: none;
+  padding: 0;
+  margin: 10px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: absolute;
+  width: calc(100% - 40px);
+  z-index: 1000;
+`;
+
+const MentionItem = styled.li`
+  padding: 10px;
+  cursor: pointer;
+  &:hover {
+    background-color: #f0f0f0;
+  }
+`;
+
 const PostCreateBox = ({ onPostCreated }) => {
   const [content, setContent] = useState('');
   const [nickName, setNickName] = useState('');
@@ -162,9 +185,15 @@ const PostCreateBox = ({ onPostCreated }) => {
   const fileInputRef = useRef(null);
   const [characterCount, setCharacterCount] = useState(0);
 
+  const [mentionedUsers, setMentionedUsers] = useState([]);
+  const [followingUsers, setFollowingUsers] = useState([]);
+  const [showMentionList, setShowMentionList] = useState(false);
+  const [mentionFilter, setMentionFilter] = useState('');
+
   useEffect(() => {
     const userNickName = localStorage.getItem('USER_NICKNAME');
     setNickName(userNickName || '익명');
+    fetchFollowingUsers().then(users => setFollowingUsers(users));
   }, []);
 
   useEffect(() => {
@@ -172,6 +201,32 @@ const PostCreateBox = ({ onPostCreated }) => {
   }, [content]);
 
   const getPercentage = () => (characterCount / MAX_CHARACTERS) * 100;
+
+
+  const handleContentChange = (e) => {
+    const newContent = e.target.value;
+    setContent(newContent);
+    
+    const words = newContent.split(' ');
+    const lastWord = words[words.length - 1];
+    
+    if (lastWord.startsWith('@')) {
+      setShowMentionList(true);
+      setMentionFilter(lastWord.slice(1).toLowerCase());
+    } else {
+      setShowMentionList(false);
+      setMentionFilter('');
+    }
+  };
+
+  const handleMention = (user) => {
+    const words = content.split(' ');
+    words.pop();
+    const newContent = [...words, `@${user.nickName}`].join(' ') + ' ';
+    setContent(newContent);
+    setMentionedUsers([...mentionedUsers, user]);
+    setShowMentionList(false);
+  };
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -208,6 +263,9 @@ const PostCreateBox = ({ onPostCreated }) => {
           formData.append('tags', tag);
         });
       }
+      mentionedUsers.forEach(user => {
+        formData.append('mentionedUserIds', user.id);
+      });
       await createPost(formData);
       setContent('');
       setImages([]);
@@ -237,13 +295,20 @@ const PostCreateBox = ({ onPostCreated }) => {
       <TextArea 
         placeholder="무슨 일이 있나요?"
         value={content}
-        onChange={(e) => {
-          if (e.target.value.length <= MAX_CHARACTERS) {
-            setContent(e.target.value);
-          }
-        }}
+        onChange={handleContentChange}
         maxLength={MAX_CHARACTERS}
       />
+      {showMentionList && (
+        <MentionList>
+          {followingUsers
+            .filter(user => user.nickName.toLowerCase().includes(mentionFilter))
+            .map(user => (
+              <MentionItem key={user.id} onClick={() => handleMention(user)}>
+                @{user.nickName}
+              </MentionItem>
+            ))}
+        </MentionList>
+      )}
       <CharacterCounter>
         <CharacterCounterSvg viewBox="0 0 44 44">
           <CharacterCounterCircle />

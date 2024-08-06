@@ -163,14 +163,14 @@ export function fetchFollowingPosts() {
   return call("/posts/following", "GET");
 }
 
-// // 팔로우 목록 가져오기
-// export const fetchFollowingUsers = async () => {
-//   try {
-//     const userId = localStorage.getItem('USER_ID');
-//     const response = await call(`/follows/${userId}/followings`, 'GET');
-//     return response.content;
-//   } catch (error) {
-//     console.error('Failed to fetch following users:', error);
-//     return [];
-//   }
-// };
+// 팔로우 목록 가져오기
+export const fetchFollowingUsers = async () => {
+  try {
+    const userId = localStorage.getItem('USER_ID');
+    const response = await call(`/follows/${userId}/followings`, 'GET');
+    return response.content;
+  } catch (error) {
+    console.error('팔로우한 사용자 목록 가져오기 실패:', error);
+    return [];
+  }
+};
