@@ -1,264 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
 import { API_BASE_URL } from '../../config/app-config';
 import { IconButton, Menu, MenuItem } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import usePostItem from '../hooks/usePostItem';
-
-const PostItemContainer = styled.div`
-  border-bottom: 1px solid #e0e0e0;
-  padding: 15px 0;
-  cursor: pointer;
-`;
-
-const PostHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-`;
-
-const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const Avatar = styled.img`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-`;
-
-const PostContent = styled.p`
-  margin-bottom: 10px;
-`;
-
-const PostImage = styled.img`
-  width: 100%; // 부모 컨테이너의 전체 너비를 사용
-  height: 400px; // 높이를 늘림 (필요에 따라 조정)
-  object-fit: cover; // 이미지 비율을 유지하면서 컨테이너를 채움
-  border-radius: 5px;
-  margin-bottom: 10px; // 이미지 간 간격
-`;
-
-const PostImages = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); // 반응형 그리드 레이아웃
-  gap: 10px;
-  margin-bottom: 20px;
-`;
-
-const PostActions = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
-
-const ActionButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #555;
-  font-size: 14px;
-  padding: 5px 10px;
-  margin-right: 10px;
-  &:hover {
-    background-color: #f0f0f0;
-    border-radius: 5px;
-  }
-`;
-
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ModalContent = styled.div`
-  background-color: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 80%;
-  max-width: 800px;
-  max-height: 80vh;
-  overflow-y: auto;
-  position: relative;
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-`;
-
-const CommentSection = styled.div`
-  margin-top: 20px;
-`;
-
-const CommentInput = styled.textarea`
-  width: 100%;
-  height: 100px;
-  margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-`;
-
-const CommentButton = styled.button`
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-`;
-
-const CommentList = styled.div`
-  margin-top: 20px;
-`;
-
-const CommentItem = styled.div`
-  margin-bottom: 10px;
-  padding-left: ${props => props.isReply ? '20px' : '0'};
-`;
-
-const ReplyButton = styled.button`
-  background: none;
-  border: none;
-  color: #4CAF50;
-  cursor: pointer;
-  margin-left: 10px;
-`;
-
-const CommentHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-`;
-
-const CommentAuthor = styled.span`
-  font-weight: bold;
-`;
-
-const CommentDate = styled.span`
-  font-size: 0.8em;
-  color: #888;
-`;
-
-const CommentContent = styled.p`
-  margin: 5px 0;
-`;
-
-const CommentActions = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-top: 5px;
-`;
-
-const ReplyForm = styled.div`
-  margin-top: 10px;
-`;
-
-const PaginationContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-`;
-
-const PageButton = styled.button`
-  margin: 0 5px;
-  padding: 5px 10px;
-  background-color: ${props => props.active ? '#4CAF50' : '#f0f0f0'};
-  color: ${props => props.active ? 'white' : 'black'};
-  border: none;
-  cursor: pointer;
-`;
-
-const EditButton = styled.button`
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-right: 10px;
-`;
-
-const DeleteButton = styled.button`
-  background-color: #f44336;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-`;
-
-const ImageInput = styled.input`
-  display: none;
-`;
-
-const ImageLabel = styled.label`
-  cursor: pointer;
-  margin-right: 10px;
-`;
-
-const TagInput = styled.input`
-  margin-top: 10px;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-`;
-
-const TagList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 5px;
-`;
-
-const Tag = styled.span`
-  background-color: #e0e0e0;
-  padding: 5px 10px;
-  margin-right: 5px;
-  margin-bottom: 5px;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-`;
-
-const TagContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 10px;
-`;
-
-const DeleteTagButton = styled.button`
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: 5px;
-  cursor: pointer;
-  font-size: 12px;
-  &:hover {
-    background-color: #d32f2f;
-  }
-`;
+import './css/PostItem.css';
 
 // 기본 아바타 SVG 컴포넌트
 const DefaultAvatar = ({ size = 40, color = "#cccccc" }) => (
@@ -271,7 +16,7 @@ const DefaultAvatar = ({ size = 40, color = "#cccccc" }) => (
 // 1px 빈 이미지 (이미지 로드 실패 시 대체 이미지로 사용)
 const placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
-export default function PostItem({ post, onPostUpdated }) {
+export default function PostItem({ post, onPostUpdated, isFollowing, onToggleFollow, currentUser: propsCurrentUser }) {
   const fileInputRef = useRef(null);
 
   const {
@@ -286,7 +31,7 @@ export default function PostItem({ post, onPostUpdated }) {
     newTag,
     comments,
     replyingTo,
-    currentUser,
+    currentUser: hookCurrentUser,
     anchorEl,
     totalComments,
     hasMore,
@@ -318,7 +63,9 @@ export default function PostItem({ post, onPostUpdated }) {
     handleSearchResult
   } = usePostItem(post, onPostUpdated);
 
-  const isCurrentUser = postData.aid === postData.currentUserAid;
+  const currentUser = propsCurrentUser || hookCurrentUser;
+
+  const isCurrentUser = currentUser && postData.aid === currentUser.id;
 
   if (!postData) {
     return <div>로딩 중...</div>;
@@ -345,12 +92,12 @@ useEffect(() => {
       console.log(`Image ${index} URL:`, imageUrl);
   
       return (
-        <div key={index}>
-          <PostImage 
+        <div key={index} className="post-image-container">
+          <img 
+            className="post-image"
             src={imageUrl}
             alt={`Thumbnail ${index + 1}`} 
             onError={(e) => {
-              console.error("Image load error for URL:", imageUrl);
               e.target.src = placeholderImage;
             }}
           />
@@ -367,46 +114,47 @@ useEffect(() => {
     return commentList
       .filter(comment => comment.parentId === parentId)
       .map(comment => (
-        <CommentItem key={comment.id} isReply={parentId !== null}>
-          <CommentHeader>
-            <CommentAuthor>{comment.nickName}</CommentAuthor>
-            <CommentDate>{formatDate(comment.regDate)}</CommentDate>
-          </CommentHeader>
-          <CommentContent>{comment.content}</CommentContent>
-          <CommentActions>
+        <div key={comment.id} className={`comment-item ${parentId !== null ? 'reply' : ''}`}>
+          <div className="comment-header">
+            <span className="comment-author">{comment.nickName}</span>
+            <span className="comment-date">{formatDate(comment.regDate)}</span>
+          </div>
+          <p className="comment-content">{comment.content}</p>
+          <div className="comment-actions">
             {currentUser && postData && currentUser.id === postData.aid?.toString() && (
-              <DeleteButton onClick={() => handleDeleteComment(comment.id)}>삭제</DeleteButton>
+              <button className="delete-button" onClick={() => handleDeleteComment(comment.id)}>삭제</button>
             )}
             {!parentId && (
-              <ReplyButton onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}>
+              <button className="reply-button" onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}>
                 {replyingTo === comment.id ? '답글 취소' : '답글'}
-              </ReplyButton>
+              </button>
             )}
-          </CommentActions>
+          </div>
           {replyingTo === comment.id && (
-            <ReplyForm>
-              <CommentInput
+            <div className="reply-form">
+              <textarea
+                className="comment-input"
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder="답글을 입력하세요..."
               />
-              <CommentButton onClick={(e) => handleReply(e, comment.id)}>
+              <button className="comment-button" onClick={(e) => handleReply(e, comment.id)}>
                 답글 작성
-              </CommentButton>
-            </ReplyForm>
+              </button>
+            </div>
           )}
           {renderComments(commentList, comment.id)}
-        </CommentItem>
+        </div>
       ));
   };
 
   // 렌더링
   return (
-    <PostItemContainer onClick={handleOpenDetailView}>
-      <PostHeader>
-        <UserInfo>
-            {postData?.profileImage ? (
-            <Avatar src={postData.profileImage} alt={postData.nickName} />
+    <div className="post-item-container" onClick={handleOpenDetailView}>
+      <div className="post-header">
+        <div className="user-info">
+          {postData?.profileImage ? (
+            <img className="avatar" src={postData.profileImage} alt={postData.nickName} />
           ) : (
             <DefaultAvatar />
           )}
@@ -414,70 +162,90 @@ useEffect(() => {
             <h3>{postData?.nickName}</h3>
             <p>{formatDate(postData?.regDate)}</p>
           </div>
-        </UserInfo>
-      </PostHeader>
+        </div>
+        {currentUser && !isCurrentUser && (
+        <button onClick={(e) => {
+          e.stopPropagation();
+          onToggleFollow(postData.aid);
+        }}>
+          {isFollowing ? '팔로잉' : '팔로우'}
+        </button>
+      )}
+      </div>
       {isEditing ? (
         <>
           <textarea
+            className="edit-textarea"
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             onClick={(e) => e.stopPropagation()}
           />
-          <ImageLabel onClick={(e) => e.stopPropagation()}>
+          <label className="image-label" onClick={(e) => e.stopPropagation()}>
             🖼️ 이미지 추가
-            <ImageInput
+            <input
               type="file"
               accept="image/*"
               multiple
               onChange={handleImageUpload}
               ref={fileInputRef}
+              className="image-input"
             />
-          </ImageLabel>
-          <PostImages>
+          </label>
+          <div className="post-images">
             {renderImages(editImages)}
-          </PostImages>
-          <TagInput
+          </div>
+          <input
+            className="tag-input"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             onKeyPress={handleAddTag}
             placeholder="태그 추가 (Enter로 추가)"
+            onClick={(e) => e.stopPropagation()}
           />
-          <TagList>
+          <div className="tag-list">
             {editTags.map((tag, index) => (
-              <Tag key={index}>{tag}</Tag>
+              <span key={index} className="tag">
+                {tag}
+                <button className="delete-tag-button" onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteTag(tag);
+                }}>
+                  X
+                </button>
+              </span>
             ))}
-          </TagList>
+          </div>
         </>
       ) : (
         <>
-          <PostContent>{postData?.content || ''}</PostContent>
+          <p className="post-content">{postData?.content || ''}</p>
           {postData?.thumbnails && postData.thumbnails.length > 0 && (
-            <PostImages>
+            <div className="post-images">
               {renderImages(postData.thumbnails)}
-            </PostImages>
+            </div>
           )}
           {postData.tags && postData.tags.length > 0 && (
-            <TagContainer>
+            <div className="tag-container">
               {postData.tags.map((tag, index) => (
-                <Tag key={index}>{tag}</Tag>
+                <span key={index} className="tag">{tag}</span>
               ))}
-          </TagContainer> 
+            </div>
           )}
         </>
-    )}
-      <PostActions>
-        <ActionButton onClick={handleLike}>
+      )}
+      <div className="post-actions">
+        <button className="action-button" onClick={handleLike}>
           {postData.liked ? '❤️' : '🤍'} {postData.toriBoxCount || 0}
-        </ActionButton>
-        <ActionButton>💬 {postData.commentCount || 0}</ActionButton>
-        <ActionButton onClick={handleBookmark}>
+        </button>
+        <button className="action-button">💬 {postData.commentCount || 0}</button>
+        <button className="action-button" onClick={handleBookmark}>
           {postData.bookmarked ? '🏷️' : '🔖'} {postData.bookmarkCount || 0}
-        </ActionButton>
-      </PostActions>
+        </button>
+      </div>
       {isDetailView && postData && (
-        <Modal onClick={handleCloseDetailView}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <CloseButton onClick={handleCloseDetailView}>&times;</CloseButton>
+        <div className="modal" onClick={handleCloseDetailView}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-button" onClick={handleCloseDetailView}>&times;</button>
             <h2>{postData.nickName}의 게시글</h2>
             {currentUser && currentUser.id === postData.aid?.toString() && (
               <div>
@@ -496,104 +264,109 @@ useEffect(() => {
             )}
             <p>{postData.content}</p>
             {postData.thumbnails && postData.thumbnails.length > 0 && (
-            <PostImages>
-              {renderImages(postData.thumbnails)}
-            </PostImages>
-          )}
-          <TagList>
-            {postData.tags && postData.tags.map((tag, index) => (
-              <Tag key={index}>{tag}</Tag>
-            ))}
-          </TagList>
-            <PostActions>
-              <ActionButton onClick={handleLike}>
+              <div className="post-images">
+                {renderImages(postData.thumbnails)}
+              </div>
+            )}
+            <div className="tag-list">
+              {postData.tags && postData.tags.map((tag, index) => (
+                <span key={index} className="tag">{tag}</span>
+              ))}
+            </div>
+            <div className="post-actions">
+              <button className="action-button" onClick={handleLike}>
                 {postData.liked ? '❤️' : '🤍'} {postData.toriBoxCount || 0}
-              </ActionButton>
-              <ActionButton>💬 {postData.commentCount || 0}</ActionButton>
-              <ActionButton onClick={handleBookmark}>
+              </button>
+              <button className="action-button">💬 {postData.commentCount || 0}</button>
+              <button className="action-button" onClick={handleBookmark}>
                 {postData.bookmarked ? '🏷️' : '🔖'} {postData.bookmarkCount || 0}
-              </ActionButton>
-            </PostActions>
+              </button>
+            </div>
 
-            {/* 댓글 섹션 */}
-            <CommentSection>
+            <div className="comment-section">
               <h3>댓글 ({totalComments})</h3>
-              <form onSubmit={handleComment}>
-                <CommentInput
+              <form onSubmit={handleComment} className="comment-form">
+                <textarea
+                  className="comment-input"
                   value={commentContent}
                   onChange={(e) => setCommentContent(e.target.value)}
                   placeholder="댓글을 입력하세요..."
                 />
-                <CommentButton type="submit">댓글 작성</CommentButton>
+                <button type="submit" className="comment-button">댓글 작성</button>
               </form>
-              <CommentList>
+              <div className="comment-list">
                 {renderComments(comments)}
-              </CommentList>
+              </div>
               {hasMore && (
-                <button onClick={handleLoadMore}>더보기</button>
+                <button onClick={handleLoadMore} className="load-more-button">더보기</button>
               )}
-            </CommentSection>
-          </ModalContent>
-        </Modal>
+            </div>
+          </div>
+        </div>
       )}
       {isEditing && (
-        <Modal onClick={handleCancelEdit}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <CloseButton onClick={handleCancelEdit}>&times;</CloseButton>
+        <div className="modal" onClick={handleCancelEdit}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-button" onClick={handleCancelEdit}>&times;</button>
             <h2>게시글 수정</h2>
             <textarea
+              className="edit-textarea"
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
             />
-            <ImageLabel>
+            <label className="image-label">
               🖼️ 이미지 추가
-              <ImageInput
+              <input
                 type="file"
                 accept="image/*"
                 multiple
                 onChange={handleImageUpload}
+                className="image-input"
               />
-            </ImageLabel>
-            <PostImages>
+            </label>
+            <div className="post-images">
               {editImages.map((image, index) => (
-                <div key={index}>
-                  <PostImage
+                <div key={index} className="edit-image-container">
+                  <img
+                    className="edit-image"
                     src={image instanceof File ? URL.createObjectURL(image) : `${API_BASE_URL}/api/images/${image}`}
                     alt={`Thumbnail ${index + 1}`}
                     onError={(e) => {
-                      console.error("Image load error:", e);
                       e.target.src = placeholderImage;
                     }}
                   />
-                  <button onClick={() => handleDeleteImage(index)}>삭제</button>
+                  <button onClick={() => handleDeleteImage(index)} className="delete-image-button">삭제</button>
                 </div>
               ))}
-            </PostImages>
-            <TagContainer>
+            </div>
+            <div className="tag-container">
               {editTags.map((tag, index) => (
-                <React.Fragment key={index}>
-                  <Tag>{tag}</Tag>
-                  <DeleteTagButton onClick={(e) => {
+                <span key={index} className="tag">
+                  {tag}
+                  <button onClick={(e) => {
                     e.stopPropagation();
                     handleDeleteTag(tag);
-                  }}>
+                  }} className="delete-tag-button">
                     X
-                  </DeleteTagButton>
-                </React.Fragment>
+                  </button>
+                </span>
               ))}
-            </TagContainer>
-            <TagInput
+            </div>
+            <input
+              className="tag-input"
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
               onKeyPress={handleAddTag}
               placeholder="새 태그 추가 (Enter로 추가)"
               onClick={(e) => e.stopPropagation()}
             />
-            <button onClick={handleSaveEdit}>저장</button>
-            <button onClick={handleCancelEdit}>취소</button>
-          </ModalContent>
-        </Modal>
+            <div className="edit-buttons">
+              <button onClick={handleSaveEdit} className="save-button">저장</button>
+              <button onClick={handleCancelEdit} className="cancel-button">취소</button>
+            </div>
+          </div>
+        </div>
       )}
-    </PostItemContainer>
+    </div>
   );
 }

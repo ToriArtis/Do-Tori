@@ -1,47 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
-import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost, fetchFollowingPosts, searchPosts } from '../api/postApi';
+import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost, fetchFollowingPosts, searchPosts, followUser, unfollowUser } from '../api/postApi';
 import PostCreateBox from '../components/postCreateBox';
 import PostItem from '../components/postItem';
 import PopularPosts from '../components/popularPosts';
 import Sidebar from '../../components/Sidebar';
 import PostList from '../components/postList';
-
-const PostListViewContainer = styled.div`
-  display: flex;
-  width: 60%;
-  padding: 20px;
-  gap: 20px;
-  position: relative;
-`;
-
-const MainContent = styled.div`
-  flex: 1;
-`;
-
-const SideContent = styled.div`
-  width: 200px;
-  margin-right: 20px;
-`;
-
-const ButtonContainer = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-`;
-
-const Button = styled.button`
-  padding: 10px 15px;
-  background-color: ${props => props.active ? '#4CAF50' : '#ddd'};
-  color: ${props => props.active ? 'white' : 'black'};
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  &:hover {
-    background-color: ${props => props.active ? '#45a049' : '#ccc'};
-  }
-`;
-
+import './css/postListView.css';
 
 export default function PostListView() {
     const [posts, setPosts] = useState([]);
@@ -51,6 +15,8 @@ export default function PostListView() {
     const [searchTypes, setSearchTypes] = useState([]);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [viewMode, setViewMode] = useState('all'); // 'all' or 'following'
+
+    const [followingUsers, setFollowingUsers] = useState([]);
 
     const loadPosts = useCallback(async () => {
         try {
@@ -104,6 +70,7 @@ export default function PostListView() {
         }, 10000);
     
         return () => clearInterval(intervalId);
+        fetchFollowingUsers().then(users => setFollowingUsers(users));
     }, [loadPosts]);
 
     const handleLike = async (postId, isLiked, likeCount) => {
@@ -135,57 +102,83 @@ export default function PostListView() {
         setViewMode(mode);
     };
 
+    const isFollowing = (userId) => {
+        return followingUsers.some(user => user.userId === userId);
+      };
+
+    const handleToggleFollow = async (userId) => {
+        try {
+          if (isFollowing(userId)) {
+            await unfollowUser(userId);
+            setFollowingUsers(followingUsers.filter(user => user.userId !== userId));
+          } else {
+            await followUser(userId);
+            const newFollowingUser = await getUserInfo(userId);
+            setFollowingUsers([...followingUsers, newFollowingUser]);
+          }
+        } catch (error) {
+          console.error('팔로우/언팔로우 처리 실패:', error);
+          alert('서버 오류로 인해 팔로우/언팔로우 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
+      };
+
     return (
-        <PostListViewContainer>
+        <div className="post-list-view-container">
             <Sidebar 
                 isOpen={isSidebarOpen} 
                 onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
             />
-            <MainContent>
-            <div>
-                <input
-                type="text"
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-                placeholder="검색어를 입력하세요"
-                />
-                <select
-                multiple
-                value={searchTypes}
-                onChange={(e) => setSearchTypes(Array.from(e.target.selectedOptions, option => option.value))}
-                >
-                <option value="c">내용</option>
-                <option value="w">작성자</option>
-                <option value="t">태그</option>
-                </select>
-                <button onClick={handleSearch}>검색</button>
-            </div>
+            <div className="main-content">
+                <div className="search-container">
+                    <input
+                        type="text"
+                        value={searchKeyword}
+                        onChange={(e) => setSearchKeyword(e.target.value)}
+                        placeholder="검색어를 입력하세요"
+                        className="search-input"
+                    />
+                    <select
+                        multiple
+                        value={searchTypes}
+                        onChange={(e) => setSearchTypes(Array.from(e.target.selectedOptions, option => option.value))}
+                        className="search-select"
+                    >
+                        <option value="c">내용</option>
+                        <option value="w">작성자</option>
+                        <option value="t">태그</option>
+                    </select>
+                    <button onClick={handleSearch} className="search-button">검색</button>
+                </div>
                 <PostCreateBox onPostCreated={loadPosts} />
-                <ButtonContainer>
-                    <Button 
+                <div className="button-container">
+                    <button 
                         onClick={() => setPostsView('all')} 
-                        active={viewMode === 'all'}
+                        className={`view-button ${viewMode === 'all' ? 'active' : ''}`}
                     >
                         모든 게시글 보기
-                    </Button>
-                    <Button 
+                    </button>
+                    <button 
                         onClick={() => setPostsView('following')} 
-                        active={viewMode === 'following'}
+                        className={`view-button ${viewMode === 'following' ? 'active' : ''}`}
                     >
                         팔로우한 사용자 게시글 보기
-                    </Button>
-                </ButtonContainer>
+                    </button>
+                </div>
                 <PostList 
                     posts={posts}
                     onPostUpdated={onPostUpdated}
                     onLike={handleLike}
                     onBookmark={handleBookmark}
                     onComment={handleComment}
+                    currentUser={currentUser}
+                    followingUsers={followingUsers}
+                    onToggleFollow={handleToggleFollow}
+                    isFollowing={isFollowing}
                 />
-            </MainContent>
-            <SideContent>
+            </div>
+            <div className="side-content">
                 <PopularPosts posts={popularPosts} />
-            </SideContent>
-        </PostListViewContainer>
+            </div>
+        </div>
     );
 }

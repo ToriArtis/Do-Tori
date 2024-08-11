@@ -1,180 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { createPost, fetchFollowingUsers } from '../api/postApi';
-
-const PostCreateCard = styled.div`
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 20px;
-  margin-bottom: 20px;
-  width: 90%;
-`;
-
-const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-`;
-
-const Avatar = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #ddd;
-  margin-right: 10px;
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  height: 100px;
-  border: none;
-  resize: none;
-  font-size: 16px;
-  margin-bottom: 10px;
-  &:focus {
-    outline: none;
-  }
-`;
-
-const ButtonRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
-
-const ImageButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-`;
-
-const SubmitButton = styled.button`
-  background-color: #ccbfb2;
-  color: black;
-  border: none;
-  border-radius: 5px;
-  padding: 8px 16px;
-  cursor: pointer;
-`;
-
-const ImagePreviewContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
-`;
-
-const ImagePreview = styled.img`
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 5px;
-`;
-
-const ImageInput = styled.input`
-  display: none;
-`;
-
-const ImageLabel = styled.label`
-  cursor: pointer;
-  display: inline-block;
-  padding: 8px 16px;
-  background-color: #f0f0f0;
-  border-radius: 5px;
-  margin-right: 10px;
-`;
-
-const TagInput = styled.input`
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-`;
-
-const TagList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 10px;
-`;
-
-const Tag = styled.span`
-  background-color: #e0e0e0;
-  padding: 2px 5px;
-  border-radius: 3px;
-`;
-
-const CharacterCounter = styled.div`
-  position: relative;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 10px;
-`;
-
-const CharacterCounterSvg = styled.svg`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 44px; /* stroke-width의 영향을 고려하여 4px을 추가 */
-  height: 44px; /* stroke-width의 영향을 고려하여 4px을 추가 */
-  transform: rotate(-90deg);
-`;
-
-const CharacterCounterCircle = styled.circle`
-  fill: none;
-  stroke: #f0f0f0;
-  stroke-width: 4;
-  cx: 22;
-  cy: 22;
-  r: 20;
-`;
-
-const CharacterCounterFillCircle = styled.circle`
-  fill: none;
-  stroke: black;
-  stroke-width: 4;
-  cx: 22;
-  cy: 22;
-  r: 20;
-  stroke-dasharray: 126; /* 2 * Math.PI * radius (2 * 3.14 * 20) */
-  stroke-dashoffset: ${props => 126 - (props.percentage / 100) * 126};
-  transition: stroke-dashoffset 0.3s ease;
-`;
-
-const CharacterCountText = styled.span`
-  position: relative;
-  z-index: 1;
-  font-size: 12px;
-`;
+import './css/postCreateBox.css';
 
 const MAX_CHARACTERS = 500; // 최대 글자 수
-
-const MentionList = styled.ul`
-  list-style-type: none;
-  padding: 0;
-  margin: 10px 0;
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  position: absolute;
-  width: calc(100% - 40px);
-  z-index: 1000;
-`;
-
-const MentionItem = styled.li`
-  padding: 10px;
-  cursor: pointer;
-  &:hover {
-    background-color: #f0f0f0;
-  }
-`;
 
 const PostCreateBox = ({ onPostCreated }) => {
   const [content, setContent] = useState('');
@@ -263,13 +92,15 @@ const PostCreateBox = ({ onPostCreated }) => {
           formData.append('tags', tag);
         });
       }
-      mentionedUsers.forEach(user => {
-        formData.append('mentionedUserIds', user.id);
-      });
+      if (mentionedUsers.length > 0) {
+        const mentionedUserIds = mentionedUsers.map(user => user.id).join(',');
+        formData.append('mentionedUserIds', mentionedUserIds);
+      }
       await createPost(formData);
       setContent('');
       setImages([]);
       setTags([]);
+      setMentionedUsers([]);
       if (onPostCreated) {
         onPostCreated();
       }
@@ -281,66 +112,78 @@ const PostCreateBox = ({ onPostCreated }) => {
   };
 
   return (
-    <PostCreateCard>
-      <UserInfo>
-        <Avatar />
+<div className="post-create-card">
+      <div className="user-info">
+        <div className="avatar" />
         <span>{nickName}</span>
-      </UserInfo>
-      <TagInput
+      </div>
+      <input
+        className="tag-input"
         value={newTag}
         onChange={(e) => setNewTag(e.target.value)}
         onKeyPress={handleAddTag}
         placeholder="태그 추가 (Enter)"
       />
-      <TextArea 
+      <textarea 
+        className="text-area"
         placeholder="무슨 일이 있나요?"
         value={content}
         onChange={handleContentChange}
         maxLength={MAX_CHARACTERS}
       />
       {showMentionList && (
-        <MentionList>
+        <ul className="mention-list">
           {followingUsers
             .filter(user => user.nickName.toLowerCase().includes(mentionFilter))
             .map(user => (
-              <MentionItem key={user.id} onClick={() => handleMention(user)}>
+              <li key={user.id} className="mention-item" onClick={() => handleMention(user)}>
                 @{user.nickName}
-              </MentionItem>
+              </li>
             ))}
-        </MentionList>
+        </ul>
       )}
-      <CharacterCounter>
-        <CharacterCounterSvg viewBox="0 0 44 44">
-          <CharacterCounterCircle />
-          <CharacterCounterFillCircle percentage={getPercentage()} />
-        </CharacterCounterSvg>
-        <CharacterCountText>{characterCount}</CharacterCountText>
-      </CharacterCounter>
-      <ImagePreviewContainer>
+      <div className="character-counter">
+        <svg viewBox="0 0 44 44" className="character-counter-svg">
+          <circle className="character-counter-circle" cx="22" cy="22" r="20" />
+          <circle 
+            className="character-counter-fill-circle" 
+            cx="22" 
+            cy="22" 
+            r="20"
+            style={{
+              strokeDasharray: 126,
+              strokeDashoffset: 126 - (getPercentage() / 100) * 126
+            }}
+          />
+        </svg>
+        <span className="character-count-text">{characterCount}</span>
+      </div>
+      <div className="image-preview-container">
         {images.map((image, index) => (
-          <ImagePreview key={index} src={URL.createObjectURL(image)} alt={`Preview ${index}`} />
+          <img key={index} className="image-preview" src={URL.createObjectURL(image)} alt={`Preview ${index}`} />
         ))}
-      </ImagePreviewContainer>
+      </div>
       
-      <TagList>
+      <div className="tag-list">
         {tags.map((tag, index) => (
-          <Tag key={index}>{tag}</Tag>
+          <span key={index} className="tag">{tag}</span>
         ))}
-      </TagList>
-      <ButtonRow>
-        <ImageLabel>
+      </div>
+      <div className="button-row">
+        <label className="image-label">
           🖼️ 이미지 추가
-          <ImageInput
+          <input
             type="file"
             accept="image/*"
             multiple
             onChange={handleImageUpload}
             ref={fileInputRef}
+            className="image-input"
           />
-        </ImageLabel>
-        <SubmitButton onClick={handleSubmit}>등록</SubmitButton>
-      </ButtonRow>
-    </PostCreateCard>
+        </label>
+        <button className="submit-button" onClick={handleSubmit}>등록</button>
+      </div>
+    </div>
   );
 };
 
