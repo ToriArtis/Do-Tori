@@ -131,3 +131,40 @@ export async function deleteUser() {
     return false;
   }
 }
+
+// 프로필 이미지 업로드
+export function uploadProfileImage(file) {
+  const formData = new FormData();
+  formData.append('profile', file);
+  return uploadImage('/auth/profile-image', formData);
+}
+
+// 헤더 이미지 업로드
+export function uploadHeaderImage(file) {
+  const formData = new FormData();
+  formData.append('header', file);
+  return uploadImage('/auth/header-image', formData);
+}
+
+// 이미지 업로드를 위한 공통 함수
+function uploadImage(endpoint, formData) {
+  const accessToken = localStorage.getItem("ACCESS_TOKEN");
+  return fetch(`${API_BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `Failed to upload image: ${response.status}`);
+    }
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      return response.text();
+    }
+  });
+}
