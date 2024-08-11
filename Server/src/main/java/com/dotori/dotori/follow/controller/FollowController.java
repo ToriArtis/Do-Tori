@@ -1,5 +1,6 @@
 package com.dotori.dotori.follow.controller;
 
+import com.dotori.dotori.auth.config.exception.BusinessLogicException;
 import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.follow.dto.FollowDTO;
 import com.dotori.dotori.follow.service.FollowService;
@@ -7,6 +8,7 @@ import com.dotori.dotori.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,10 +22,16 @@ public class FollowController {
 
     // 팔로우
     @PostMapping("/{userId}")
-    public ResponseEntity<String> follow(@PathVariable Long userId) {
-        Auth currentAuth = authService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
-        followService.follow(currentAuth.getId(), userId);
-        return ResponseEntity.ok("팔로우 성공");
+    public ResponseEntity<?> follow(@PathVariable Long userId) {
+        try {
+            Auth currentAuth = authService.getLoginUser();
+            followService.follow(currentAuth.getId(), userId);
+            return ResponseEntity.ok().body("{\"message\":\"success\"}");
+        } catch (BusinessLogicException e) {
+            return ResponseEntity.status(e.getExceptionCode().getCode()).body("{\"message\":\"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\":\"서버 오류가 발생했습니다.\"}");
+        }
     }
 
     // 언팔로우

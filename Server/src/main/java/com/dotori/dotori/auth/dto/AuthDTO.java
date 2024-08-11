@@ -43,4 +43,14 @@ public class AuthDTO {
     public static class FindDTO{
         private String phone;
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MentionDTO {
+        private Long id;
+        private String nickName;
+        private String profileImage;
+    }
 }

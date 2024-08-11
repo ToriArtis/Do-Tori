@@ -1,5 +1,6 @@
 package com.dotori.dotori.post.service;
 
+import com.dotori.dotori.auth.dto.AuthDTO;
 import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.auth.repository.AuthRepository;
 import com.dotori.dotori.follow.dto.FollowDTO;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -126,10 +128,10 @@ public class PostService {
         }
 
         // 멘션 처리
-        if (postDTO.getMentionedUserIds() != null && !postDTO.getMentionedUserIds().isEmpty()) {
-            for (Long userId : postDTO.getMentionedUserIds()) {
-                Auth mentionedUser = authRepository.findById(userId)
-                        .orElseThrow(() -> new RuntimeException("Mentioned user not found"));
+        if (postDTO.getMentionedUsers() != null && !postDTO.getMentionedUsers().isEmpty()) {
+            for (AuthDTO.MentionDTO mentionDTO : postDTO.getMentionedUsers()) {
+                Auth mentionedUser = authRepository.findById(mentionDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Mentioned user not found with id: " + mentionDTO.getId()));
                 post.addMention(mentionedUser);
             }
         }
@@ -146,7 +148,9 @@ public class PostService {
             post.getThumbnails().addAll(thumbnails);
         }
 
-        return postRepository.save(post).getPid();
+        Post savedPost = postRepository.save(post);
+        postRepository.flush();
+        return savedPost.getPid();
     }
 
     // 특정 게시글 조회 (로그인하지 않은 사용자도 조회 가능)
@@ -173,8 +177,6 @@ public class PostService {
         }
 
         // 유지할 이미지만 남기기
-//        post.getThumbnails().removeIf(thumbnail -> !retainedImages.contains(thumbnail.getThumbnail()));
-
         if (retainedImages != null && !retainedImages.isEmpty()) {
             post.getThumbnails().removeIf(thumbnail -> !retainedImages.contains(thumbnail.getThumbnail()));
         } else {
@@ -197,8 +199,21 @@ public class PostService {
             post.setTags(tags);
         }
 
+        // 멘션 업데이트
+        post.getMentionedUsers().clear();
+        if (postDTO.getMentionedUsers() != null && !postDTO.getMentionedUsers().isEmpty()) {
+            for (AuthDTO.MentionDTO mentionDTO : postDTO.getMentionedUsers()) {
+                Auth mentionedUser = authRepository.findById(mentionDTO.getId())
+                        .orElseThrow(() -> new RuntimeException("Mentioned user not found with id: " + mentionDTO.getId()));
+                post.addMention(mentionedUser);
+            }
+        }
+
         post.setModDate(LocalDateTime.now());
         postRepository.save(post);
+
+        // 명시적으로 flush 호출
+        postRepository.flush();
     }
 
     @Transactional
@@ -515,6 +530,10 @@ public class PostService {
                     .map(Tag::getName)
                     .collect(Collectors.toList()));
         }
+
+        postDTO.setMentionedUsers(post.getMentionedUsers().stream()
+                .map(auth -> new AuthDTO.MentionDTO(auth.getId(), auth.getNickName(), auth.getProfileImage()))
+                .collect(Collectors.toList()));
 
         return postDTO;
     }
