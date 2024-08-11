@@ -7,23 +7,19 @@ import com.dotori.dotori.auth.dto.AuthDTO;
 import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.auth.jwt.TokenProvider;
 import com.dotori.dotori.auth.service.AuthService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.nio.charset.StandardCharsets;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-import java.util.Arrays;
-import java.util.Base64;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -185,4 +181,24 @@ public class AuthController {
         }
     }
 
+    // 이미지 출력
+    @GetMapping("/images/{filename}")
+    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+        try {
+            Resource file = authService.loadImages(filename);
+            String contentType = "application/octet-stream";
+            if (filename.toLowerCase().endsWith(".png")) {
+                contentType = "image/png";
+            } else if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) {
+                contentType = "image/jpeg";
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getFilename() + "\"")
+                    .body(file);
+        } catch (IOException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
