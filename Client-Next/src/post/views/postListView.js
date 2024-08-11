@@ -72,14 +72,24 @@ export default function PostListView() {
         }
     };
 
-    const handleSearch = async () => {
+    const handleSearch = useCallback(async () => {
         try {
+          console.log('Search params:', { types: searchTypes, keyword: searchKeyword });
           const searchResults = await searchPosts(searchTypes, searchKeyword);
-          setPosts(searchResults.content || []);
+          console.log('Search API response:', searchResults);
+          const processedPosts = searchResults.content.map(post => ({
+            ...post,
+            thumbnails: post.thumbnail ? [post.thumbnail] : [],
+            tags: post.tags || [],
+            toriBoxCount: post.toriBoxCount || 0,
+            commentCount: post.commentCount || 0,
+            bookmarkCount: post.bookmarkCount || 0,
+          }));
+          setPosts(processedPosts);
         } catch (error) {
           console.error("게시물 검색 중 오류 발생:", error);
         }
-      };
+      }, [searchTypes, searchKeyword]);
 
     useEffect(() => {
         const userId = localStorage.getItem('USER_ID');
