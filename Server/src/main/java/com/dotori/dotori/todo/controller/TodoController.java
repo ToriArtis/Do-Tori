@@ -26,24 +26,38 @@ public class TodoController {
 
     @GetMapping
     public ResponseEntity<List<TodoDTO>> getAllTodos() {
-        return ResponseEntity.ok(todoService.getAllTodo());
+        try{
+            return ResponseEntity.ok(todoService.getAllTodo());
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     @PostMapping
     public ResponseEntity<TodoDTO> addTodo(@Valid @RequestBody TodoDTO todo) {
-
-        return ResponseEntity.ok(todoService.addTodo(todo));
+        try{
+            return ResponseEntity.ok(todoService.addTodo(todo));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     @PutMapping()
     public ResponseEntity<TodoDTO> modifyTodo(@Valid @RequestBody TodoDTO todoDTO) {
-        return ResponseEntity.ok(todoService.updateTodo(todoDTO));
+        try{
+            return ResponseEntity.ok(todoService.updateTodo(todoDTO));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     @DeleteMapping()
     public ResponseEntity<?> deleteTodo(@Valid @RequestBody TodoDTO todoDTO) {
-        TodoDTO deleteTodo = todoService.deleteTodo(todoDTO.getId());
-
-        return ResponseEntity.ok(deleteTodo);
+        try{
+            TodoDTO deleteTodo = todoService.deleteTodo(todoDTO.getId());
+            return ResponseEntity.ok(deleteTodo);
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 }
