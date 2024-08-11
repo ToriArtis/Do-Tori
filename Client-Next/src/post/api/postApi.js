@@ -190,3 +190,15 @@ export const fetchFollowingUsers = async () => {
     return [];
   }
 };
+
+export const followUser = async (userId) => {
+  return call(`/follows/${userId}`, "POST");
+};
+
+export const unfollowUser = async (userId) => {
+  return call(`/follows/${userId}`, "DELETE");
+};
+
+export const getUserInfo = async (userId) => {
+  return call(`/auth/${userId}`, "GET");
+};

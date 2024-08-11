@@ -1,0 +1,35 @@
+.popular-posts-container {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    width: 300px;
+  }
+  
+  .popular-posts-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+  
+  .popular-post-item {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .popular-post-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  
+  .popular-post-content {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+  
+  .popular-post-info {
+    font-size: 12px;
+    color: #888;
+  }
