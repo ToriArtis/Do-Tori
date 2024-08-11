@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { updatePost, deletePost, likePost, bookmarkPost, createComment, fetchComments, deleteComment } from '../api/postApi';
-import { format } from 'date-fns';
 import { API_BASE_URL } from '../../config/app-config';
 import { IconButton, Menu, MenuItem } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import usePostItem from '../hooks/usePostItem';
 
 const PostItemContainer = styled.div`
   border-bottom: 1px solid #e0e0e0;
@@ -272,493 +271,329 @@ const DefaultAvatar = ({ size = 40, color = "#cccccc" }) => (
 // 1px 빈 이미지 (이미지 로드 실패 시 대체 이미지로 사용)
 const placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
-export default function PostItem({ post, onPostUpdated, onLike, onBookmark, onComment }) {
-    // 상태 정의
-    const [isDetailView, setIsDetailView] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editContent, setEditContent] = useState(post.content);
-    const [commentContent, setCommentContent] = useState('');
-    const [replyContent, setReplyContent] = useState('');
-    const [editImages, setEditImages] = useState(post.thumbnails || []);
-    const [editTags, setEditTags] = useState(post.tags || []);
-    const [newTag, setNewTag] = useState('');
-    const fileInputRef = useRef(null);
-    const [comments, setComments] = useState([]);
-    const [replyingTo, setReplyingTo] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [currentUser, setCurrentUser] = useState(null);
-    const [deletedThumbnails, setDeletedThumbnails] = useState([]);
-    const [anchorEl, setAnchorEl] = useState(null);
+export default function PostItem({ post, onPostUpdated }) {
+  const fileInputRef = useRef(null);
 
-    const [totalComments, setTotalComments] = useState(0);
-    const [hasMore, setHasMore] = useState(false);
-    const [commentSize, setCommentSize] = useState(10);
+  const {
+    isDetailView,
+    setIsDetailView,
+    isEditing,
+    editContent,
+    commentContent,
+    replyContent,
+    editImages,
+    editTags,
+    newTag,
+    comments,
+    replyingTo,
+    currentUser,
+    anchorEl,
+    totalComments,
+    hasMore,
+    postData,
+    handleOpenDetailView,
+    handleCloseDetailView,
+    handleEdit,
+    handleSaveEdit,
+    handleCancelEdit,
+    handleDelete,
+    handleLike,
+    handleBookmark,
+    handleLoadMore,
+    handleComment,
+    handleReply,
+    handleDeleteComment,
+    handleImageUpload,
+    handleDeleteImage,
+    handleAddTag,
+    handleDeleteTag,
+    handleMenuOpen,
+    handleMenuClose,
+    setEditContent,
+    setCommentContent,
+    setReplyContent,
+    setReplyingTo,
+    setNewTag,
+    formatDate,
+    handleSearchResult
+  } = usePostItem(post, onPostUpdated);
 
-    const isCurrentUser = post.aid === post.currentUserAid; // 백엔드에서 제공하는 currentUserAid 사용
+  const isCurrentUser = postData.aid === postData.currentUserAid;
 
-    const handleMenuOpen = (event) => {
-      event.stopPropagation();  // 이벤트 버블링 방지
-      setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-      setAnchorEl(null);
-  };
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    handleMenuClose();
-};
-  
-const handleSaveEdit = async () => {
-  try {
-    const formData = new FormData();
-    formData.append('postDTO', JSON.stringify({
-      pid: post.pid,
-      content: editContent,
-      tags: editTags // 수정된 태그 배열 포함
-    }));
-    
-    // 유지할 기존 이미지
-    const retainedImages = editImages.filter(image => typeof image === 'string');
-    retainedImages.forEach(image => formData.append('retainedImages', image));
-    
-    // 새로 추가된 이미지
-    editImages.forEach((image, index) => {
-      if (image instanceof File) {
-        formData.append(`newFiles`, image);
-      }
-    });
-
-    // 삭제된 이미지
-    deletedThumbnails.forEach(thumbnail => 
-      formData.append('deletedThumbnails', thumbnail)
-    );
-
-    await updatePost(post.pid, formData);
-    setIsEditing(false);
-    onPostUpdated();
-  } catch (error) {
-    console.error('게시글 수정 실패:', error);
-    alert('게시글 수정에 실패했습니다: ' + error.message);
+  if (!postData) {
+    return <div>로딩 중...</div>;
   }
-};
-  
-    const handleCancelEdit = (e) => {
-      e.stopPropagation();
-      setIsEditing(false);
-      setEditContent(post.content);
-      setEditImages(post.thumbnails || []);
-      setEditTags(post.tags || []);
-      setNewTag('');
-      setDeletedThumbnails([]);
-    };
-    // 게시글 삭제 핸들러
-    const handleDelete = async () => {
-      if (window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
-          try {
-              await deletePost(post.pid);
-              alert('게시글이 성공적으로 삭제되었습니다.');
-              onPostUpdated();
-          } catch (error) {
-              console.error('게시글 삭제 실패:', error);
-              alert('게시글 삭제에 실패했습니다.');
-          }
-      }
-      handleMenuClose();
-  };
-    // 좋아요 핸들러
-    const handleLike = async (e) => {
-      e.stopPropagation();
-      try {
-        const result = await likePost(post.pid);
-        onLike(post.pid, result.isLiked, result.likeCount);
-      } catch (error) {
-        console.error('좋아요 처리 실패:', error);
-      }
-    };
-  
-    // 북마크 핸들러
-    const handleBookmark = async (e) => {
-      e.stopPropagation();
-      try {
-        const result = await bookmarkPost(post.pid);
-        onBookmark(post.pid, result.isBookmarked, result.bookmarkCount);
-      } catch (error) {
-        console.error('북마크 처리 실패:', error);
-      }
-    };
 
-     // 댓글 로딩 함수
-     const loadComments = useCallback(async (size = 10) => {
-      try {
-        const response = await fetchComments(post.pid, { page: 0, size });
-        setComments(response.comments || []);
-        setTotalComments(response.total);
-        setHasMore(response.total > size);
-      } catch (error) {
-        console.error('댓글 로딩 실패:', error);
-      }
-    }, [post.pid]);
-  
-    // 댓글 불러오기
-    useEffect(() => {
-      if (isDetailView) {
-        loadComments(commentSize);
-      }
-      const userId = localStorage.getItem('USER_ID');
-      const userNickName = localStorage.getItem('USER_NICKNAME');
-      setCurrentUser(userId ? { id: userId, nickName: userNickName } : null);
-      console.log('Current user updated:', currentUser);
-    }, [isDetailView, post.pid, commentSize, loadComments]);
-
-    // 댓글 더보기 핸들러
-    const handleLoadMore = () => {
-      setCommentSize(prevSize => prevSize + 10);
-    };
-
-    // 댓글 작성 핸들러
-    const handleComment = async (e) => {
-      e.preventDefault();
-      try {
-        await createComment(post.pid, { content: commentContent });
-        setCommentContent('');
-        loadComments(commentSize);
-        onPostUpdated();
-      } catch (error) {
-        console.error('댓글 작성 실패:', error);
-      }
-    };
-
-// 답글 작성 핸들러
-const handleReply = async (e, parentId) => {
-  e.preventDefault();
-  try {
-    await createComment(post.pid, { 
-      content: replyContent, 
-      parentId: parentId 
-    });
-    setReplyContent('');
-    setReplyingTo(null);
-    loadComments(commentSize); // 댓글 목록 갱신
-  } catch (error) {
-    console.error('답글 작성 실패:', error);
+useEffect(() => {
+  console.log('postData:', postData);
+  console.log('Updated postData:', postData);
+  console.log('PostItem re-rendered with data:', postData);
+  if (postData) {
+    handleSearchResult(postData);
   }
-};
+}, [postData, handleSearchResult]);
+
+  // 이미지 렌더링 함수
+  const renderImages = useCallback((images) => {
+    console.log('Rendering images:', images);
+    if (!images || images.length === 0) {
+      console.log('No images to render');
+      return null;
+    }
+    return images.map((image, index) => {
+      const imageUrl = `${API_BASE_URL}/images/${encodeURIComponent(image.trim())}`;
+      console.log(`Image ${index} URL:`, imageUrl);
   
-    // 날짜 포맷 함수
-    const formatDate = (dateString) => {
-      if (!dateString) return '날짜 없음';
-      const date = new Date(dateString);
-      return isNaN(date.getTime()) ? '날짜 없음' : format(date, 'yyyy. MM. dd. HH:mm:ss');
-    };
-  
-    // 댓글 삭제 핸들러
-    const handleDeleteComment = async (commentId) => {
-      try {
-        await deleteComment(commentId);
-        alert('댓글이 삭제되었습니다.');
-        loadComments(currentPage);
-      } catch (error) {
-        console.error('댓글 삭제 실패:', error);
-        alert('댓글 삭제에 실패했습니다.');
-      }
-    };
-    // 댓글 렌더링 함수 (대댓글 포함)
-    const renderComments = (commentList, parentId = null) => {
-      if (!commentList || commentList.length === 0) {
-        return null;
-      }
-      return commentList
-        .filter(comment => comment.parentId === parentId)
-        .map(comment => (
-          <CommentItem key={comment.id} isReply={parentId !== null}>
-            <CommentHeader>
-              <CommentAuthor>{comment.nickName}</CommentAuthor>
-              <CommentDate>{formatDate(comment.regDate)}</CommentDate>
-            </CommentHeader>
-            <CommentContent>{comment.content}</CommentContent>
-            <CommentActions>
-              {currentUser && currentUser.id.toString() === comment.aid.toString() && (
-                <DeleteButton onClick={() => handleDeleteComment(comment.id)}>삭제</DeleteButton>
-              )}
-              {!parentId && (
-                <ReplyButton onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}>
-                  {replyingTo === comment.id ? '답글 취소' : '답글'}
-                </ReplyButton>
-              )}
-            </CommentActions>
-            {replyingTo === comment.id && (
-              <ReplyForm>
-                <CommentInput
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                  placeholder="답글을 입력하세요..."
-                />
-                <CommentButton onClick={(e) => handleReply(e, comment.id)}>
-                  답글 작성
-                </CommentButton>
-              </ReplyForm>
+      return (
+        <div key={index}>
+          <PostImage 
+            src={imageUrl}
+            alt={`Thumbnail ${index + 1}`} 
+            onError={(e) => {
+              console.error("Image load error for URL:", imageUrl);
+              e.target.src = placeholderImage;
+            }}
+          />
+        </div>
+      );
+    });
+  }, [API_BASE_URL]);
+
+  // 댓글 렌더링 함수
+  const renderComments = (commentList, parentId = null) => {
+    if (!commentList || commentList.length === 0) {
+      return null;
+    }
+    return commentList
+      .filter(comment => comment.parentId === parentId)
+      .map(comment => (
+        <CommentItem key={comment.id} isReply={parentId !== null}>
+          <CommentHeader>
+            <CommentAuthor>{comment.nickName}</CommentAuthor>
+            <CommentDate>{formatDate(comment.regDate)}</CommentDate>
+          </CommentHeader>
+          <CommentContent>{comment.content}</CommentContent>
+          <CommentActions>
+            {currentUser && postData && currentUser.id === postData.aid?.toString() && (
+              <DeleteButton onClick={() => handleDeleteComment(comment.id)}>삭제</DeleteButton>
             )}
-            {renderComments(commentList, comment.id)} {/* 대댓글 렌더링 */}
-          </CommentItem>
-        ));
-    };
-    
-    // 이미지 업로드 핸들러
-    const handleImageUpload = (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length + editImages.length > 4) {
-        alert('최대 4장의 이미지만 첨부할 수 있습니다.');
-        return;
-      }
-      setEditImages(prevImages => [...prevImages, ...files]);
-    };
-    
-    // 이미지 삭제 핸들러
-    const handleDeleteImage = async (index) => {
-      try {
-        const thumbnailToDelete = editImages[index];
-        if (typeof thumbnailToDelete === 'string') {
-          await setDeletedThumbnails(prev => [...prev, thumbnailToDelete]);
-        }
-        await setEditImages(prev => prev.filter((_, i) => i !== index));
-      } catch (error) {
-        console.error("이미지 삭제 중 오류 발생:", error);
-      }
-    };
-
-    // 이미지 렌더링 함수
-    const renderImages = (images) => {
-      return images && images.map((image, index) => {
-        // image가 문자열(파일 이름)인지 확인
-        const imageUrl = typeof image === 'string' 
-          ? `${API_BASE_URL}/images/${encodeURIComponent(image)}`
-          : placeholderImage;
-
-        console.log("Image URL:", imageUrl); // 디버깅을 위한 로그 추가
-
-        return (
-          <div key={index}>
-            <PostImage 
-              src={imageUrl}
-              alt={`Thumbnail ${index + 1}`} 
-              onError={(e) => {
-                console.error("Image load error for URL:", imageUrl);
-                e.target.src = placeholderImage;
-              }}
-            />
-            {isEditing && (
-              <button onClick={() => handleDeleteImage(index)}>삭제</button>
+            {!parentId && (
+              <ReplyButton onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}>
+                {replyingTo === comment.id ? '답글 취소' : '답글'}
+              </ReplyButton>
             )}
-          </div>
-        );
-      });
-    };
-
-    // 태그 추가 핸들러
-    const handleAddTag = (e) => {
-      if (e.key === 'Enter' && newTag.trim() !== '') {
-        if (!editTags.includes(newTag.trim())) {
-          setEditTags([...editTags, newTag.trim()]);
-        }
-        setNewTag('');
-      }
-    };
-
-    const handleDeleteTag = (tagToDelete) => {
-      setEditTags(editTags.filter(tag => tag !== tagToDelete));
-    };
-  
-    // 렌더링
-    return (
-      <PostItemContainer onClick={() => setIsDetailView(true)}>
-        <PostHeader>
-          <UserInfo>
-            {post.profileImage ? (
-              <Avatar src={post.profileImage} alt={post.nickName} />
-            ) : (
-              <DefaultAvatar />
-            )}
-            <div>
-              <h3>{post.nickName}</h3>
-              <p>{formatDate(post.regDate)}</p>
-            </div>
-          </UserInfo>
-        </PostHeader>
-        {isEditing ? (
-            <>
-                <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                />
-                <ImageLabel onClick={(e) => e.stopPropagation()}>
-                    🖼️ 이미지 추가
-                    <ImageInput
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageUpload}
-                        ref={fileInputRef}
-                    />
-                </ImageLabel>
-                <PostImages>
-                    {renderImages(editImages)}
-                </PostImages>
-                <TagInput
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyPress={handleAddTag}
-                      placeholder="태그 추가 (Enter로 추가)"
-                  />
-                  <TagList>
-                      {editTags.map((tag, index) => (
-                          <Tag key={index}>{tag}</Tag>
-                      ))}
-                  </TagList>
-              </>
-          ) : (
-              <>
-                  <PostContent>{post.content}</PostContent>
-                  <PostImages>
-                      {renderImages(post.thumbnails)}
-                  </PostImages>
-                  <TagContainer>
-                    {post.tags && post.tags.map((tag, index) => (
-                      <Tag key={index}>{tag}</Tag>
-                    ))}
-                  </TagContainer>
-              </>
-          )}
-        <PostActions>
-          <ActionButton onClick={handleLike}>
-            {post.liked ? '❤️' : '🤍'} {post.toriBoxCount}
-          </ActionButton>
-          <ActionButton>💬 {post.commentCount}</ActionButton>
-          <ActionButton onClick={handleBookmark}>
-            {post.bookmarked ? '🏷️' : '🔖'} {post.bookmarkCount}
-          </ActionButton>
-        </PostActions>
-        {isDetailView && (
-          <Modal onClick={() => setIsDetailView(false)}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-            <CloseButton onClick={() => setIsDetailView(false)}>&times;</CloseButton>
-                        <h2>{post.nickName}의 게시글</h2>
-                        {currentUser && currentUser.id === post.aid.toString() && (
-                            <div>
-                                <IconButton onClick={handleMenuOpen}>
-                                    <MoreVertIcon />
-                                </IconButton>
-                                <Menu
-                                    anchorEl={anchorEl}
-                                    open={Boolean(anchorEl)}
-                                    onClose={handleMenuClose}
-                                >
-                                    <MenuItem onClick={handleEdit}>수정</MenuItem>
-                                    <MenuItem onClick={handleDelete}>삭제</MenuItem>
-                                </Menu>
-                            </div>
-                        )}
-                        <p>{post.content}</p>
-              <PostImages>
-                  {renderImages(post.thumbnails)}
-              </PostImages>
-              <TagList>
-                {post.tags && post.tags.map((tag, index) => (
-                  <Tag key={index}>{tag}</Tag>
-                ))}
-              </TagList>
-              <PostActions>
-                <ActionButton onClick={handleLike}>
-                  {post.liked ? '❤️' : '🤍'} {post.toriBoxCount}
-                </ActionButton>
-                <ActionButton>💬 {post.commentCount}</ActionButton>
-                <ActionButton onClick={handleBookmark}>
-                  {post.bookmarked ? '🏷️' : '🔖'} {post.bookmarkCount}
-                </ActionButton>
-              </PostActions>
-    
-              {/* 댓글 섹션 */}
-              <CommentSection>
-                <h3>댓글 ({totalComments})</h3>
-                <form onSubmit={handleComment}>
-                  <CommentInput
-                    value={commentContent}
-                    onChange={(e) => setCommentContent(e.target.value)}
-                    placeholder="댓글을 입력하세요..."
-                  />
-                  <CommentButton type="submit">댓글 작성</CommentButton>
-                </form>
-                <CommentList>
-                  {renderComments(comments)}
-                </CommentList>
-                {hasMore && (
-                  <button onClick={handleLoadMore}>더보기</button>
-                )}
-              </CommentSection>
-            </ModalContent>
-          </Modal>
-        )}
-        {isEditing && (
-          <Modal onClick={handleCancelEdit}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-              <CloseButton onClick={handleCancelEdit}>&times;</CloseButton>
-              <h2>게시글 수정</h2>
-              <textarea
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
+          </CommentActions>
+          {replyingTo === comment.id && (
+            <ReplyForm>
+              <CommentInput
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                placeholder="답글을 입력하세요..."
               />
-              <ImageLabel>
-                🖼️ 이미지 추가
-                <ImageInput
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
+              <CommentButton onClick={(e) => handleReply(e, comment.id)}>
+                답글 작성
+              </CommentButton>
+            </ReplyForm>
+          )}
+          {renderComments(commentList, comment.id)}
+        </CommentItem>
+      ));
+  };
+
+  // 렌더링
+  return (
+    <PostItemContainer onClick={handleOpenDetailView}>
+      <PostHeader>
+        <UserInfo>
+            {postData?.profileImage ? (
+            <Avatar src={postData.profileImage} alt={postData.nickName} />
+          ) : (
+            <DefaultAvatar />
+          )}
+          <div>
+            <h3>{postData?.nickName}</h3>
+            <p>{formatDate(postData?.regDate)}</p>
+          </div>
+        </UserInfo>
+      </PostHeader>
+      {isEditing ? (
+        <>
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <ImageLabel onClick={(e) => e.stopPropagation()}>
+            🖼️ 이미지 추가
+            <ImageInput
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              ref={fileInputRef}
+            />
+          </ImageLabel>
+          <PostImages>
+            {renderImages(editImages)}
+          </PostImages>
+          <TagInput
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyPress={handleAddTag}
+            placeholder="태그 추가 (Enter로 추가)"
+          />
+          <TagList>
+            {editTags.map((tag, index) => (
+              <Tag key={index}>{tag}</Tag>
+            ))}
+          </TagList>
+        </>
+      ) : (
+        <>
+          <PostContent>{postData?.content || ''}</PostContent>
+          {postData?.thumbnails && postData.thumbnails.length > 0 && (
+            <PostImages>
+              {renderImages(postData.thumbnails)}
+            </PostImages>
+          )}
+          {postData.tags && postData.tags.length > 0 && (
+            <TagContainer>
+              {postData.tags.map((tag, index) => (
+                <Tag key={index}>{tag}</Tag>
+              ))}
+          </TagContainer> 
+          )}
+        </>
+    )}
+      <PostActions>
+        <ActionButton onClick={handleLike}>
+          {postData.liked ? '❤️' : '🤍'} {postData.toriBoxCount || 0}
+        </ActionButton>
+        <ActionButton>💬 {postData.commentCount || 0}</ActionButton>
+        <ActionButton onClick={handleBookmark}>
+          {postData.bookmarked ? '🏷️' : '🔖'} {postData.bookmarkCount || 0}
+        </ActionButton>
+      </PostActions>
+      {isDetailView && postData && (
+        <Modal onClick={handleCloseDetailView}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <CloseButton onClick={handleCloseDetailView}>&times;</CloseButton>
+            <h2>{postData.nickName}의 게시글</h2>
+            {currentUser && currentUser.id === postData.aid?.toString() && (
+              <div>
+                <IconButton onClick={handleMenuOpen}>
+                  <MoreVertIcon />
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleMenuClose}
+                >
+                  <MenuItem onClick={handleEdit}>수정</MenuItem>
+                  <MenuItem onClick={handleDelete}>삭제</MenuItem>
+                </Menu>
+              </div>
+            )}
+            <p>{postData.content}</p>
+            {postData.thumbnails && postData.thumbnails.length > 0 && (
+            <PostImages>
+              {renderImages(postData.thumbnails)}
+            </PostImages>
+          )}
+          <TagList>
+            {postData.tags && postData.tags.map((tag, index) => (
+              <Tag key={index}>{tag}</Tag>
+            ))}
+          </TagList>
+            <PostActions>
+              <ActionButton onClick={handleLike}>
+                {postData.liked ? '❤️' : '🤍'} {postData.toriBoxCount || 0}
+              </ActionButton>
+              <ActionButton>💬 {postData.commentCount || 0}</ActionButton>
+              <ActionButton onClick={handleBookmark}>
+                {postData.bookmarked ? '🏷️' : '🔖'} {postData.bookmarkCount || 0}
+              </ActionButton>
+            </PostActions>
+
+            {/* 댓글 섹션 */}
+            <CommentSection>
+              <h3>댓글 ({totalComments})</h3>
+              <form onSubmit={handleComment}>
+                <CommentInput
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  placeholder="댓글을 입력하세요..."
                 />
-              </ImageLabel>
-              <PostImages>
-                {editImages.map((image, index) => (
-                  <div key={index}>
-                    <PostImage
-                      src={image instanceof File ? URL.createObjectURL(image) : `${API_BASE_URL}/api/images/${image}`}
-                      alt={`Thumbnail ${index + 1}`}
-                      onError={(e) => {
-                        console.error("Image load error:", e);
-                        e.target.src = placeholderImage;
-                      }}
-                    />
-                    <button onClick={() => handleDeleteImage(index)}>삭제</button>
-                  </div>
-                ))}
-              </PostImages>
-              <TagContainer>
-                  {editTags.map((tag, index) => (
-                    <React.Fragment key={index}>
-                      <Tag>{tag}</Tag>
-                      <DeleteTagButton onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTag(tag);
-                      }}>
-                        X
-                      </DeleteTagButton>
-                    </React.Fragment>
-                  ))}
-                </TagContainer>
-                <TagInput
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={handleAddTag}
-                  placeholder="새 태그 추가 (Enter로 추가)"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              <button onClick={handleSaveEdit}>저장</button>
-              <button onClick={handleCancelEdit}>취소</button>
-            </ModalContent>
-          </Modal>
-        )}
-      </PostItemContainer>
-    );
-  }
+                <CommentButton type="submit">댓글 작성</CommentButton>
+              </form>
+              <CommentList>
+                {renderComments(comments)}
+              </CommentList>
+              {hasMore && (
+                <button onClick={handleLoadMore}>더보기</button>
+              )}
+            </CommentSection>
+          </ModalContent>
+        </Modal>
+      )}
+      {isEditing && (
+        <Modal onClick={handleCancelEdit}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <CloseButton onClick={handleCancelEdit}>&times;</CloseButton>
+            <h2>게시글 수정</h2>
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+            />
+            <ImageLabel>
+              🖼️ 이미지 추가
+              <ImageInput
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+              />
+            </ImageLabel>
+            <PostImages>
+              {editImages.map((image, index) => (
+                <div key={index}>
+                  <PostImage
+                    src={image instanceof File ? URL.createObjectURL(image) : `${API_BASE_URL}/api/images/${image}`}
+                    alt={`Thumbnail ${index + 1}`}
+                    onError={(e) => {
+                      console.error("Image load error:", e);
+                      e.target.src = placeholderImage;
+                    }}
+                  />
+                  <button onClick={() => handleDeleteImage(index)}>삭제</button>
+                </div>
+              ))}
+            </PostImages>
+            <TagContainer>
+              {editTags.map((tag, index) => (
+                <React.Fragment key={index}>
+                  <Tag>{tag}</Tag>
+                  <DeleteTagButton onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteTag(tag);
+                  }}>
+                    X
+                  </DeleteTagButton>
+                </React.Fragment>
+              ))}
+            </TagContainer>
+            <TagInput
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              onKeyPress={handleAddTag}
+              placeholder="새 태그 추가 (Enter로 추가)"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button onClick={handleSaveEdit}>저장</button>
+            <button onClick={handleCancelEdit}>취소</button>
+          </ModalContent>
+        </Modal>
+      )}
+    </PostItemContainer>
+  );
+}
