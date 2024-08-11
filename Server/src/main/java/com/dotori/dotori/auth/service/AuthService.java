@@ -232,4 +232,9 @@ public class AuthService {
         }
     }
 
+    public Auth getUserById(Long id) {
+        return authRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+
 }

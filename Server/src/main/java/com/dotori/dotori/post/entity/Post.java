@@ -65,13 +65,13 @@ public class Post{
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();
 
-    @ManyToMany
+    @Builder.Default
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "post_mentions",
             joinColumns = @JoinColumn(name = "post_id"),
             inverseJoinColumns = @JoinColumn(name = "auth_id")
     )
-    @Builder.Default
     private Set<Auth> mentionedUsers = new HashSet<>();
 
     public void changePost(String content, LocalDateTime modDate, List<PostThumbnail> thumbnails) {

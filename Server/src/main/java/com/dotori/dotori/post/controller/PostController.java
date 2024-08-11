@@ -1,5 +1,6 @@
 package com.dotori.dotori.post.controller;
 
+import com.dotori.dotori.auth.dto.AuthDTO;
 import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.auth.service.AuthService;
 import com.dotori.dotori.post.dto.*;
@@ -15,10 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/posts")
@@ -41,6 +39,7 @@ public class PostController {
     public ResponseEntity<PostDTO> addPost(
             @RequestParam("content") String content,
             @RequestParam(value = "tags", required = false) List<String> tags,
+            @RequestParam(value = "mentionedUserIds", required = false) String mentionedUserIdsString,
             @RequestParam(value = "files", required = false) List<MultipartFile> files) throws Exception {
 
         PostDTO postDTO = new PostDTO();
@@ -50,6 +49,17 @@ public class PostController {
         } else {
             postDTO.setTags(new ArrayList<>()); // 태그가 없을 경우 빈 리스트 설정
         }
+
+        // mentionedUserIds 문자열을 Set<Long>으로 변환
+        List<AuthDTO.MentionDTO> mentionedUsers = new ArrayList<>();
+        if (mentionedUserIdsString != null && !mentionedUserIdsString.isEmpty()) {
+            for (String id : mentionedUserIdsString.split(",")) {
+                Auth auth = authService.getUserById(Long.parseLong(id.trim()));
+                mentionedUsers.add(new AuthDTO.MentionDTO(auth.getId(), auth.getNickName(), auth.getProfileImage()));
+            }
+        }
+        postDTO.setMentionedUsers(mentionedUsers);
+
         Long postId = postService.addPost(postDTO, files);
         PostDTO addedPost = postService.getPost(postId);
         return ResponseEntity.ok(addedPost);

@@ -1,5 +1,6 @@
 package com.dotori.dotori.post.dto;
 
+import com.dotori.dotori.auth.dto.AuthDTO;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -48,7 +49,7 @@ public class PostDTO {
     private List<String> tags = new ArrayList<>();
 
     @Builder.Default
-    private Set<Long> mentionedUserIds = new HashSet<>();
+    private List<AuthDTO.MentionDTO> mentionedUsers = new ArrayList<>();
 
     public void setToriBoxCount(Long toriBoxCount) {
         this.toriBoxCount = toriBoxCount;
