@@ -9,6 +9,8 @@ export default function useInfoViewModel() {
         bio : '',
         nickName: '',
         phone: '',
+        profileImage: '',
+        headerImage: ''
     });
 
     useEffect(() => {

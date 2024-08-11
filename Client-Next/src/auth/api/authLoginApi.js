@@ -27,10 +27,10 @@ export async function login(authDTO) {
 
   try {
     const response = await fetch(API_BASE_URL + "/auth/login", requestOptions);
-    console.log('Login response:', response);
+    //console.log('Login response:', response);
     
     const responseData = await response.text();
-    console.log('Raw response:', responseData);
+    //console.log('Raw response:', responseData);
 
     if (!response.ok) {
       let errorMessage;
@@ -44,7 +44,7 @@ export async function login(authDTO) {
     }
 
     const result = JSON.parse(responseData);
-    console.log("Login success:", result);
+    //console.log("Login success:", result);
 
     if (result.accessToken) {
       localStorage.setItem(ACCESS_TOKEN, result.accessToken);
@@ -55,7 +55,7 @@ export async function login(authDTO) {
       if(result.refreshToken) localStorage.setItem("REFRESH_TOKEN", result.refreshToken);
       if(result.provider) localStorage.setItem("PROVIDER", result.provider);
 
-      if(window.history.back() === '/logout') window.location.href = "/";
+      if(window.history.back() === '/logout') window.location.href = "/todo";
       else window.history.back();
       
     } else {
