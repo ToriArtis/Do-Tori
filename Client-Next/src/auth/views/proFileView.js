@@ -4,6 +4,7 @@ import { modify } from '../api/authApi';
 import "../components/css/profile.css";
 import SettingView from './settingView';
 import { getFollowerCount, getFollowingCount } from '../api/followApi';
+import { ToriboxView } from '../../post/views/toriboxView'; 
 
 export default function ProfileView() {
   const userInfo = useInfoViewModel();
@@ -131,8 +132,9 @@ export default function ProfileView() {
             </div>
           ) : (
             <div>
-              <h3>마음함</h3>
-              {/* 마음함 목록 표사 */}
+
+              {/* 마음함 목록 표시 */}
+              <ToriboxView />
             </div>
           )}
         </div>
