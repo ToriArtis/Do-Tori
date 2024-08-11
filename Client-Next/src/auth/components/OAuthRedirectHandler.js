@@ -1,32 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { API_BASE_URL } from '@/config/app-config';
 import OauthLoadingPage from '../views/OauthLoadingPage';
 
 function OAuth2RedirectHandler() {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter(); // 넥스트 라우터 훅
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // 라우터가 준비되었는지 확인
+    if (!router.isReady) return;
+
     const handleOAuthRedirect = async () => {
-      // 2초 동안 로딩 상태를 유지합니다.
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const urlParams = new URLSearchParams(location.search);
-      const code = urlParams.get('code');
-      const state = urlParams.get('state');
+      // 쿼리 파라미터에서 code와 state를 추출
+      const { code, state } = router.query;
+       // 세션 스토리지에서 저장된 state와 provider 정보 가져옴
       const storedState = sessionStorage.getItem('oauth_state');
       const provider = sessionStorage.getItem('oauth_provider');
-  
+
       if (state !== storedState) {
-        // console.error('OAuth state does not match');
         setError('OAuth state mismatch. Please try logging in again.');
         setIsLoading(false);
         return;
       }
-  
+
+      // 사용이 끝난 세션 스토리지 항목들 제거
       sessionStorage.removeItem('oauth_state');
       sessionStorage.removeItem('oauth_provider');
 
@@ -48,8 +49,8 @@ function OAuth2RedirectHandler() {
             localStorage.setItem('USER_EMAIL', data.email);
             if(data.refreshToken) localStorage.setItem("REFRESH_TOKEN", data.refreshToken);
             if(data.provider) localStorage.setItem("PROVIDER", data.provider);
-         
-            navigate('/');
+        
+            router.push('/todo');
           } else {
             throw new Error('Token not received');
           }
@@ -58,14 +59,15 @@ function OAuth2RedirectHandler() {
           throw new Error('Received non-JSON response from server');
         }
       } catch (error) {
-        
+        console.error('OAuth login error:', error);
+        setError('로그인 중 오류가 발생했습니다. 다시 시도해 주세요.');
       } finally {
         setIsLoading(false);
       }
     };
 
     handleOAuthRedirect();
-  }, [navigate, location]);
+  }, [router.isReady, router.query]);
 
   if (isLoading) {
     return <OauthLoadingPage />;
@@ -74,12 +76,11 @@ function OAuth2RedirectHandler() {
   if (error) {
     return (
       <div>
-        <p>로그인 완료!</p>
+        <p>{error}</p>
       </div>
     );
   }
 
-  // 이 부분은 실행되지 않을 것입니다. 모든 경우가 위에서 처리됩니다.
   return null;
 }
 
