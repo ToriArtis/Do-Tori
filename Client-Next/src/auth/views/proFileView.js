@@ -3,9 +3,9 @@ import useInfoViewModel from '../viewmodels/useInfoViewModel';
 import { modify, uploadProfileImage, uploadHeaderImage } from '../api/authApi';
 import "../components/css/profile.css";
 import SettingView from './settingView';
-import { getFollowerCount, getFollowingCount } from '../api/followApi';
+import { getFollowerCount, getFollowingCount, getFollowers, getFollowings } from '../api/followApi';
 import { API_BASE_URL } from '@/config/app-config';
-import { ToriboxView } from '../../post/views/toriboxView'; 
+import { ToriboxView } from '../../post/views/toriboxView';
 
 
 export default function ProfileView() {
@@ -19,6 +19,11 @@ export default function ProfileView() {
   const [followingCount, setFollowingCount] = useState(0);
   const [newProfileImage, setNewProfileImage] = useState(null);
   const [newHeaderImage, setNewHeaderImage] = useState(null);
+  const [showFollowModal, setShowFollowModal] = useState(false);
+  const [followModalType, setFollowModalType] = useState('');
+  const [followList, setFollowList] = useState([]);
+  const [followPage, setFollowPage] = useState(0);
+
 
   // 사용자 정보 로드후 팔로워/팔로잉 수 가져옴
   useEffect(() => {
@@ -37,6 +42,41 @@ export default function ProfileView() {
     } catch (error) {
       console.error('팔로우 수 가져오기 실패:', error);
     }
+  };
+
+  // 팔로우 목록
+  const fetchFollowList = async (type) => {
+    try {
+      // 팔로워 또는 팔로잉 목록을 가져옴
+      const response = type === 'followers'
+        ? await getFollowers(userInfo.id, followPage)
+        : await getFollowings(userInfo.id, followPage);
+
+      setFollowList(prev => [...prev, ...response.content]);
+      if (response.last) {
+        setFollowPage(-1);
+      } else {
+        setFollowPage(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error(`${type} 목록 가져오기 실패:`, error);
+    }
+  };
+
+  // 팔로우 모달
+  const openFollowModal = (type) => {
+    setFollowModalType(type);
+    setFollowList([]);
+    setFollowPage(0);
+    setShowFollowModal(true);
+    fetchFollowList(type);
+  };
+
+  const closeFollowModal = () => {
+    setShowFollowModal(false);
+    setFollowModalType('');
+    setFollowList([]);
+    setFollowPage(0);
   };
 
   // 모달창
@@ -100,7 +140,7 @@ export default function ProfileView() {
         <div className="profile-info">
           <div className="profile-image-container">
             {userInfo.profileImage ? (
-              <img src={`${API_BASE_URL}/auth/images/${userInfo.profileImage}`} alt="Profile"/>
+              <img src={`${API_BASE_URL}/auth/images/${userInfo.profileImage}`} alt="Profile" />
             ) : (
               <div className="default-profile"></div>
             )}
@@ -109,8 +149,8 @@ export default function ProfileView() {
           <p>{userInfo.bio || '자신을 소개해보세요'}</p>
 
           <div className="follow-info">
-            <span>{followingCount} 팔로잉</span>
-            <span>{followerCount} 팔로워</span>
+            <span onClick={() => openFollowModal('followings')}>{followingCount} 팔로잉</span>
+            <span onClick={() => openFollowModal('followers')}>{followerCount} 팔로워</span>
           </div>
 
           <button onClick={handleEditProfile} className="edit-button">프로필 수정</button></div>
@@ -129,9 +169,9 @@ export default function ProfileView() {
                   <input type="file" onChange={handleHeaderImageChange} accept="image/*" />
                 </div>
                 <input
-                  type="text" value={editedNickName} onChange={(e) => setEditedNickName(e.target.value)} placeholder="닉네임"/>
+                  type="text" value={editedNickName} onChange={(e) => setEditedNickName(e.target.value)} placeholder="닉네임" />
                 <textarea
-                  value={editedBio} onChange={(e) => setEditedBio(e.target.value)} placeholder="자신을 소개해보세요"/>
+                  value={editedBio} onChange={(e) => setEditedBio(e.target.value)} placeholder="자신을 소개해보세요" />
                 <button type="submit">저장</button>
               </form>
             </div>
@@ -139,19 +179,39 @@ export default function ProfileView() {
         )}
       </div>
 
+      {showFollowModal && (
+        <div className="modal-overlay">
+          <div className="modal-content follow-modal">
+            <button onClick={closeFollowModal} className="modal-close-btn">X</button>
+            <h3>{followModalType === 'followers' ? '팔로워' : '팔로잉'} 목록</h3>
+            <div className="follow-list">
+              {followList.map((user, index) => (
+                <div key={index} className="follow-item">
+                  <img
+                    src={`${API_BASE_URL}/auth/images/${user.profileImage}`}
+                    alt={user.nickName}
+                    onError={(e) => { e.target.onerror = null; e.target.src = "/default-profile.png"; }}
+                  />
+                  <span>{user.nickName}</span>
+                </div>
+              ))}
+            </div>
+            {followPage !== -1 && (
+              <button onClick={() => fetchFollowList(followModalType)} className="load-more-btn">
+                더 보기
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 작성글/마음함 tab */}
       <div className="tab-container">
         <div className="tab-menu">
-          <button
-            className={activeTab === 'posts' ? 'active' : ''}
-            onClick={() => handleTabChange('posts')}
-          >
+          <button className={activeTab === 'posts' ? 'active' : ''} onClick={() => handleTabChange('posts')}>
             작성글 관리
           </button>
-          <button
-            className={activeTab === 'likes' ? 'active' : ''}
-            onClick={() => handleTabChange('likes')}
-          >
+          <button className={activeTab === 'likes' ? 'active' : ''} onClick={() => handleTabChange('likes')}>
             마음함
           </button>
         </div>

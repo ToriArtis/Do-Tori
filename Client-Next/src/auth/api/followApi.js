@@ -64,3 +64,12 @@ export function getFollowingCount(userId) {
     return call(`/follows/${userId}/following-count`, "GET");
 }
 
+// 팔로워 목록 조회
+export function getFollowers(userId, page = 0, size = 10) {
+  return call(`/follows/${userId}/followers?page=${page}&size=${size}`, "GET");
+}
+
+// 팔로잉 목록 조회
+export function getFollowings(userId, page = 0, size = 10) {
+  return call(`/follows/${userId}/followings?page=${page}&size=${size}`, "GET");
+}
