@@ -41,6 +41,10 @@ public class PostListCommentCountDTO {
         this.tags = tags != null ? Arrays.asList(tags.split(",")) : Collections.emptyList();
     }
 
+    public List<String> getThumbnailList() {
+        return thumbnail != null ? Arrays.asList(thumbnail.split(",")) : Collections.emptyList();
+    }
+
     public PostListCommentCountDTO() {
     }
 }

@@ -6,6 +6,7 @@ import com.dotori.dotori.post.entity.*;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -71,58 +72,46 @@ public class PostSearchImpl extends QuerydslRepositorySupport implements PostSea
         QBookmark bookmark = QBookmark.bookmark;
         QTag tag = QTag.tag;
 
-        // 게시글, 댓글, 썸네일, 좋아요, 북마크, 태그 엔티티를 조인하고
-        // 그룹화하여 PostListCommentCountDTO 객체로 결과를 가져오는 JPQLQuery 생성
         JPQLQuery<PostListCommentCountDTO> query = from(post)
                 .leftJoin(post.thumbnails, postThumbnail)
-                .leftJoin(comment).on(comment.post.eq(post))
-                .leftJoin(toriBox).on(toriBox.post.eq(post))
-                .leftJoin(bookmark).on(bookmark.post.eq(post))
                 .leftJoin(post.tags, tag)
-                .groupBy(post.pid, post.auth.id, post.content, post.auth.nickName, post.auth.profileImage, post.regDate, post.modDate)
+                .groupBy(post.pid)
                 .select(Projections.constructor(PostListCommentCountDTO.class,
                         post.pid,
-                        post.auth.id,  // email 대신 id 사용
+                        post.auth.id,
                         post.content,
                         post.auth.nickName,
                         post.auth.profileImage,
                         post.regDate,
                         post.modDate,
-                        Expressions.as(Expressions.stringTemplate("MAX({0})", postThumbnail.thumbnail), "thumbnail"),
-                        comment.count(),
-                        toriBox.count(),
-                        bookmark.count(),
-                        Expressions.stringTemplate("group_concat({0})", tag.name)
+                        Expressions.as(Expressions.stringTemplate("GROUP_CONCAT(DISTINCT {0})", postThumbnail.thumbnail), "thumbnail"),
+                        Expressions.as(JPAExpressions.select(comment.count()).from(comment).where(comment.post.eq(post)), "commentCount"),
+                        Expressions.as(JPAExpressions.select(toriBox.count()).from(toriBox).where(toriBox.post.eq(post)), "toriBoxCount"),
+                        Expressions.as(JPAExpressions.select(bookmark.count()).from(bookmark).where(bookmark.post.eq(post)), "bookmarkCount"),
+                        Expressions.as(Expressions.stringTemplate("GROUP_CONCAT(DISTINCT {0})", tag.name), "tags")
                 ));
 
         BooleanBuilder booleanBuilder = new BooleanBuilder();
-
-        // 검색 조건이 있을 경우 BooleanBuilder를 사용하여 조건 생성
-        if (types != null && keyword != null && !keyword.isEmpty()) {
+        if (types != null && keyword != null && !keyword.trim().isEmpty()) {
             for (String type : types) {
                 switch (type) {
                     case "c":
-                        booleanBuilder.or(post.content.contains(keyword));
+                        booleanBuilder.or(post.content.containsIgnoreCase(keyword));
                         break;
                     case "w":
-                        booleanBuilder.or(post.auth.nickName.contains(keyword));
+                        booleanBuilder.or(post.auth.nickName.containsIgnoreCase(keyword));
                         break;
                     case "t":
                         booleanBuilder.or(post.tags.any().name.eq(keyword));
                         break;
                 }
             }
-        }
-
-        // 검색 조건이 있는 경우 쿼리에 조건 추가
-        if (booleanBuilder.hasValue()) {
             query = query.where(booleanBuilder);
         }
-        // 페이징 처리된 결과 목록과 전체 개수 가져오기
+
         List<PostListCommentCountDTO> list = getQuerydsl().applyPagination(pageable, query).fetch();
         long count = query.fetchCount();
 
-        // 페이징된 결과를 PageImpl로 반환
         return new PageImpl<>(list, pageable, count);
     }
 }

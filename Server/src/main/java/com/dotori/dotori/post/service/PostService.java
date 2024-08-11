@@ -173,7 +173,13 @@ public class PostService {
         }
 
         // 유지할 이미지만 남기기
-        post.getThumbnails().removeIf(thumbnail -> !retainedImages.contains(thumbnail.getThumbnail()));
+//        post.getThumbnails().removeIf(thumbnail -> !retainedImages.contains(thumbnail.getThumbnail()));
+
+        if (retainedImages != null && !retainedImages.isEmpty()) {
+            post.getThumbnails().removeIf(thumbnail -> !retainedImages.contains(thumbnail.getThumbnail()));
+        } else {
+            post.getThumbnails().clear();
+        }
 
         // 새 파일 추가
         if (newFiles != null && !newFiles.isEmpty()) {
