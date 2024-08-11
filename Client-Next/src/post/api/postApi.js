@@ -107,6 +107,21 @@ export function likePost(id) {
   return call(`/posts/${id}/like`, "POST");
 }
 
+// 좋아요한 게시물 목록 조회 함수
+
+// 좋아요한 게시글 목록 조회 함수
+export function toriBoxSelectAll() {
+  return call("/posts/likes", "GET")
+    .then(response => {
+      console.log('Fetched liked posts:', response);
+      return response;
+    })
+    .catch(error => {
+      console.error('Error fetching liked posts:', error);
+      throw error;
+    });
+}
+
 // 게시글 북마크 함수
 export function bookmarkPost(id) {
   return call(`/posts/${id}/bookmark`, "POST");
@@ -141,6 +156,7 @@ export function fetchComments(postId, pageRequestDTO) {
     });
 }
 
+// 인기게시물 조회 함수
 export function fetchPopularPosts() {
   return call("/posts/best", "GET")
     .then(response => {

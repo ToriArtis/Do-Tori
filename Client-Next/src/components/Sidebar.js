@@ -104,6 +104,9 @@ const Sidebar = ({ isOpen, onToggle }) => {
           <Link href="/bookmark" passHref>
             <StyledLink isDarkMode={isDarkMode}>Bookmark</StyledLink>
           </Link>
+          <Link href="/toribox" passHref>
+            <StyledLink isDarkMode={isDarkMode}>Toribox</StyledLink>
+          </Link>
           <Link href="/settings" passHref>
             <StyledLink isDarkMode={isDarkMode}>Settings</StyledLink>
           </Link>
