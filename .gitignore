@@ -1,0 +1,6 @@
+# backend
+/Server/src/main/resources/static/images/
+/Server/src/main/resources/application.properties
+
+# frontend
+/Client-Next/src/Config.js
