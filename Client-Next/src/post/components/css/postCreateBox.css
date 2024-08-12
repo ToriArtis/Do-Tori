@@ -1,159 +1,110 @@
 .post-create-card {
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 20px;
-    margin-bottom: 20px;
-    width: 90%;
-  }
-  
-  .user-info {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  
-  .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #ddd;
-    margin-right: 10px;
-  }
-  
-  .tag-input {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-  }
-  
-  .text-area {
-    width: 100%;
-    height: 100px;
-    border: none;
-    resize: none;
-    font-size: 16px;
-    margin-bottom: 10px;
-  }
-  
-  .text-area:focus {
-    outline: none;
-  }
-  
-  .mention-list {
-    list-style-type: none;
-    padding: 0;
-    margin: 10px 0;
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: absolute;
-    width: calc(100% - 40px);
-    z-index: 1000;
-  }
-  
-  .mention-item {
-    padding: 10px;
-    cursor: pointer;
-  }
-  
-  .mention-item:hover {
-    background-color: #f0f0f0;
-  }
-  
-  .character-counter {
-    position: relative;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
-  }
-  
-  .character-counter-svg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 44px;
-    height: 44px;
-    transform: rotate(-90deg);
-  }
-  
-  .character-counter-circle {
-    fill: none;
-    stroke: #f0f0f0;
-    stroke-width: 4;
-  }
-  
-  .character-counter-fill-circle {
-    fill: none;
-    stroke: black;
-    stroke-width: 4;
-    transition: stroke-dashoffset 0.3s ease;
-  }
-  
-  .character-count-text {
-    position: relative;
-    z-index: 1;
-    font-size: 12px;
-  }
-  
-  .image-preview-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .image-preview {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 5px;
-  }
-  
-  .tag-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 10px;
-  }
-  
-  .tag {
-    background-color: #e0e0e0;
-    padding: 2px 5px;
-    border-radius: 3px;
-  }
-  
-  .button-row {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .image-label {
-    cursor: pointer;
-    display: inline-block;
-    padding: 8px 16px;
-    background-color: #f0f0f0;
-    border-radius: 5px;
-    margin-right: 10px;
-  }
-  
-  .image-input {
-    display: none;
-  }
-  
-  .submit-button {
-    background-color: #ccbfb2;
-    color: black;
-    border: none;
-    border-radius: 5px;
-    padding: 8px 16px;
-    cursor: pointer;
-  }
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #cccccc;
+  margin-right: 10px;
+}
+
+.text-area {
+  width: 100%;
+  border: none;
+  resize: none;
+  font-size: 14px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tag-input {
+  width: 100%;
+  border: none;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.image-label {
+  cursor: pointer;
+  color: #1da1f2;
+}
+
+.image-input {
+  display: none;
+}
+
+.post-create-character-counter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.submit-button {
+  background-color: #CCBFB2;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: 0.3s all;
+}
+
+.submit-button:hover {
+  background-color: #967F7A;
+}
+
+.character-counter {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 12px;
+}
+
+.character-counter-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 44px;
+  transform: rotate(-90deg);
+}
+
+.character-counter-circle {
+  fill: none;
+  stroke: #f0f0f0;
+  stroke-width: 4;
+}
+
+.character-counter-fill-circle {
+  fill: none;
+  stroke: black;
+  stroke-width: 4;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.character-count-text {
+  position: relative;
+  z-index: 1;
+  font-size: 12px;
+}
