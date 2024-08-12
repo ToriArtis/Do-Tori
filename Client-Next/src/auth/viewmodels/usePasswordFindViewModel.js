@@ -10,19 +10,17 @@ export function usePasswordFindViewModel() {
     passwordCheck: '',
   });
 
-  const [error, setError] = useState(null);
-
   const validateForm = () => {
     if (!values.email ) {
-      setError('유효하지 않은 이메일 주소입니다.');
+      alert('유효하지 않은 이메일 주소입니다.');
       return false;
     }
     if (!values.password || !isValidPassword(values.password)) {
-      setError('비밀번호는 최소 8자 이상이며, 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.');
+      alert('비밀번호는 최소 8자 이상이며, 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.');
       return false;
     }
     if (!values.passwordCheck || values.passwordCheck !== values.password) {
-      setError('비밀번호를 확인해야 합니다.');
+      alert('비밀번호를 확인해야 합니다.');
       return false;
     }
     return true;
@@ -39,8 +37,7 @@ export function usePasswordFindViewModel() {
         await passwordFind(values);
       
     } catch (error) {
-      setError('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
-      // console.error('failed:', error);
+      alert('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
       alert('이메일을 찾지 못했습니다.');
     }
   };
@@ -51,6 +48,5 @@ export function usePasswordFindViewModel() {
     passwordCheck: values.passwordCheck,
     handleChange,
     handleSubmit,
-    error,
   };
 }

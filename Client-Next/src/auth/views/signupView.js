@@ -7,7 +7,6 @@ function SignUpView() {
     values,
     handleChange,
     handleSubmit,
-    error
   } = useSignUpViewModel();
 
 
@@ -20,7 +19,7 @@ function SignUpView() {
         </div>
         <div className="form-container">
           <form onSubmit={handleSubmit} className="form">
-            {error && <p className="error">{error}</p>}
+
             <div className="input-container">
               <label className="input-label">이메일</label>
               <input className="input-field" type="email" name="email"value={values.email} onChange={handleChange} required />

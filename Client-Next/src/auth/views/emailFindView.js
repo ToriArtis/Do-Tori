@@ -11,7 +11,6 @@ function EmailFindView() {
     phone,
     handleChange,
     handleSubmit,
-    error,
     email,
   } = useEmailFindViewModel();
 
@@ -44,7 +43,6 @@ function EmailFindView() {
                 required
               />
             </div>
-            {error && <p className="error">{error}</p>}
             {email && <p className="success">이메일을 찾았습니다. 곧 로그인 페이지로 이동합니다...</p>}
             <div className="button-container">
               <button type="button" className="cancel-button" onClick={() => window.history.back()}>취소</button>

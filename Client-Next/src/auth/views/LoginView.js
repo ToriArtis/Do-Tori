@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Container, Typography, Grid, Link, Button } from '@mui/material';
 import "../components/css/auth.css";
-import Input from "../components/Input";
 import { useLoginViewModel } from "../viewmodels/useLoginViewModel";
 import { googleKey, naverKey, kakaoKey, redirectUri } from "../../Config";
 
@@ -12,7 +11,6 @@ function LoginView() {
     password,
     handleChange,
     handleSubmit,
-    error,
   } = useLoginViewModel();
 
 
@@ -40,75 +38,59 @@ const handleSocialLogin = (provider) => {
 
 
   return (
-  <>
-    <Container component="main" maxWidth="xs" sx={{ marginTop: "8%" }}>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Typography component="h1" variant="h5" style={{ textAlign: "center" }}>
-            <b>로그인</b>
-          </Typography>
-        </Grid>
-      </Grid>
-
-      <br />
-      <form onSubmit={handleSubmit} >
-        <Input
-          label="이메일"
-          type="email"
-          id="email"
-          value={email}
-          onChange={(e) => handleChange('email', e.target.value)}
-          required
-        />
-        <Input
-          label="비밀번호"
-          type="password"
-          id="password"
-          value={password}
-          onChange={(e) => handleChange('password', e.target.value)}
-          required
-        />
-        <button className="login-button" type="submit">로그인</button>
-      </form>
-
-      {error && (
-        <Typography color="error" style={{ marginTop: '10px' }}>{error}</Typography>
-      )}
-
-      <Grid container justifyContent="flex-start" style={{ marginTop: '10px' }}>
-        <Grid item>
-          <Link href="/signup" variant="body2" style={{ color: "#8A8A8A" }}>
-            회원가입 |
-          </Link>
-          
-          &nbsp;
-          <Link href="/emailfind" variant="body2" style={{ color: "#8A8A8A" }}>
-            아이디/</Link>
-          <Link href="/passwordfind" variant="body2" style={{ color: "#8A8A8A" }}>
-          비밀번호 찾기</Link>
-        </Grid>
-      </Grid>
-
-      <div className="hr-sect">&nbsp; 또는 &nbsp;</div>
-       <div className="btns">
-          {['kakao', 'naver', 'google'].map((provider) => (
-            <Button 
-              key={provider} 
-              className={provider} 
-              aria-label={provider}
-              onClick={() => handleSocialLogin(provider)}
-            >
-              <img
-                style={{ width: "60%", height: 'auto' }}
-                src={`/${provider}.png`}
-                alt={`${provider} login`}
-              />
-            </Button>
-          ))}
+    <div className="container">
+      <div className="content">
+        <div className="image-container">
+          <img src="/tori.png" alt="tori" className="image" />
         </div>
-      </Container>
-      <Container sx={{ marginTop: "8%" }}></Container>
-    </>
+        <div className="form-container">
+          <form onSubmit={handleSubmit} className="form">
+            <div className="input-group">
+              <div className="input-label">아이디</div>
+              <input
+                className="input-field"
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                required
+              />
+            </div>
+            <div className="input-group">
+              <div className="input-label">비밀번호</div>
+              <input
+                className="input-field"
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => handleChange('password', e.target.value)}
+                required
+              />
+            </div>
+            <div className="find-account">
+              <Link href="/emailfind">아이디</Link> | <Link href="/passwordfind">비밀번호 찾기</Link>
+            </div>
+
+            <div className="hr-sect">소셜 계정 로그인</div>
+            <div className="social-buttons">
+              {['google', 'naver', 'kakao'].map((provider) => (
+                <button 
+                  key={provider} 
+                  className={`social-button ${provider}`}
+                  onClick={() => handleSocialLogin(provider)}
+                >
+                  <img src={`/${provider}.png`} alt={`${provider} login`} />
+                </button>
+              ))}
+            </div>
+            <div className="action-buttons">
+              <button type="submit" className="action-button login-button">로그인</button>
+              <a href="/signup" className="action-button signup-button">회원가입</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }
 

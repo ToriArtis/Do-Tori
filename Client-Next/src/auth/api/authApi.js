@@ -168,3 +168,8 @@ function uploadImage(endpoint, formData) {
     }
   });
 }
+
+// 특정 사용자 정보 조회
+export function getUserInfo(userId) {
+  return call(`/auth/${userId}`, "GET");
+}

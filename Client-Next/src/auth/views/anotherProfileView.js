@@ -1,50 +1,45 @@
 import React, { useEffect, useState } from 'react';
-import useInfoViewModel from '../viewmodels/useInfoViewModel';
-import { modify, uploadProfileImage, uploadHeaderImage } from '../api/authApi';
-import "../components/css/profile.css";
+import { useRouter } from 'next/router';
+import { getUserInfo } from '../api/authApi';
 import { getFollowerCount, getFollowingCount, getFollowers, getFollowings } from '../api/followApi';
 import { API_BASE_URL } from '@/config/app-config';
+import "../components/css/profile.css";
 import { ToriboxView } from '../../post/views/toriboxView';
-import { useRouter } from 'next/router';
-import Sidebar from '@/components/Sidebar';
 
-export default function ProfileView() {
-  const userInfo = useInfoViewModel();
+export default function anotherProfileView() {
+  // 라우터 및 URL 파라미터 가져오기
+  const router = useRouter();
+  const { userId } = router.query;
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editedNickName, setEditedNickName] = useState('');
-  const [editedBio, setEditedBio] = useState('');
+  const [userInfo, setUserInfo] = useState(null);
   const [activeTab, setActiveTab] = useState('posts');
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [newProfileImage, setNewProfileImage] = useState(null);
-  const [newHeaderImage, setNewHeaderImage] = useState(null);
   const [showFollowModal, setShowFollowModal] = useState(false);
   const [followModalType, setFollowModalType] = useState('');
   const [followList, setFollowList] = useState([]);
   const [followPage, setFollowPage] = useState(0);
-  const router = useRouter(); // 라우터 초기화
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // 사용자 프로필 이동
-  const navigateToUserProfile = (userId) => {
-    router.push(`/profile/${userId}`);
-  };
-
-
-  // 사용자 정보 로드후 팔로워/팔로잉 수 가져옴
   useEffect(() => {
-    if (userInfo.id) {
+    if (userId) {
+      fetchUserInfo();
       fetchFollowCounts();
     }
-  }, [userInfo.id]);
+  }, [userId]);
 
+  const fetchUserInfo = async () => {
+    try {
+      const info = await getUserInfo(userId);
+      setUserInfo(info);
+    } catch (error) {
+      console.error('사용자 정보 가져오기 실패:', error);
+    }
+  };
 
   const fetchFollowCounts = async () => {
     try {
-      const followers = await getFollowerCount(userInfo.id);
-      const followings = await getFollowingCount(userInfo.id);
+      const followers = await getFollowerCount(userId);
+      const followings = await getFollowingCount(userId);
       setFollowerCount(followers);
       setFollowingCount(followings);
     } catch (error) {
@@ -55,10 +50,9 @@ export default function ProfileView() {
   // 팔로우 목록
   const fetchFollowList = async (type) => {
     try {
-      // 팔로워 또는 팔로잉 목록을 가져옴
       const response = type === 'followers'
-        ? await getFollowers(userInfo.id, followPage)
-        : await getFollowings(userInfo.id, followPage);
+        ? await getFollowers(userId, followPage)
+        : await getFollowings(userId, followPage);
 
       setFollowList(prev => [...prev, ...response.content]);
       if (response.last) {
@@ -87,48 +81,6 @@ export default function ProfileView() {
     setFollowPage(0);
   };
 
-  // 모달창
-  const handleEditProfile = () => {
-    setEditedNickName(userInfo.nickName);
-    setEditedBio(userInfo.bio);
-    setIsModalOpen(true);
-  };
-
-  //프로필 변경 이벤트 핸들러
-  const handleProfileImageChange = (e) => {
-    // e.target.files[0]: 선택된 첫 번째 파일
-    setNewProfileImage(e.target.files[0]);
-  };
-
-  const handleHeaderImageChange = (e) => {
-    setNewHeaderImage(e.target.files[0]);
-  };
-
-  // 프로필 저장
-  const handleSaveProfile = async (e) => {
-    e.preventDefault();
-    try {
-      // 닉네임/bio 업데이트
-      await modify({ nickName: editedNickName, bio: editedBio });
-
-      // 프로필 이미지 업데이트
-      if (newProfileImage) {
-        await uploadProfileImage(newProfileImage);
-      }
-
-      // 헤더 이미지 업데이트
-      if (newHeaderImage) {
-        await uploadHeaderImage(newHeaderImage);
-      }
-
-      setIsModalOpen(false);
-      window.location.reload();
-      alert("프로필이 성공적으로 업데이트되었습니다.");
-    } catch (error) {
-      alert(`프로필 업데이트에 실패했습니다: ${error.message}`);
-    }
-  };
-
   // 탭 변경
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -136,11 +88,6 @@ export default function ProfileView() {
 
   return (
     <>
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-      />
-      
       <div className="profile-container">
         <div className="header-image-container">
           {userInfo.headerImage ? (
@@ -160,8 +107,7 @@ export default function ProfileView() {
           </div>
 
           <div className="nickname-info">
-            <span style={{ fontSize: "24px", fontWeight: "bold", paddingRight: "500px" }}>{userInfo.nickName} </span>
-            <span><button onClick={handleEditProfile} className="edit-button">프로필 수정</button></span>
+            <span style={{fontSize:"24px", fontWeight:"bold", paddingRight:"500px"}}>{userInfo.nickName}</span>
           </div>
 
           <div className="follow-info">
@@ -169,32 +115,8 @@ export default function ProfileView() {
             <span onClick={() => openFollowModal('followers')}>{followerCount} 팔로워</span>
           </div>
 
-          <p style={{ color: "grey", fontSize: "15px" }}>{userInfo.bio || '자신을 소개해보세요'}</p>
-
+          <p style={{color:"grey", fontSize:"15px"}}>{userInfo.bio || ''}</p>
         </div>
-
-        {isModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <button onClick={() => setIsModalOpen(false)} className="modal-close-btn">X</button>
-              <form onSubmit={handleSaveProfile}>
-                <div>
-                  <label>프로필 이미지:</label>
-                  <input type="file" onChange={handleProfileImageChange} accept="image/*" />
-                </div>
-                <div>
-                  <label>헤더 이미지:</label>
-                  <input type="file" onChange={handleHeaderImageChange} accept="image/*" />
-                </div>
-                <input
-                  type="text" value={editedNickName} onChange={(e) => setEditedNickName(e.target.value)} placeholder="닉네임" />
-                <textarea
-                  value={editedBio} onChange={(e) => setEditedBio(e.target.value)} placeholder="자신을 소개해보세요" />
-                <button type="submit">저장</button>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
 
       {showFollowModal && (
@@ -210,8 +132,7 @@ export default function ProfileView() {
                     alt={user.nickName}
                     onError={(e) => { e.target.onerror = null; e.target.src = "/default-profile.png"; }}
                   />
-                  {/* 닉네임 클릭 시 해당 사용자의 프로필로 이동 */}
-                  <span onClick={() => navigateToUserProfile(user.userId)}>{user.nickName}</span>
+                  <span onClick={() => router.push(`/profile/${user.userId}`)}>{user.nickName}</span>
                 </div>
               ))}
             </div>
@@ -224,11 +145,11 @@ export default function ProfileView() {
         </div>
       )}
 
-      {/* 작성글/마음함 tab */}
+      {/* 작성글/마음함 탭 */}
       <div className="tab-container">
         <div className="tab-menu">
           <button className={activeTab === 'posts' ? 'active' : ''} onClick={() => handleTabChange('posts')}>
-            작성글 관리
+            작성글
           </button>
           <button className={activeTab === 'likes' ? 'active' : ''} onClick={() => handleTabChange('likes')}>
             마음함
@@ -243,7 +164,7 @@ export default function ProfileView() {
             </div>
           ) : (
             <div>
-              <ToriboxView />
+              <ToriboxView userId={userId} />
             </div>
           )}
         </div>
