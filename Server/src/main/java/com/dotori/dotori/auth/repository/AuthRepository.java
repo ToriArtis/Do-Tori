@@ -16,7 +16,6 @@ public interface AuthRepository extends JpaRepository<Auth, Long> {
     Optional<Auth> findByPhone(String phone);
 
     boolean existsByEmail(String email);
-    boolean existsByNickName(String nickName);
     boolean existsByPhone(String phoneNumber);
 
     // 사용자 비번 업데이트 JPQL 쿼리 메서드

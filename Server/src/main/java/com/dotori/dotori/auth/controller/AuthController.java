@@ -159,6 +159,18 @@ public class AuthController {
         }
     }
 
+    // 특정 사용자 조회
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getUserInfo(@PathVariable Long userId) {
+        try {
+            AuthDTO.ResponseDTO authDTO = authService.getUserInfo(userId);
+            return ResponseEntity.ok(authDTO);
+        } catch (BusinessLogicException e) {
+            ResponseDTO responseDTO = ResponseDTO.builder().error("User not found").build();
+            return ResponseEntity.badRequest().body(responseDTO);
+        }
+    }
+
     // 이미지 업로드
     @PostMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProfileImage(@RequestParam("profile") MultipartFile file) {

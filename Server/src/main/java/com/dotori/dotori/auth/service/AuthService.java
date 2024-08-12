@@ -51,9 +51,9 @@ public class AuthService {
         if (authRepository.existsByEmail(email)) {
             throw new BusinessLogicException(ExceptionCode.EXIST_EMAIL);
         }
-        if (authRepository.existsByNickName(nickName)) {
-            throw new BusinessLogicException(ExceptionCode.EXIST_NICK_NAME);
-        }
+//        if (authRepository.existsByNickName(nickName)) {
+//            throw new BusinessLogicException(ExceptionCode.EXIST_NICK_NAME);
+//        }
         if (nickName.length() >= 12) {
             throw new BusinessLogicException(ExceptionCode.NICKNAME_TOO_LONG);
         }
@@ -136,13 +136,11 @@ public class AuthService {
         return user.orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
     }
 
-
-    // 로그인한 사용자의 ID 조회
-    public Long getUserId(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String name = authentication.getName();
-        Optional<Auth> user = authRepository.findByEmail(name);
-        return user.get().getId();
+    // 특정 사용자 정보 조회
+    public AuthDTO.ResponseDTO getUserInfo(Long userId) {
+        Auth auth = authRepository.findById(userId)
+                .orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
+        return modelMapper.map(auth, AuthDTO.ResponseDTO.class);
     }
 
     //비밀번호 재설정

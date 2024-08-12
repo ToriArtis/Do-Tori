@@ -6,7 +6,6 @@ public enum ExceptionCode {
 
     USER_NOT_FOUND(404, "회원 정보를 찾을 수 없습니다."),
     EXIST_EMAIL(409,"이미 가입한 e-mail입니다."),
-    EXIST_NICK_NAME(409,"이미 존재하는 닉네임입니다."),
     EXIST_PHONE_NUMBER(409,"이미 존재하는 연락처입니다."),
     NICKNAME_TOO_LONG(400, "닉네임은 5글자 이하여야 합니다."),
     SELF_FOLLOW_NOT_ALLOWED(400, "자기 자신은 팔로우할 수 없습니다."),
