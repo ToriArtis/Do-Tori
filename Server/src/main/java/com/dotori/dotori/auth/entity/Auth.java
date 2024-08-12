@@ -22,7 +22,7 @@ public class Auth {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "nick_name", length = 20 , nullable = false, unique = true)
+    @Column(name = "nick_name", length = 20 , nullable = false)
     private String nickName;
 
     @Column(name = "password")

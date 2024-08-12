@@ -16,13 +16,6 @@ import java.util.Optional;
 public class AuthInfoFilter {
     private final AuthRepository authRepository;
 
-    private void existNickName(String NickName) {
-        log.info("NickName = {}", NickName);
-        if (NickName == null) return;
-        Optional<Auth> user = authRepository.findByNickName(NickName);
-        if (user.isPresent()) throw new BusinessLogicException(ExceptionCode.EXIST_NICK_NAME);
-    }
-
     public void existEmail(String email) {
         Optional<Auth> user = authRepository.findByEmail(email);
         if (user.isPresent()) throw new BusinessLogicException(ExceptionCode.EXIST_EMAIL);
@@ -37,7 +30,6 @@ public class AuthInfoFilter {
 
     public void filterUserInfo(Auth auth) {
         existEmail(auth.getEmail());
-        existNickName(auth.getNickName());
         existPhoneNum(auth.getPhone());
     }
 }
