@@ -142,22 +142,6 @@ const PostCreateBox = ({ onPostCreated }) => {
             ))}
         </ul>
       )}
-      <div className="character-counter">
-        <svg viewBox="0 0 44 44" className="character-counter-svg">
-          <circle className="character-counter-circle" cx="22" cy="22" r="20" />
-          <circle 
-            className="character-counter-fill-circle" 
-            cx="22" 
-            cy="22" 
-            r="20"
-            style={{
-              strokeDasharray: 126,
-              strokeDashoffset: 126 - (getPercentage() / 100) * 126
-            }}
-          />
-        </svg>
-        <span className="character-count-text">{characterCount}</span>
-      </div>
       <div className="image-preview-container">
         {images.map((image, index) => (
           <img key={index} className="image-preview" src={URL.createObjectURL(image)} alt={`Preview ${index}`} />
@@ -181,7 +165,25 @@ const PostCreateBox = ({ onPostCreated }) => {
             className="image-input"
           />
         </label>
+        <div className='post-create-character-counter'>
+        <div className="character-counter">
+        <svg viewBox="0 0 44 44" className="character-counter-svg">
+          <circle className="character-counter-circle" cx="22" cy="22" r="20" />
+          <circle 
+            className="character-counter-fill-circle" 
+            cx="22" 
+            cy="22" 
+            r="20"
+            style={{
+              strokeDasharray: 126,
+              strokeDashoffset: 126 - (getPercentage() / 100) * 126
+            }}
+          />
+        </svg>
+        <span className="character-count-text">{characterCount}</span>
+      </div>
         <button className="submit-button" onClick={handleSubmit}>등록</button>
+        </div>
       </div>
     </div>
   );

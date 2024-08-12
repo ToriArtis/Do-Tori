@@ -5,6 +5,8 @@ import PostItem from '../components/postItem';
 import PopularPosts from '../components/popularPosts';
 import Sidebar from '../../components/Sidebar';
 import PostList from '../components/postList';
+import Link from 'next/link';
+import SearchIcon from '@mui/icons-material/Search';
 import './css/postListView.css';
 
 export default function PostListView() {
@@ -12,7 +14,7 @@ export default function PostListView() {
     const [popularPosts, setPopularPosts] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [searchTypes, setSearchTypes] = useState([]);
+    const [searchType, setSearchType] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
     const [viewMode, setViewMode] = useState('all'); // 'all' or 'following'
 
@@ -40,8 +42,8 @@ export default function PostListView() {
 
     const handleSearch = useCallback(async () => {
         try {
-          console.log('Search params:', { types: searchTypes, keyword: searchKeyword });
-          const searchResults = await searchPosts(searchTypes, searchKeyword);
+          console.log('Search params:', { types: searchType, keyword: searchKeyword });
+          const searchResults = await searchPosts(searchType === 'all' ? ['c', 'w', 't'] : [searchType], searchKeyword);
           console.log('Search API response:', searchResults);
           const processedPosts = searchResults.content.map(post => ({
             ...post,
@@ -55,7 +57,7 @@ export default function PostListView() {
         } catch (error) {
           console.error("게시물 검색 중 오류 발생:", error);
         }
-      }, [searchTypes, searchKeyword]);
+      }, [searchType, searchKeyword]);
 
     useEffect(() => {
         const userId = localStorage.getItem('USER_ID');
@@ -122,48 +124,37 @@ export default function PostListView() {
         }
       };
 
-    return (
+      return (
         <div className="post-list-view-container">
             <Sidebar 
                 isOpen={isSidebarOpen} 
                 onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
             />
             <div className="main-content">
-                <div className="search-container">
-                    <input
-                        type="text"
-                        value={searchKeyword}
-                        onChange={(e) => setSearchKeyword(e.target.value)}
-                        placeholder="검색어를 입력하세요"
-                        className="search-input"
-                    />
-                    <select
-                        multiple
-                        value={searchTypes}
-                        onChange={(e) => setSearchTypes(Array.from(e.target.selectedOptions, option => option.value))}
-                        className="search-select"
-                    >
-                        <option value="c">내용</option>
-                        <option value="w">작성자</option>
-                        <option value="t">태그</option>
-                    </select>
-                    <button onClick={handleSearch} className="search-button">검색</button>
+                <div className="header">
+                    <h1 className="page-title">To-rest</h1>
+                    <Link href="/todo" className="go-dotori">
+                        go Do-Tori →
+                    </Link>
                 </div>
+                
                 <PostCreateBox onPostCreated={loadPosts} />
-                <div className="button-container">
+
+                <div className="view-buttons">
                     <button 
                         onClick={() => setPostsView('all')} 
                         className={`view-button ${viewMode === 'all' ? 'active' : ''}`}
                     >
-                        모든 게시글 보기
+                        모든 글 보기
                     </button>
                     <button 
                         onClick={() => setPostsView('following')} 
                         className={`view-button ${viewMode === 'following' ? 'active' : ''}`}
                     >
-                        팔로우한 사용자 게시글 보기
+                        팔로잉 게시글 모아보기
                     </button>
                 </div>
+
                 <PostList 
                     posts={posts}
                     onPostUpdated={onPostUpdated}
@@ -177,7 +168,32 @@ export default function PostListView() {
                 />
             </div>
             <div className="side-content">
-                <PopularPosts posts={popularPosts} />
+                <div className="search-container">
+                    <select
+                        value={searchType}
+                        onChange={(e) => setSearchType(e.target.value)}
+                        className="search-category"
+                    >
+                        <option value="">전체</option>
+                        <option value="c">내용</option>
+                        <option value="w">작성자</option>
+                        <option value="t">태그</option>
+                    </select>
+                    <input
+                        type="text"
+                        value={searchKeyword}
+                        onChange={(e) => setSearchKeyword(e.target.value)}
+                        placeholder="검색"
+                        className="search-input"
+                    />
+                    <button onClick={handleSearch} className="search-button">
+                        <SearchIcon />
+                    </button>
+                </div>
+                <div className="hot-posts">
+                    <h2 className="hot-posts-title">HOT 게시물</h2>
+                    <PopularPosts posts={popularPosts} />
+                </div>
             </div>
         </div>
     );
