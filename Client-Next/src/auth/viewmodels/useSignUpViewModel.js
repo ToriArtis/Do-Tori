@@ -11,8 +11,6 @@ export function useSignUpViewModel() {
   });
 
 
-  const [error, setError] = useState(null);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setValues(prev => ({ ...prev, [name]: value }));
@@ -20,15 +18,15 @@ export function useSignUpViewModel() {
 
   const validateForm = () => {
     if (!isValidEmail(values.email)) {
-      setError('유효하지 않은 이메일 주소입니다.');
+      alert('유효하지 않은 이메일 주소입니다.');
       return false;
     }
     if (!isValidPassword(values.password)) {
-      setError('비밀번호는 최소 8자 이상이며, 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.');
+      alert('비밀번호는 최소 8자 이상이며, 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다.');
       return false;
     }
     if (!values.nickName) {
-      setError('닉네임을 입력해주세요.');
+      alert('닉네임을 입력해주세요.');
       return false;
     }
     return true;
@@ -36,8 +34,7 @@ export function useSignUpViewModel() {
 
   const handleSubmit = async (event) => {
     // console.log(address);
-    event.preventDefault();
-    setError(null);
+    event.preventDefault();;
     
     if (!validateForm()) return;
 
@@ -59,6 +56,5 @@ export function useSignUpViewModel() {
     values,
     handleChange,
     handleSubmit,
-    error,
   };
 }

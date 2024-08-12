@@ -13,7 +13,6 @@ function PassWordFindView() {
     passwordCheck,
     handleChange,
     handleSubmit,
-    error,
   } = usePasswordFindViewModel();
 
   return (
@@ -25,7 +24,6 @@ function PassWordFindView() {
         <div className="form-container">
           <form onSubmit={handleSubmit} className="form">
             <h1 className="form-title">비밀번호 찾기</h1>
-            {error && <p className="error">{error}</p>}
             <div className="input-container">
               <label className="input-label">이메일</label>
               <input

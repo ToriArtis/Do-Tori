@@ -56,25 +56,25 @@
     height: 100%;
     object-fit: cover;
   }
-  
-  .profile-info h2 {
+ 
+  .nickname-info{
     margin-top: 60px;
-    font-size: 24px;
+    margin-bottom: 10px;
   }
   
   .follow-info {
     display: flex;
-    gap: 20px;
+    font-size: 13px;
     margin-bottom: 10px;
   }
   
   .edit-button {
-    background-color: #1da1f2;
-    color: white;
+    background-color: white;
+    color: gray;
     border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
     cursor: pointer;
+    float: right;
+    padding-right: 20px;
   }
   
   .modal-overlay {
@@ -154,8 +154,8 @@
   }
   
   .tab-menu button.active {
-    color: #1da1f2;
-    border-bottom: 2px solid #1da1f2;
+    color: #967F7A;
+    border-bottom: 2px solid #967F7A;
   }
   
   .tab-content {

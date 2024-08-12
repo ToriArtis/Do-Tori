@@ -1,39 +1,66 @@
 .setting-container {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  
-  .form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
-  }
-  
-  .form label {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-  
-  .form input {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  .button {
-    background-color: #1da1f2;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
-    cursor: pointer;
-    align-self: flex-start;
-  }
-  
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 35px;
+  text-align: left;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input-group label {
+  font-size: 14px;
+  color: #333;
+  min-width: 100px;
+}
+
+.underline-input {
+  flex: 1;
+  border: none;
+  border-bottom: 1px solid #000;
+  padding: 5px 0;
+  font-size: 16px;
+  outline: none;
+  background-color: transparent;
+}
+
+.button-group {
+  display: flex;
+  justify-content: flex-end;  /* 버튼을 오른쪽으로 정렬 */
+  gap: 10px;  /* 버튼 사이의 간격 설정 */
+  margin-top: 30px;
+}
+
+.submit-button, .cancel-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.submit-button {
+  background-color: #f0f0f0;
+  color: #000;
+}
+
+.cancel-button {
+  background-color: #d9c8b4;
+  color: #000;
+}
