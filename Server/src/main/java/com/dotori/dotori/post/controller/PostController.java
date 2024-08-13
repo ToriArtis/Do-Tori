@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -72,7 +73,7 @@ public class PostController {
     }
 
     // 게시글 수정 (작성자만 가능)
-    @PreAuthorize("isAuthenticated() and @postService.isPostAuthor(#id, authentication.name)")
+    @PreAuthorize("isAuthenticated() and @postService.isCommentAuthor(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<PostDTO> modifyPost(
             @PathVariable Long id,
@@ -91,7 +92,7 @@ public class PostController {
     }
 
     // 게시글 삭제 (작성자만 가능)
-    @PreAuthorize("isAuthenticated() and @postService.isPostAuthor(#id, authentication.name)")
+    @PreAuthorize("isAuthenticated() and @postService.isCommentAuthor(#id)")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id) {
         postService.deletePost(id);
@@ -170,11 +171,15 @@ public class PostController {
     }
 
     // 댓글 삭제 (작성자만 가능)
-    @PreAuthorize("isAuthenticated() and @postService.isCommentAuthor(#id, authentication.name)")
+    @PreAuthorize("isAuthenticated() and @postService.isCommentAuthor(#id)")
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
-        postService.deleteComment(id);
-        return ResponseEntity.ok().build();
+        try {
+            postService.deleteComment(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     // 게시글 검색

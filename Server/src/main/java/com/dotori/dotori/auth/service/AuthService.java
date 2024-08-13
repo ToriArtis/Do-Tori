@@ -128,12 +128,14 @@ public class AuthService {
     }
 
     // 로그인한 사용자 정보 조회
-    public Auth getLoginUser(){
+    public Auth getLoginUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String name = authentication.getName();
-        log.info("회원 이메일 = {}", name);
-        Optional<Auth> user = authRepository.findByEmail(name);
-        return user.orElseThrow(() -> new BusinessLogicException(ExceptionCode.USER_NOT_FOUND));
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("No authenticated user found");
+        }
+        String email = authentication.getName();
+        return authRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
     // 특정 사용자 정보 조회
