@@ -2,7 +2,7 @@ import React from 'react';
 import PostItem from './postItem'; 
 import './css/popularPosts.css';
 
-export default function PopularPosts({ posts }) {
+export default function PopularPosts({ posts = [] }) {
     return (
         <div className="popular-posts-container">
             <h2 className="popular-posts-title">HOT 게시물</h2>
