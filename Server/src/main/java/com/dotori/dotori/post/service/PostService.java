@@ -3,6 +3,7 @@ package com.dotori.dotori.post.service;
 import com.dotori.dotori.auth.dto.AuthDTO;
 import com.dotori.dotori.auth.entity.Auth;
 import com.dotori.dotori.auth.repository.AuthRepository;
+import com.dotori.dotori.auth.service.AuthService;
 import com.dotori.dotori.follow.dto.FollowDTO;
 import com.dotori.dotori.follow.service.FollowService;
 import com.dotori.dotori.post.dto.*;
@@ -45,6 +46,7 @@ public class PostService {
     private final BookmarkRepository bookmarkRepository;
     private final FollowService followService;
     private final PostLikeService postLikeService;
+    private final AuthService authService;
 
     // 로그인한 사용자 조회
     private Auth getLoginUser() {
@@ -57,17 +59,19 @@ public class PostService {
                 .orElse(null); // 사용자를 찾지 못한 경우에도 null 반환
     }
     // 특정 사용자가 게시글의 작성자인지 확인하는 메서드
-    public boolean isPostAuthor(Long postId, String email) {
+    public boolean isPostAuthor(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
-        return post.getAuth().getEmail().equals(email);
+        Auth currentUser = authService.getLoginUser();
+        return currentUser != null && post.getAuth().getId().equals(currentUser.getId());
     }
 
     // 특정 사용자가 댓글의 작성자인지 확인하는 메서드
-    public boolean isCommentAuthor(Long commentId, String email) {
+    public boolean isCommentAuthor(Long commentId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
-        return comment.getAuth().getEmail().equals(email);
+        Auth currentUser = authService.getLoginUser();
+        return currentUser != null && comment.getAuth().getId().equals(currentUser.getId());
     }
 
     // Post 기능
@@ -157,11 +161,8 @@ public class PostService {
     public PostDTO getPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
-        PostDTO postDTO = modelMapper.map(post, PostDTO.class);
-        postDTO.setThumbnails(post.getThumbnails().stream()
-                .map(PostThumbnail::getThumbnail)
-                .collect(Collectors.toList()));
-        return postDTO;
+        Auth loginAuth = getLoginUser();
+        return convertToPostDTO(post, loginAuth);
     }
 
     // 게시글 수정
@@ -516,12 +517,6 @@ public class PostService {
             // 로그인하지 않은 사용자의 경우 false로 설정
             postDTO.setLiked(false);
             postDTO.setBookmarked(false);
-        }
-
-        if (post.getThumbnails() != null && !post.getThumbnails().isEmpty()) {
-            postDTO.setThumbnails(post.getThumbnails().stream()
-                    .map(PostThumbnail::getThumbnail)
-                    .collect(Collectors.toList()));
         }
 
         // 태그 정보 처리
