@@ -1,18 +1,19 @@
 .post-item-container {
   border-bottom: 1px solid #e0e0e0;
   padding: 20px;
+  cursor: pointer;
 }
 
 .post-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 10px;
 }
 
 .user-info {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .avatar {
@@ -24,22 +25,33 @@
 
 .user-name-container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   margin-left: 8px;
-  flex-wrap: wrap;
 }
 
-.user-name-container>h3 {
-  margin-right: 8px;
-  margin-bottom: 0;
+.user-name-container > h3 {
+  margin: 0;
+  margin-bottom: 4px;
 }
-.user-name-container>p {
+
+.user-name-container > p {
   font-size: 14px;
-  margin-bottom: 0;
+  margin: 0;
+  color: #657786;
 }
 
 .tag-container {
-  width: 100%;
+  margin-top: 8px;
+}
+
+.tag {
+  display: inline-block;
+  background-color: #f1f1f1;
+  padding: 2px 8px;
+  margin-right: 5px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #1da1f2;
 }
 
 .post-content {

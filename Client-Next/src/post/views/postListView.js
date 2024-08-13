@@ -60,9 +60,10 @@ export default function PostListView() {
       }, [searchType, searchKeyword]);
 
     useEffect(() => {
+        const token = localStorage.getItem('ACCESS_TOKEN');
         const userId = localStorage.getItem('USER_ID');
         const userNickName = localStorage.getItem('USER_NICKNAME');
-        setCurrentUser(userId ? { id: userId, nickName: userNickName } : null);
+        setCurrentUser(token ? { id: userId, nickName: userNickName } : null);
     
         loadPosts();
         loadPopularPosts();

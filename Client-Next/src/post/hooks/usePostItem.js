@@ -109,7 +109,7 @@ export default function usePostItem(post, onPostUpdated) {
   };
 
   const handleLike = async (e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     try {
       const result = await likePost(postData.pid);
       setPostData(prevPost => ({
@@ -123,7 +123,7 @@ export default function usePostItem(post, onPostUpdated) {
   };
 
   const handleBookmark = async (e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     try {
       const result = await bookmarkPost(postData.pid);
       setPostData(prevPost => ({

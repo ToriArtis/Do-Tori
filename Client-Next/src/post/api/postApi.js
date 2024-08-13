@@ -75,6 +75,25 @@ export function fetchPost(id) {
   return call(`/posts/${id}`, "GET");
 }
 
+// 게시글 상세 조회
+export const getPostById = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('ACCESS_TOKEN')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('게시글을 불러오는데 실패했습니다.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('게시글 조회 실패:', error);
+    throw error;
+  }
+};
 
 // 게시글 수정 함수
 export function updatePost(id, formData) {
@@ -83,8 +102,6 @@ export function updatePost(id, formData) {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      // Content-Type 헤더를 제거합니다.
-      // FormData를 사용할 때는 브라우저가 자동으로 적절한 Content-Type을 설정합니다.
     },
     body: formData,
   }).then((response) => {
