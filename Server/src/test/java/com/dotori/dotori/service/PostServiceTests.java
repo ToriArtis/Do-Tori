@@ -2,12 +2,10 @@ package com.dotori.dotori.service;
 
 import com.dotori.dotori.auth.dto.AuthDTO;
 import com.dotori.dotori.auth.service.AuthService;
-import com.dotori.dotori.post.dto.PageRequestDTO;
-import com.dotori.dotori.post.dto.PageResponseDTO;
-import com.dotori.dotori.post.dto.PostDTO;
-import com.dotori.dotori.post.dto.ToriBoxDTO;
+import com.dotori.dotori.post.dto.*;
 import com.dotori.dotori.post.service.PostService;
 import lombok.extern.log4j.Log4j2;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @SpringBootTest
@@ -107,6 +106,49 @@ public class PostServiceTests {
             log.info(postDTO.getContent());
         }
     }
+
+
+
+    @Test
+    public void testAddComment() throws Exception {
+        log.info("testAddComment");
+        log.info(postService.getClass().getName());
+
+        CommentDTO commentDTO = CommentDTO.builder()
+                .parentId(2L)
+                .content("comment test2")
+                .aid(1L)
+                .build();
+        CommentDTO newComment = postService.readComment(commentDTO.getId());
+        log.info("newComment's id is {}", newComment.getId());
+    }
+
+    @Test
+    public void selectTest() {
+        log.info("selectTest");
+        CommentDTO commentDTO = postService.readComment(1L);
+        log.info(commentDTO.getContent());
+    }
+
+    @Test
+    public void listCommentTest() {
+        log.info("listTest");
+        PageRequestDTO pageRequestDTO = new PageRequestDTO();
+//        PageResponseDTO<CommentDTO> commentDTO = postService.getListOfPost(2, pageRequestDTO);
+//        log.info(commentDTO);
+    }
+
+    @Test
+    public void deleteTest() {
+        log.info("deleteTest");
+        Long id = 1L;
+        postService.deleteComment(id);       // pid 이미 지웠기 때문에 재차 remove 시 에러가 뜬다
+        Assertions.assertThrows(NoSuchElementException.class, () -> {
+            postService.readComment(id);
+        });
+    }
+
+
 
 
 }
