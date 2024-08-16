@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { createPost, fetchFollowingUsers } from '../api/postApi';
 import './css/postCreateBox.css';
+import { getItem } from '@/auth/utils/storage';
 
 const MAX_CHARACTERS = 500; // 최대 글자 수
 
@@ -20,7 +21,8 @@ const PostCreateBox = ({ onPostCreated }) => {
   const [mentionFilter, setMentionFilter] = useState('');
 
   useEffect(() => {
-    const userNickName = localStorage.getItem('USER_NICKNAME');
+    // const userNickName = localStorage.getItem('USER_NICKNAME');
+    const userNickName = getItem('USER_NICKNAME');
     setNickName(userNickName || '익명');
     fetchFollowingUsers().then(users => setFollowingUsers(users));
   }, []);

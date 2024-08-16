@@ -8,6 +8,7 @@ import PostList from '../components/postList';
 import Link from 'next/link';
 import SearchIcon from '@mui/icons-material/Search';
 import './css/postListView.css';
+import { getItem } from '@/auth/utils/storage';
 
 export default function PostListView() {
     const [posts, setPosts] = useState([]);
@@ -60,9 +61,12 @@ export default function PostListView() {
       }, [searchType, searchKeyword]);
 
     useEffect(() => {
-        const token = localStorage.getItem('ACCESS_TOKEN');
-        const userId = localStorage.getItem('USER_ID');
-        const userNickName = localStorage.getItem('USER_NICKNAME');
+        // const token = localStorage.getItem('ACCESS_TOKEN');
+        // const userId = localStorage.getItem('USER_ID');
+        // const userNickName = localStorage.getItem('USER_NICKNAME');
+        const token = getItem('ACCESS_TOKEN');
+        const userId = getItem('USER_ID');
+        const userNickName = getItem('USER_NICKNAME');
         setCurrentUser(token ? { id: userId, nickName: userNickName } : null);
     
         loadPosts();

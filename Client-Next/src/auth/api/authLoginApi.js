@@ -1,15 +1,16 @@
 import { API_BASE_URL } from "../../config/app-config";
+import { removeItem, setItem } from "../utils/storage";
 
 // 액세스 토큰을 저장하기 위한 키 상수
 const ACCESS_TOKEN = "ACCESS_TOKEN";
 const USER_NICKNAME = "USER_NICKNAME";
-const USER_EMAIL ="USER_EMAIL";
+const USER_EMAIL = "USER_EMAIL";
 // const USER_ID = "USER_ID";
 
 // 로그인
 export async function login(authDTO) {
   console.log('Login attempt with:', authDTO);
-  
+
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
@@ -27,10 +28,7 @@ export async function login(authDTO) {
 
   try {
     const response = await fetch(API_BASE_URL + "/auth/login", requestOptions);
-    //console.log('Login response:', response);
-    
     const responseData = await response.text();
-    //console.log('Raw response:', responseData);
 
     if (!response.ok) {
       let errorMessage;
@@ -44,20 +42,22 @@ export async function login(authDTO) {
     }
 
     const result = JSON.parse(responseData);
-    //console.log("Login success:", result);
 
     if (result.accessToken) {
-      localStorage.setItem(ACCESS_TOKEN, result.accessToken);
-      localStorage.setItem(USER_NICKNAME, result.nickName);
-      localStorage.setItem(USER_EMAIL, result.email);
+      // localStorage.setItem(ACCESS_TOKEN, result.accessToken);
+      // localStorage.setItem(USER_NICKNAME, result.nickName);
+      // localStorage.setItem(USER_EMAIL, result.email);
+      setItem('ACCESS_TOKEN', result.accessToken);
+      setItem('USER_NICKNAME', result.nickName);
+      setItem('USER_EMAIL', result.email);
       // localStorage.setItem(USER_ID, result.id);
-  
-      if(result.refreshToken) localStorage.setItem("REFRESH_TOKEN", result.refreshToken);
-      if(result.provider) localStorage.setItem("PROVIDER", result.provider);
 
-      if(window.history.back() === '/logout') window.location.href = "/todo";
+      if (result.refreshToken) localStorage.setItem("REFRESH_TOKEN", result.refreshToken);
+      if (result.provider) localStorage.setItem("PROVIDER", result.provider);
+
+      if (window.history.back() === '/logout') window.location.href = '/todo';
       else window.history.back();
-      
+
     } else {
       throw new Error("토큰이 없습니다.");
     }
@@ -68,22 +68,27 @@ export async function login(authDTO) {
     throw error;
   }
 }
-  
-  // 로그아웃 함수
-  export function logout() {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(ACCESS_TOKEN);
-      localStorage.removeItem(USER_NICKNAME);
-      localStorage.removeItem(USER_EMAIL);
-      // localStorage.removeItem(USER_ID);
-      localStorage.removeItem("PROVIDER");
-      window.location.href = "/login";
-    }
+
+// 로그아웃 함수
+export function logout() {
+  if (typeof window !== 'undefined') {
+    // localStorage.removeItem(ACCESS_TOKEN);
+    // localStorage.removeItem(USER_NICKNAME);
+    // localStorage.removeItem(USER_EMAIL);
+    removeItem('ACCESS_TOKEN');
+    removeItem('USER_NICKNAME');
+    removeItem('USER_EMAIL');
+    removeItem('REFRESH_TOKEN');
+
+    // localStorage.removeItem(USER_ID);
+    localStorage.removeItem("PROVIDER");
+    window.location.href = "/login";
   }
-  
-  export default function Logout() {
-    if (typeof window !== 'undefined') {
-      logout();
-    }
-    return null;
+}
+
+export default function Logout() {
+  if (typeof window !== 'undefined') {
+    logout();
   }
+  return null;
+}

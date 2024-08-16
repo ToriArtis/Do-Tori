@@ -1,3 +1,4 @@
+import { getItem } from "@/auth/utils/storage";
 import { API_BASE_URL } from "../../config/app-config";
 
 // API 호출을 위한 기본 함수
@@ -5,7 +6,8 @@ function call(api, method, request) {
   let headers = new Headers({
     "Content-Type": "application/json",
   });
-  const accessToken = localStorage.getItem("ACCESS_TOKEN");
+  // const accessToken = localStorage.getItem("ACCESS_TOKEN");
+  const accessToken = getItem('ACCESS_TOKEN');
   if (accessToken) {
     headers.append("Authorization", "Bearer " + accessToken);
   }
@@ -48,7 +50,8 @@ function call(api, method, request) {
 
 // 게시글 생성 함수
 export function createPost(formData) {
-  const accessToken = localStorage.getItem("ACCESS_TOKEN");
+  // const accessToken = localStorage.getItem("ACCESS_TOKEN");
+  const accessToken = getItem('ACCESS_TOKEN');
   return fetch(`${API_BASE_URL}/posts`, {
     method: "POST",
     headers: {
@@ -97,7 +100,8 @@ export const getPostById = async (id) => {
 
 // 게시글 수정 함수
 export function updatePost(id, formData) {
-  const accessToken = localStorage.getItem("ACCESS_TOKEN");
+  // const accessToken = localStorage.getItem("ACCESS_TOKEN");
+  const accessToken = getItem('ACCESS_TOKEN');
   return fetch(`${API_BASE_URL}/posts/${id}`, {
     method: "PUT",
     headers: {
@@ -199,7 +203,8 @@ export function fetchFollowingPosts() {
 // 팔로우 목록 가져오기
 export const fetchFollowingUsers = async () => {
   try {
-    const userId = localStorage.getItem('USER_ID');
+    // const userId = localStorage.getItem('USER_ID');
+    const userId = getItem('USER_ID');
     const response = await call(`/follows/${userId}/followings`, 'GET');
     return response.content;
   } catch (error) {
