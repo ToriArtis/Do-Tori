@@ -1,3 +1,5 @@
+import { getItem } from "@/auth/utils/storage";
+
 export class TodoModel {
     constructor(id, content, category, done, todoDate) {
         this.id = id;
@@ -29,7 +31,8 @@ export function callApi(api, method, request) {
     });
   
     // 로컬 스토리지에서 ACCESS TOKEN 가져오기
-    const accessToken = localStorage.getItem("ACCESS_TOKEN");
+    // const accessToken = localStorage.getItem("ACCESS_TOKEN");
+    const accessToken = getItem('ACCESS_TOKEN');
     if (accessToken && accessToken !== null) {
       headers.append("Authorization", "Bearer " + accessToken);
     }

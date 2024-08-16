@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { API_BASE_URL } from '@/config/app-config';
 import OauthLoadingPage from '../views/OauthLoadingPage';
+import { setItem } from '../utils/storage';
 
 function OAuth2RedirectHandler() {
   const router = useRouter(); // 넥스트 라우터 훅
@@ -17,7 +18,7 @@ function OAuth2RedirectHandler() {
 
       // 쿼리 파라미터에서 code와 state를 추출
       const { code, state } = router.query;
-       // 세션 스토리지에서 저장된 state와 provider 정보 가져옴
+      // 세션 스토리지에서 저장된 state와 provider 정보 가져옴
       const storedState = sessionStorage.getItem('oauth_state');
       const provider = sessionStorage.getItem('oauth_provider');
 
@@ -44,12 +45,17 @@ function OAuth2RedirectHandler() {
         if (contentType && contentType.indexOf("application/json") !== -1) {
           const data = await response.json();
           if (data.accessToken) {
-            localStorage.setItem('ACCESS_TOKEN', data.accessToken);
-            localStorage.setItem('USER_NICKNAME', data.nickName);
-            localStorage.setItem('USER_EMAIL', data.email);
-            if(data.refreshToken) localStorage.setItem("REFRESH_TOKEN", data.refreshToken);
-            if(data.provider) localStorage.setItem("PROVIDER", data.provider);
-        
+            // localStorage.setItem('ACCESS_TOKEN', data.accessToken);
+            // localStorage.setItem('USER_NICKNAME', data.nickName);
+            // localStorage.setItem('USER_EMAIL', data.email);
+            // if (data.refreshToken) localStorage.setItem("REFRESH_TOKEN", data.refreshToken);
+            // if (data.provider) localStorage.setItem("PROVIDER", data.provider);
+            setItem('ACCESS_TOKEN', data.accessToken);
+            setItem('USER_NICKNAME', data.nickName);
+            setItem('USER_EMAIL', data.email);
+            if (data.refreshToken) setItem("REFRESH_TOKEN", data.refreshToken);
+            if (data.provider) setItem("PROVIDER", data.provider);
+
             router.push('/todo');
           } else {
             throw new Error('Token not received');

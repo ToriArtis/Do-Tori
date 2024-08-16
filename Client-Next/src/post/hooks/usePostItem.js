@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { updatePost, deletePost, likePost, bookmarkPost, createComment, fetchComments, deleteComment } from '../api/postApi';
 import { format } from 'date-fns';
 import { isEqual } from 'lodash';
+import { getItem } from '@/auth/utils/storage';
 
 export default function usePostItem(post, onPostUpdated) {
   const [isDetailView, setIsDetailView] = useState(false);
@@ -22,8 +23,10 @@ export default function usePostItem(post, onPostUpdated) {
   const [postData, setPostData] = useState(post || {});
 
   useEffect(() => {
-    const userId = localStorage.getItem('USER_ID');
-    const userNickName = localStorage.getItem('USER_NICKNAME');
+    // const userId = localStorage.getItem('USER_ID');
+    // const userNickName = localStorage.getItem('USER_NICKNAME');
+    const userId = getItem('USER_ID');
+    const userNickName = getItem('USER_NICKNAME');
     setCurrentUser(userId ? { id: userId, nickName: userNickName } : null);
 
     if (post) {
