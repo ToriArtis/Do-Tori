@@ -43,7 +43,7 @@ public class ToriBoxRepositoryTests {
 
     @Test
     public void testDelete(){
-        toriBoxRepository.deleteById(1);
+        toriBoxRepository.deleteById(1L);
     }
 
 
