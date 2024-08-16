@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/todo")
@@ -23,14 +26,26 @@ public class TodoController {
 
     private final TodoService todoService;
 
+
     @GetMapping
-    public ResponseEntity<List<TodoDTO>> getAllTodos() {
-        try{
-            return ResponseEntity.ok(todoService.getAllTodo());
-        }catch (Exception e){
+    public ResponseEntity<?> getAllTodos() {
+        try {
+            List<TodoDTO> todos = todoService.getAllTodo();
+
+            // 카테고리별로 Todo 항목들을 그룹화
+            Map<String, List<TodoDTO>> todoCategory = todos.stream()
+                    .collect(Collectors.groupingBy(TodoDTO::getCategory));
+
+            // 카테고리를 알파벳 순으로 정렬 (선택사항)
+            Map<String, List<TodoDTO>> sortedTodoCategory = new TreeMap<>(todoCategory);
+
+            return ResponseEntity.ok(sortedTodoCategory);
+        } catch (Exception e) {
+            log.error("Error while fetching todos", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
 
     @PostMapping
     public ResponseEntity<TodoDTO> addTodo(@Valid @RequestBody TodoDTO todo) {
