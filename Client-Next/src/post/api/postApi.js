@@ -38,6 +38,15 @@ function call(api, method, request) {
     return Promise.reject(error);
   });
 }
+// // 로그인 함수
+// export function signin(userDTO) {
+//   return call("/auth/signin", "POST", userDTO);
+// }
+
+// // 회원가입 함수
+// export function signup(userDTO) {
+//   return call("/auth/signup", "POST", userDTO);
+// }
 
 // 게시글 생성 함수
 export function createPost(formData) {
@@ -119,7 +128,19 @@ export function likePost(id) {
   return call(`/posts/${id}/like`, "POST");
 }
 
-// 좋아요한 게시물 목록 조회 함수
+// 유저 게시물 목록 조회 함수
+export function authPostListView() {
+  return call("/posts/me", "GET")
+    .then(response => {
+      console.log('Fetched liked posts:', response);
+      return response;
+    })
+    .catch(error => {
+      console.error('Error fetching liked posts:', error);
+      throw error;
+    });
+}
+
 
 // 좋아요한 게시글 목록 조회 함수
 export function toriBoxSelectAll() {

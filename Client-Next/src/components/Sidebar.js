@@ -131,10 +131,11 @@ const Sidebar = ({ isOpen, onToggle }) => {
     }
   };
   const menuItems = [
+    { href: '/profile', label: 'Profile' },
     { href: '/posts', label: 'Posts' },
     { href: '/todo', label: 'Todo' },
-    { href: '/toribox', label: 'Toribox' },
-    { href: '/settings', label: 'Settings' },
+    { href: '/bookmark', label: 'Bookmark' },
+    { href: '/setting', label: 'Settings' },
   ];
 
   

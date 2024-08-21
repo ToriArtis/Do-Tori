@@ -7,6 +7,7 @@ import { API_BASE_URL } from '@/config/app-config';
 import { ToriboxView } from '../../post/views/toriboxView';
 import { useRouter } from 'next/router';
 import Sidebar from '@/components/Sidebar';
+import { AuthPostListView } from '../../post/views/authPostListView';
 
 export default function ProfileView() {
   const userInfo = useInfoViewModel();
@@ -238,7 +239,7 @@ export default function ProfileView() {
         <div className="tab-content">
           {activeTab === 'posts' ? (
             <div>
-              {/* 작성글 목록 표시 */}
+              <AuthPostListView />
 
             </div>
           ) : (
