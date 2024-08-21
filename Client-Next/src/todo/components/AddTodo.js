@@ -1,4 +1,5 @@
 import React from 'react';
+import './css/AddTodo.css';
 
 class AddTodo extends React.Component {
     constructor(props) {
@@ -50,8 +51,8 @@ class AddTodo extends React.Component {
     render() {
         const { content, category } = this.state.item;
         return (
-            <form onSubmit={this.handleSubmit}>
-                <select name="category" value={category} onChange={this.handleChange} className="form-control" style={{ width: "18%" }}>
+            <form onSubmit={this.handleSubmit} class="selectBox">
+                <select name="category" value={category} onChange={this.handleChange} className="form-control select">
                     <option value="No category">No category</option>
                     <option value="Schedule">Schedule</option>
                     <option value="Study">Study</option>
@@ -62,9 +63,10 @@ class AddTodo extends React.Component {
                     name="content"
                     value={content}
                     onChange={this.handleChange}
+                    className="addTodoText"
                     placeholder="Add todo"
                 />
-                <button type="submit" style={{ marginLeft: "10px", border: "none", background: "white", cursor: "pointer" }}>➕</button>
+                <button type="submit" style={{ marginLeft: "10px", border: "none", background: "white", cursor: "pointer", float: "right"}}>➕</button>
             </form>
         );
     }

@@ -1,0 +1,47 @@
+.selectBox {
+    position: relative;
+    width: auto;
+    height: 35px;
+    border-bottom: 2px solid black;
+  }
+  .selectBox .select {
+    width: inherit;
+    height: inherit;
+    background: transparent;
+    border: 0 none;
+    outline: 0 none;
+    padding: 0 5px;
+    position: relative;
+    z-index: 3;
+  }
+  .selectBox .select option {
+    background: #fff;
+    color: #000;
+    padding: 3px 0;
+    font-size: 16px;
+    text-align: center;
+  }
+  .selectBox .icoArrow {
+    position: absolute; 
+    top: 0; 
+    right: 0; 
+    z-index: 1; 
+    width: 35px; 
+    height: inherit;
+    border-left: 2px solid lightcoral;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  
+  .selectBox .select:focus + .icoArrow img {
+    transform: rotate(180deg);
+  }
+
+
+  .addTodoText {
+    
+    border: none;
+    width: 350px;
+  }
