@@ -77,7 +77,6 @@ export default function PostListView() {
         }, 10000);
     
         return () => clearInterval(intervalId);
-        fetchFollowingUsers().then(users => setFollowingUsers(users));
     }, [loadPosts]);
 
     const handleLike = async (postId, isLiked, likeCount) => {

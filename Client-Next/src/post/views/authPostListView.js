@@ -1,33 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { toriBoxSelectAll, likePost, bookmarkPost, createComment } from '../api/postApi';
+import { authPostListView, likePost, bookmarkPost, createComment } from '../api/postApi';
 import PostList from '../components/postList';
 import styled from 'styled-components';
 import useInfoViewModel from '../../auth/viewmodels/useInfoViewModel';
 
-const ToriboxContainer = styled.div`
+const UserPostsContainer = styled.div`
   width: 80%;
   margin: 0 auto;
   padding: 20px;
 `;
 
 
-const ToriboxView = () => {
-    const [likedPosts, setLikedPosts] = useState([]);
-    const userInfo = useInfoViewModel();  // useInfoViewModel 사용
+const AuthPostListView = () => {
+    const [userPosts, setUserPost] = useState([]);
+    const userInfo = useInfoViewModel();  
     
     useEffect(() => {
         if (userInfo.id) {
-          fetchLikedPosts();
+          fetchUserPosts();
         }
       }, [userInfo.id]);
   
-      const fetchLikedPosts = async () => {
+
+      const fetchUserPosts = async () => {
         try {
-          const posts = await toriBoxSelectAll();
+          // 해당 부분 수정하기
+          const posts = await authPostListView(); 
+
           console.log('Fetched liked posts:', posts);
-          setLikedPosts(posts);
+
+          setUserPost(posts);
+
         } catch (error) {
-          console.error('좋아요한 게시물을 불러오는데 실패했습니다:', error);
+          console.error('유저 게시물을 불러오는데 실패했습니다:', error);
+
         }
       };
   
@@ -38,7 +44,7 @@ const ToriboxView = () => {
     const handleLike = async (postId) => {
       try {
         const result = await likePost(postId);
-        setLikedPosts(prevPosts =>
+        setUserPost(prevPosts =>
           prevPosts.map(post =>
             post.pid === postId
               ? { ...post, liked: result.isLiked, toriBoxCount: result.likeCount }
@@ -53,7 +59,7 @@ const ToriboxView = () => {
     const handleBookmark = async (postId) => {
       try {
         const result = await bookmarkPost(postId);
-        setLikedPosts(prevPosts =>
+        setUserPost(prevPosts =>
           prevPosts.map(post =>
             post.pid === postId
               ? { ...post, bookmarked: result.isBookmarked, bookmarkCount: result.bookmarkCount }
@@ -75,17 +81,17 @@ const ToriboxView = () => {
     };
   
     return (
-      <ToriboxContainer>
+      <UserPostsContainer>
         <PostList 
-          posts={likedPosts}
+          posts={userPosts}
           onPostUpdated={handlePostUpdated}
           onLike={handleLike}
           onBookmark={handleBookmark}
           onComment={handleComment}
         />
-      </ToriboxContainer>
+      </UserPostsContainer>
     );
   };
 
-export { ToriboxView }; 
-export default ToriboxView;
+export { AuthPostListView }; 
+export default AuthPostListView;

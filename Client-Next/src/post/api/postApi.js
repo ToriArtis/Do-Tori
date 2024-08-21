@@ -128,7 +128,19 @@ export function likePost(id) {
   return call(`/posts/${id}/like`, "POST");
 }
 
-// 좋아요한 게시물 목록 조회 함수
+// 유저 게시물 목록 조회 함수
+export function authPostListView() {
+  return call("/posts/me", "GET")
+    .then(response => {
+      console.log('Fetched liked posts:', response);
+      return response;
+    })
+    .catch(error => {
+      console.error('Error fetching liked posts:', error);
+      throw error;
+    });
+}
+
 
 // 좋아요한 게시글 목록 조회 함수
 export function toriBoxSelectAll() {
