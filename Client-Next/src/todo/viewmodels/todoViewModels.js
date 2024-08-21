@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { callApi, TodoModel } from "../models/todoModels";
+import todoModels, { callApi, TodoModel } from "../models/todoModels";
 
 export function useTodoViewModel() {
     const [items, setItems] = useState({});
@@ -25,7 +25,22 @@ export function useTodoViewModel() {
 
     const addTodo = async (item) => {
         try {
-            await callApi("/todo", "POST", item);
+             // Adjust the category handling
+            const category = item.category ? item.category : "no category";
+
+            // Adjust the time (adding 9 hours)
+            const todoDate = new Date(item.todoDate);
+            todoDate.setHours(todoDate.getHours() + 9);
+
+            // Create the new TodoModel
+            const itemTodo = new TodoModel(
+                item.id,
+                item.content,
+                category,
+                item.done,
+                todoDate
+            );
+            await callApi("/todo", "POST", itemTodo);
             fetchTodos();
         } catch (error) {
             console.error("Failed to add todo:", error);

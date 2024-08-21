@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useTheme } from '../components/ThemeContext';
+import { useRouter } from 'next/router';
 
 const SidebarContainer = styled.div`
   position: fixed;
@@ -9,7 +10,7 @@ const SidebarContainer = styled.div`
   left: ${props => props.isOpen ? '0' : '-250px'};
   width: 250px;
   height: 100vh;
-  background-color: ${props => props.isDarkMode ? '#1e1e1e' : '#f0f0f0'};
+  background-color: ${props => props.isDarkMode ? '#4A463F' : '#CCBFB2'};
   color: ${props => props.isDarkMode ? '#ffffff' : '#333333'};
   transition: all 0.2s ease-in-out;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
@@ -32,33 +33,50 @@ const MenuTitle = styled.h2`
 const StyledLink = styled.a`
   display: block;
   padding: 15px 0;
-  color: inherit;
-  text-decoration: none;
+  color: ${props => props.isDarkMode ? '#ffffff' : '#333333'};
   font-size: 18px;
   transition: all 0.2s ease;
 
+  text-decoration: none;  
   &:hover {
     transform: translateX(10px);
-    color: ${props => props.isDarkMode ? '#64ffda' : '#0070f3'};
+    color: ${props => props.isDarkMode ? '#f5f5f5' : '#3f3f3f'};
+    text-decoration: none;  
   }
 `;
 
+
 const ToggleButton = styled.button`
-  padding: 15px;
-  background-color: ${props => props.isDarkMode ? '#64ffda' : '#0070f3'};
-  color: ${props => props.isDarkMode ? '#000000' : '#ffffff'};
+  background: none;
   border: none;
-  border-radius: 5px;
   cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s ease;
-  margin-bottom: 15%; // 메뉴 항목과의 간격 조정
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  transition: background-color 0.3s;
 
   &:hover {
+    background-color: ${props => props.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'};
+  }
+`;
+
+const LoginLogoutButton = styled(StyledLink)`
+  margin-bottom: 20px;
+  text-align: center;
+  background-color: ${props => props.isDarkMode ? '#64ffda' : '#0070f3'};
+  color: ${props => props.isDarkMode ? '#333333' : '#ffffff'};
+  border-radius: 5px;
+  padding: 10px 0;
+
+  &:hover {
+    transform: none;
     opacity: 0.9;
   }
 `;
-
 
 const SidebarToggle = styled.button`
   position: fixed;
@@ -83,36 +101,66 @@ const SidebarToggle = styled.button`
     background-color: ${props => props.isDarkMode ? '#2e2e2e' : '#e0e0e0'};
   }
 `;
+
+const ToggleImage = styled.img`
+  width: 20px;
+  height: 20px;
+`;
+
+
 const Sidebar = ({ isOpen, onToggle }) => {
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const [isLogin, setIsLogin] = useState(false);
+  const router = useRouter();
 
+  useEffect(() => {
+    if (localStorage.getItem('ACCESS_TOKEN') || localStorage.getItem('REFRESH_TOKEN') === 'true') {
+      setIsLogin(true);
+    }
+
+  }, []);
+
+  const handleLoginLogout = () => {
+    if (isLogin) {
+      localStorage.setItem('isLoggedIn', 'false');
+      setIsLogin(false);
+      router.push('/');
+    } else {
+      // 로그인 페이지로 이동
+      router.push('/login');
+    }
+  };
+  const menuItems = [
+    { href: '/posts', label: 'Posts' },
+    { href: '/todo', label: 'Todo' },
+    { href: '/toribox', label: 'Toribox' },
+    { href: '/settings', label: 'Settings' },
+  ];
+
+  
   return (
     <>
       <SidebarContainer isOpen={isOpen} isDarkMode={isDarkMode}>
         <SidebarContent>
-          <MenuTitle>메뉴</MenuTitle>
-          
-          <Link href="/login" passHref>
-            <StyledLink isDarkMode={isDarkMode}>Login</StyledLink>
-          </Link>
-          <Link href="/posts" passHref>
-            <StyledLink isDarkMode={isDarkMode}>Posts</StyledLink>
-          </Link>
-          <Link href="/todo" passHref>
-            <StyledLink isDarkMode={isDarkMode}>Todo</StyledLink>
-          </Link>
-          <Link href="/bookmark" passHref>
-            <StyledLink isDarkMode={isDarkMode}>Bookmark</StyledLink>
-          </Link>
-          <Link href="/toribox" passHref>
-            <StyledLink isDarkMode={isDarkMode}>Toribox</StyledLink>
-          </Link>
-          <Link href="/settings" passHref>
-            <StyledLink isDarkMode={isDarkMode}>Settings</StyledLink>
-          </Link>
+          <MenuTitle><img src='/dotori.png' alt="Dotori" width="auto" /></MenuTitle>
+
+          <StyledLink onClick={handleLoginLogout} isDarkMode={isDarkMode} isLoginButton>
+            {isLogin ? 'Logout' : 'Login'}
+          </StyledLink>
+
+          {menuItems.map((item) => (
+            router.pathname !== item.href && (
+              <Link href={item.href} passHref key={item.href} style={{ textDecoration: 'none' }}>
+                <StyledLink isDarkMode={isDarkMode}>{item.label}</StyledLink>
+              </Link>
+            )
+          ))}
           
           <ToggleButton onClick={toggleDarkMode} isDarkMode={isDarkMode}>
-            {isDarkMode ? '라이트 모드' : '다크 모드'}로 전환
+            <ToggleImage
+              src={isDarkMode ? '/moon.png' : '/moon.png'}
+              alt={isDarkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}
+            />
           </ToggleButton>
         </SidebarContent>
       </SidebarContainer>

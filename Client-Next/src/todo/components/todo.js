@@ -53,10 +53,12 @@ class Todo extends React.Component {
                     onClick={this.offReadOnlyMode}
                     onChange={this.editEventHandler}
                     onKeyPress={this.enterkeyEventHandler}
+                    style={{ display: "none" }}
                 />
                 <Checkbox
                     checked={item.done}
                     onChange={this.checkboxEventHandler}
+                    style={{float: "left"}}
                 />
                 <ListItemText>
                     <InputBase
@@ -70,7 +72,7 @@ class Todo extends React.Component {
                         onChange={this.editEventHandler}
                         onKeyPress={this.enterkeyEventHandler}
                     />
-                    <p>{item.todoDate}</p>
+                    <p style={{display: 'none'}}>{item.todoDate}</p>
                 </ListItemText>
                 <ListItemSecondaryAction>
                     <IconButton aria-label="Delete Todo" onClick={this.deleteEventHandler}>
