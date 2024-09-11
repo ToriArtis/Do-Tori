@@ -6,6 +6,14 @@
   margin-bottom: 20px;
 }
 
+.post-create-card .text-area {
+  width: 100%;
+  border: none;
+  resize: none;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
 .user-info {
   display: flex;
   align-items: center;
@@ -20,17 +28,8 @@
   margin-right: 10px;
 }
 
-.text-area {
-  width: 100%;
-  border: none;
-  resize: none;
-  font-size: 14px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
 .tag-input {
-  width: 100%;
+  width: 30%;
   border: none;
   font-size: 14px;
   margin-bottom: 10px;
@@ -40,6 +39,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 12px;
 }
 
 .image-label {
@@ -62,9 +63,9 @@
   color: #000;
   border: none;
   border-radius: 10px;
-  padding: 8px 16px;
   cursor: pointer;
   transition: 0.3s all;
+  padding: 8px 16px;
 }
 
 .submit-button:hover {
@@ -107,4 +108,106 @@
   position: relative;
   z-index: 1;
   font-size: 12px;
+}
+
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-preview-wrapper {
+  position: relative;
+}
+
+.image-preview {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.image-preview-wrapper button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.tag {
+  background-color: #f1f1f1;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #1da1f2;
+  display: flex;
+  align-items: center;
+}
+
+.tag button {
+  background: none;
+  border: none;
+  color: #657786;
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.image-label {
+  cursor: pointer;
+  color: #1da1f2;
+}
+
+.image-input {
+  display: none;
+}
+
+.tag-input {
+  flex-grow: 1;
+  margin: 0 10px;
+  padding: 5px;
+  border: 1px solid #e1e8ed;
+  border-radius: 4px;
+}
+
+.post-content {
+  white-space: pre-wrap;
+}
+
+.mention-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mention-list li {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.mention-list li:hover, .mention-list li.selected {
+  background-color: #f0f0f0;
+  text-decoration: underline;
 }

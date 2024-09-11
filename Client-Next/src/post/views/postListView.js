@@ -1,25 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchPosts, fetchPopularPosts, likePost, bookmarkPost, fetchFollowingPosts, searchPosts, followUser, unfollowUser } from '../api/postApi';
+import { fetchPosts, fetchPopularPosts, fetchFollowingPosts, searchPosts, followUser, unfollowUser, fetchFollowingUsers } from '../api/postApi';
 import PostCreateBox from '../components/postCreateBox';
-import PostItem from '../components/postItem';
-import PopularPosts from '../components/popularPosts';
-import Sidebar from '../../components/Sidebar';
 import PostList from '../components/postList';
+import PopularPosts from '../components/popularPosts';
+import Sidebar from '@/components/Sidebar';
 import Link from 'next/link';
-import SearchIcon from '@mui/icons-material/Search';
+import SearchComponent from '../components/searchComponent';
+import { usePostActions } from '../hooks/usePostActions';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { format } from 'date-fns';
 import './css/postListView.css';
-import { getItem } from '@/auth/utils/storage';
 
 export default function PostListView() {
     const [posts, setPosts] = useState([]);
     const [popularPosts, setPopularPosts] = useState([]);
-    const [currentUser, setCurrentUser] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [searchType, setSearchType] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [viewMode, setViewMode] = useState('all'); // 'all' or 'following'
-
+    const [viewMode, setViewMode] = useState('all');
     const [followingUsers, setFollowingUsers] = useState([]);
+
+    const [, updateState] = useState();
+    const forceUpdate = useCallback(() => updateState({}), []);
+
+    const { handleLike, handleBookmark, handleComment, error } = usePostActions();
+    const { currentUser, isAuthenticated } = useAuth();
 
     const loadPosts = useCallback(async () => {
         try {
@@ -43,62 +48,45 @@ export default function PostListView() {
 
     const handleSearch = useCallback(async () => {
         try {
-          console.log('Search params:', { types: searchType, keyword: searchKeyword });
-          const searchResults = await searchPosts(searchType === 'all' ? ['c', 'w', 't'] : [searchType], searchKeyword);
-          console.log('Search API response:', searchResults);
-          const processedPosts = searchResults.content.map(post => ({
-            ...post,
-            thumbnails: post.thumbnail ? [post.thumbnail] : [],
-            tags: post.tags || [],
-            toriBoxCount: post.toriBoxCount || 0,
-            commentCount: post.commentCount || 0,
-            bookmarkCount: post.bookmarkCount || 0,
-          }));
-          setPosts(processedPosts);
+            const searchResults = await searchPosts(searchType === 'all' ? ['c', 'w', 't'] : [searchType], searchKeyword);
+            const processedPosts = searchResults.content.map(post => ({
+                ...post,
+                thumbnails: post.thumbnail ? [post.thumbnail] : [],
+                tags: post.tags || [],
+                toriBoxCount: post.toriBoxCount || 0,
+                commentCount: post.commentCount || 0,
+                bookmarkCount: post.bookmarkCount || 0,
+            }));
+            setPosts(processedPosts);
         } catch (error) {
-          console.error("게시물 검색 중 오류 발생:", error);
+            console.error("게시물 검색 중 오류 발생:", error);
         }
-      }, [searchType, searchKeyword]);
+    }, [searchType, searchKeyword]);
 
     useEffect(() => {
-        // const token = localStorage.getItem('ACCESS_TOKEN');
-        // const userId = localStorage.getItem('USER_ID');
-        // const userNickName = localStorage.getItem('USER_NICKNAME');
-        const token = getItem('ACCESS_TOKEN');
-        const userId = getItem('USER_ID');
-        const userNickName = getItem('USER_NICKNAME');
-        setCurrentUser(token ? { id: userId, nickName: userNickName } : null);
-    
+        const loadFollowingUsers = async () => {
+            if (isAuthenticated) {
+                try {
+                    const users = await fetchFollowingUsers();
+                    setFollowingUsers(users);
+                } catch (error) {
+                    console.error('팔로잉 목록 로드 실패:', error);
+                }
+            }
+        };
+        loadFollowingUsers();
+    }, [isAuthenticated]);
+
+    useEffect(() => {
         loadPosts();
         loadPopularPosts();
-    
+
         const intervalId = setInterval(() => {
-          loadPopularPosts();
+            loadPopularPosts();
         }, 10000);
-    
+
         return () => clearInterval(intervalId);
     }, [loadPosts]);
-
-    const handleLike = async (postId, isLiked, likeCount) => {
-        setPosts(posts.map(post => 
-            post.pid === postId 
-                ? { ...post, liked: isLiked, toriBoxCount: likeCount }
-                : post
-        ));
-    };
-
-    const handleBookmark = async (postId, isBookmarked, bookmarkCount) => {
-        setPosts(posts.map(post => 
-            post.pid === postId 
-                ? { ...post, bookmarked: isBookmarked, bookmarkCount: bookmarkCount }
-                : post
-        ));
-    };
-
-    const handleComment = (postId, content) => {
-        // 여기에 댓글 작성 API 호출 로직을 추가하세요
-        console.log(`댓글 작성: 게시글 ID ${postId}, 내용: ${content}`);
-    };
 
     const onPostUpdated = useCallback(() => {
         loadPosts();
@@ -108,27 +96,61 @@ export default function PostListView() {
         setViewMode(mode);
     };
 
-    const isFollowing = (userId) => {
-        return followingUsers.some(user => user.userId === userId);
-      };
+    const isFollowing = useCallback((userId) => {
+        return followingUsers.some(user => user.userId.toString() === userId.toString());
+    }, [followingUsers]);
 
     const handleToggleFollow = async (userId) => {
-        try {
-          if (isFollowing(userId)) {
-            await unfollowUser(userId);
-            setFollowingUsers(followingUsers.filter(user => user.userId !== userId));
-          } else {
-            await followUser(userId);
-            const newFollowingUser = await getUserInfo(userId);
-            setFollowingUsers([...followingUsers, newFollowingUser]);
-          }
-        } catch (error) {
-          console.error('팔로우/언팔로우 처리 실패:', error);
-          alert('서버 오류로 인해 팔로우/언팔로우 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        if (!isAuthenticated) {
+            alert("로그인이 필요합니다.");
+            return;
         }
-      };
+        if (currentUser.id.toString() === userId.toString()) {
+            alert("자기 자신을 팔로우/언팔로우할 수 없습니다.");
+            return;
+        }
+        try {
+            const isCurrentlyFollowing = isFollowing(userId);
+            let result;
+            if (isCurrentlyFollowing) {
+                result = await unfollowUser(userId);
+            } else {
+                result = await followUser(userId);
+            }
+            
+            if (result.success) {
+                setFollowingUsers(prev => 
+                    isCurrentlyFollowing
+                        ? prev.filter(user => user.userId.toString() !== userId.toString())
+                        : [...prev, { userId: userId.toString() }]
+                );
+                
+                setPosts(prevPosts => 
+                    prevPosts.map(post => 
+                        post.aid.toString() === userId.toString()
+                            ? { ...post, isFollowing: !isCurrentlyFollowing } 
+                            : post
+                    )
+                );
+                
+                console.log(isCurrentlyFollowing ? '언팔로우 성공' : '팔로우 성공');
+            } else {
+                throw new Error(isCurrentlyFollowing ? '언팔로우 처리에 실패했습니다.' : '팔로우 처리에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('팔로우/언팔로우 처리 실패:', error);
+            alert(`팔로우/언팔로우 처리에 실패했습니다: ${error.message}`);
+        }
+    };
+    
 
-      return (
+    const formatDate = (dateString) => {
+        if (!dateString) return '날짜 없음';
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? '날짜 없음' : format(date, 'yyyy. MM. dd. HH:mm:ss');
+    };
+
+    return (
         <div className="post-list-view-container">
             <Sidebar 
                 isOpen={isSidebarOpen} 
@@ -142,7 +164,7 @@ export default function PostListView() {
                     </Link>
                 </div>
                 
-                <PostCreateBox onPostCreated={loadPosts} />
+                {isAuthenticated && <PostCreateBox onPostCreated={loadPosts} />}
 
                 <div className="view-buttons">
                     <button 
@@ -151,49 +173,51 @@ export default function PostListView() {
                     >
                         모든 글 보기
                     </button>
-                    <button 
-                        onClick={() => setPostsView('following')} 
-                        className={`view-button ${viewMode === 'following' ? 'active' : ''}`}
-                    >
-                        팔로잉 게시글 모아보기
-                    </button>
+                    {isAuthenticated && (
+                        <button 
+                            onClick={() => setPostsView('following')} 
+                            className={`view-button ${viewMode === 'following' ? 'active' : ''}`}
+                        >
+                            팔로잉 게시글 모아보기
+                        </button>
+                    )}
                 </div>
 
                 <PostList 
-                    posts={posts}
-                    onPostUpdated={onPostUpdated}
-                    onLike={handleLike}
-                    onBookmark={handleBookmark}
-                    onComment={handleComment}
-                    currentUser={currentUser}
-                    followingUsers={followingUsers}
-                    onToggleFollow={handleToggleFollow}
-                    isFollowing={isFollowing}
-                />
+                posts={posts}
+                onPostUpdated={onPostUpdated}
+                onLike={handleLike}
+                onBookmark={handleBookmark}
+                onComment={handleComment}
+                currentUser={currentUser}
+                onToggleFollow={handleToggleFollow}
+                isFollowing={isFollowing}
+                formatDate={formatDate}
+                renderPostHeader={(post) => (
+                    <PostHeader 
+                        key={`${post.pid}-${isFollowing(post.aid)}`}
+                        post={post}
+                        currentUser={currentUser}
+                        onToggleFollow={handleToggleFollow}
+                        isFollowing={isFollowing(post.aid)}
+                        showEditDeleteButtons={true}
+                        onMenuOpen={(e) => setAnchorEl(e.currentTarget)}
+                        anchorEl={anchorEl}
+                        onMenuClose={() => setAnchorEl(null)}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                    />
+                )}
+            />
             </div>
             <div className="side-content">
-                <div className="search-container">
-                    <select
-                        value={searchType}
-                        onChange={(e) => setSearchType(e.target.value)}
-                        className="search-category"
-                    >
-                        <option value="">전체</option>
-                        <option value="c">내용</option>
-                        <option value="w">작성자</option>
-                        <option value="t">태그</option>
-                    </select>
-                    <input
-                        type="text"
-                        value={searchKeyword}
-                        onChange={(e) => setSearchKeyword(e.target.value)}
-                        placeholder="검색"
-                        className="search-input"
-                    />
-                    <button onClick={handleSearch} className="search-button">
-                        <SearchIcon />
-                    </button>
-                </div>
+                <SearchComponent 
+                    searchType={searchType}
+                    setSearchType={setSearchType}
+                    searchKeyword={searchKeyword}
+                    setSearchKeyword={setSearchKeyword}
+                    handleSearch={handleSearch}
+                />
                 <div className="hot-posts">
                     <h2 className="hot-posts-title">HOT 게시물</h2>
                     <PopularPosts posts={popularPosts} />

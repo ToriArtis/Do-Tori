@@ -1,19 +1,26 @@
 .post-detail-container {
   display: flex;
   width: 100%;
-  justify-content: center;
+  justify-content: space-between;
   padding: 20px;
 }
 
-.main-content {
+/* .main-content {
   width: 60%;
   max-width: 800px;
   margin-right: 20px;
+} */
+.main-content {
+  width: 70%;
 }
 
-.side-content {
+/* .side-content {
   width: 30%;
   max-width: 300px;
+} */
+
+.side-content {
+  width: 25%;
 }
 
 .header {
@@ -31,6 +38,15 @@
 .go-dotori {
   text-decoration: none;
   color: #333;
+}
+
+.go-torest {
+  text-decoration: none;
+  color: #333
+}
+
+.go-torest:hover {
+  text-decoration: underline;
 }
 
 .post-content {
@@ -93,7 +109,6 @@
 
 .post-image {
   width: calc(25% - 7.5px);
-  height: 150px;
   object-fit: cover;
   border-radius: 8px;
 }
@@ -124,6 +139,8 @@
 
 .comments-section form {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 15px;
 }
 
@@ -134,19 +151,35 @@
   border-radius: 5px;
 }
 
+.comments-section>form>textarea {
+  width: 80%;
+  border: none;
+  resize: none;
+  font-size: 14px;
+}
+
+.comments-section>form>button {
+  width: 15%;
+  padding: 10px;
+}
+
 .comments-section button {
-  padding: 10px 15px;
+  padding: 10px 20px;
   background-color: #CCBFB2;
   color: white;
   border: none;
   border-radius: 5px;
-  margin-left: 10px;
   cursor: pointer;
+}
+
+.comments-section button:hover {
+  background-color: #967F7A;
 }
 
 .comment-item {
   border-bottom: 1px solid #eee;
   padding: 10px 0;
+  margin-left: 0;
 }
 
 .comment-item:last-child {
@@ -184,12 +217,6 @@
   cursor: pointer;
   font-size: 14px;
   margin-left: 10px;
-}
-
-.reply {
-  margin-left: 20px;
-  border-left: 2px solid #eee;
-  padding-left: 10px;
 }
 
 .reply-form {
@@ -247,4 +274,125 @@
 
 .image-upload-label input[type="file"] {
   display: none;
+}
+
+.replies {
+  padding-left: 10px;
+}
+
+.comment-item.reply {
+  margin-top: 10px;
+}
+
+.edit-form {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.edit-form textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 10px;
+  border: none;
+  background-color: #ffffff;
+  resize: vertical;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+.edit-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.edit-tags .tag {
+  background-color: #e0e0e0;
+  color: #333;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.edit-tags .tag button {
+  background: none;
+  border: none;
+  color: #666;
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+.edit-tags input {
+  flex-grow: 1;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.edit-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.edit-images > div {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.edit-images img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.edit-images button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.edit-form input[type="file"] {
+  margin-bottom: 15px;
+}
+
+.edit-form button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.edit-form button[type="submit"] {
+  background-color: #CCBFB2;
+  color: #fff;
+}
+
+.edit-form button[type="button"] {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.edit-form button:hover {
+  background-color: #967F7A;
+  color: #fff;
 }

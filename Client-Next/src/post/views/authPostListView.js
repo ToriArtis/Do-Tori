@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { authPostListView, likePost, bookmarkPost, createComment } from '../api/postApi';
+import { fetchUserPosts, likePost, bookmarkPost, createComment } from '../api/postApi';
 import PostList from '../components/postList';
 import styled from 'styled-components';
 import useInfoViewModel from '../../auth/viewmodels/useInfoViewModel';
+import { useAuth } from '@/auth/hooks/useAuth';
 
 const UserPostsContainer = styled.div`
   width: 80%;
@@ -12,86 +13,66 @@ const UserPostsContainer = styled.div`
 
 
 const AuthPostListView = () => {
-    const [userPosts, setUserPost] = useState([]);
-    const userInfo = useInfoViewModel();  
-    
-    useEffect(() => {
-        if (userInfo.id) {
-          fetchUserPosts();
-        }
-      }, [userInfo.id]);
-  
+  const [userPosts, setUserPosts] = useState([]);
+  const { currentUser } = useAuth();
 
-      const fetchUserPosts = async () => {
-        try {
-          // 해당 부분 수정하기
-          const posts = await authPostListView(); 
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserPostsData();
+    }
+  }, [currentUser]);
 
-          console.log('Fetched liked posts:', posts);
-
-          setUserPost(posts);
-
-        } catch (error) {
-          console.error('유저 게시물을 불러오는데 실패했습니다:', error);
-
-        }
-      };
-  
-    const handlePostUpdated = () => {
-      fetchLikedPosts();
-    };
-  
-    const handleLike = async (postId) => {
-      try {
-        const result = await likePost(postId);
-        setUserPost(prevPosts =>
-          prevPosts.map(post =>
-            post.pid === postId
-              ? { ...post, liked: result.isLiked, toriBoxCount: result.likeCount }
-              : post
-          )
-        );
-      } catch (error) {
-        console.error('좋아요 처리 실패:', error);
-      }
-    };
-  
-    const handleBookmark = async (postId) => {
-      try {
-        const result = await bookmarkPost(postId);
-        setUserPost(prevPosts =>
-          prevPosts.map(post =>
-            post.pid === postId
-              ? { ...post, bookmarked: result.isBookmarked, bookmarkCount: result.bookmarkCount }
-              : post
-          )
-        );
-      } catch (error) {
-        console.error('북마크 처리 실패:', error);
-      }
-    };
-  
-    const handleComment = async (postId, content) => {
-      try {
-        await createComment(postId, { content });
-        fetchLikedPosts();
-      } catch (error) {
-        console.error('댓글 작성 실패:', error);
-      }
-    };
-  
-    return (
-      <UserPostsContainer>
-        <PostList 
-          posts={userPosts}
-          onPostUpdated={handlePostUpdated}
-          onLike={handleLike}
-          onBookmark={handleBookmark}
-          onComment={handleComment}
-        />
-      </UserPostsContainer>
-    );
+  const fetchUserPostsData = async () => {
+    try {
+      const posts = await fetchUserPosts();
+      setUserPosts(posts);
+    } catch (error) {
+      console.error('사용자 게시물을 불러오는데 실패했습니다:', error);
+      setUserPosts([]);
+    }
   };
+
+  const handleLike = async (postId) => {
+    try {
+      await likePost(postId);
+      fetchUserPosts(); // 좋아요 후 목록 새로고침
+    } catch (error) {
+      console.error('좋아요 처리 실패:', error);
+    }
+  };
+
+  const handleBookmark = async (postId) => {
+    try {
+      await bookmarkPost(postId);
+      fetchUserPosts(); // 북마크 후 목록 새로고침
+    } catch (error) {
+      console.error('북마크 처리 실패:', error);
+    }
+  };
+
+  const handleComment = async (postId, content) => {
+    try {
+      await createComment(postId, { content });
+      fetchUserPosts(); // 댓글 작성 후 목록 새로고침
+    } catch (error) {
+      console.error('댓글 작성 실패:', error);
+    }
+  };
+
+  return (
+    <div className="auth-post-list-container">
+      <PostList 
+        posts={userPosts}
+        onPostUpdated={fetchUserPostsData}
+        onLike={handleLike}
+        onBookmark={handleBookmark}
+        onComment={handleComment}
+        currentUser={currentUser}
+        showEditDeleteMenu={true}
+      />
+    </div>
+  );
+};
 
 export { AuthPostListView }; 
 export default AuthPostListView;
