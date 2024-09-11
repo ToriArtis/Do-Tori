@@ -15,10 +15,15 @@ import java.net.URLEncoder;
 public class PageRequestDTO {
 
     @Builder.Default
+    private int page = 0;
+
+    @Builder.Default
     private int size = 10;
 
     private String type;
     private String keyword;
+
+    private Long lastCommentId;
 
     public String[] getTypes() {
         if(type == null || type.isEmpty()) {
@@ -27,8 +32,8 @@ public class PageRequestDTO {
         return type.split(",");
     }
 
-    public Pageable getPageable(String...props) {
-        return PageRequest.of(0, this.size, Sort.by(props).descending());
+    public Pageable getPageable(String... props) {
+        return PageRequest.of(page, size, Sort.by(props).descending());
     }
 
     private String link;

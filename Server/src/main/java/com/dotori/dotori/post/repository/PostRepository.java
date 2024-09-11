@@ -30,4 +30,6 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostSearch {
     List<Post> findByAuthIdIn(List<Long> userIds);
 
 //    List<Post> findByTagsName(String tagName);
+
+    List<Post> findByAuthIdInOrderByRegDateDesc(List<Long> userIds);
 }

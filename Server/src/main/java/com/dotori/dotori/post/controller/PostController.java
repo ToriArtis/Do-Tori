@@ -73,7 +73,7 @@ public class PostController {
     }
 
     // 게시글 수정 (작성자만 가능)
-    @PreAuthorize("isAuthenticated() and @postService.isCommentAuthor(#id)")
+    @PreAuthorize("isAuthenticated() and @postService.isPostAuthor(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<PostDTO> modifyPost(
             @PathVariable Long id,
@@ -92,11 +92,21 @@ public class PostController {
     }
 
     // 게시글 삭제 (작성자만 가능)
-    @PreAuthorize("isAuthenticated() and @postService.isCommentAuthor(#id)")
+    @PreAuthorize("isAuthenticated() and @postService.isPostAuthor(#id)")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
-        postService.deletePost(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Map<String, String>> deletePost(@PathVariable Long id) {
+        try {
+            postService.deletePost(id);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "게시글이 성공적으로 삭제되었습니다.");
+            log.info("게시글 삭제 성공: id = " + id);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "게시글 삭제 중 오류가 발생했습니다: " + e.getMessage());
+            log.error("게시글 삭제 실패: id = " + id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 
     // 게시글 좋아요 (로그인 필요)
@@ -166,8 +176,28 @@ public class PostController {
 
     // 댓글 목록 조회
     @GetMapping("/{postId}/comments")
-    public ResponseEntity<PageResponseDTO<CommentDTO>> listComments(@PathVariable Long postId, PageRequestDTO pageRequestDTO) {
-        return ResponseEntity.ok(postService.getListOfComment(postId, pageRequestDTO));
+    public ResponseEntity<PageResponseDTO<CommentDTO>> listComments(
+            @PathVariable Long postId,
+            @RequestParam(required = false) Long lastCommentId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("Fetching comments for postId: {}, lastCommentId: {}, page: {}, size: {}", postId, lastCommentId, page, size);
+
+        PageRequestDTO pageRequestDTO = PageRequestDTO.builder()
+                .page(page)
+                .size(size)
+                .lastCommentId(lastCommentId)
+                .build();
+
+        PageResponseDTO<CommentDTO> response = postService.getListOfComment(postId, pageRequestDTO);
+
+        if (response != null && response.getPostLists() != null) {
+            log.info("Fetched {} comments", response.getPostLists().size());
+        } else {
+            log.warn("Received null response or null postLists");
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     // 댓글 삭제 (작성자만 가능)

@@ -25,6 +25,9 @@ public class FollowController {
     public ResponseEntity<?> follow(@PathVariable Long userId) {
         try {
             Auth currentAuth = authService.getLoginUser();
+            if (currentAuth.getId().equals(userId)) {
+                return ResponseEntity.badRequest().body("{\"message\":\"자기 자신을 팔로우할 수 없습니다.\"}");
+            }
             followService.follow(currentAuth.getId(), userId);
             return ResponseEntity.ok().body("{\"message\":\"success\"}");
         } catch (BusinessLogicException e) {
@@ -36,10 +39,14 @@ public class FollowController {
 
     // 언팔로우
     @DeleteMapping("/{userId}")
-    public ResponseEntity<String> unfollow(@PathVariable Long userId) {
-        Auth currentAuth = authService.getLoginUser();  // 현재 로그인한 사용자 정보 가져오기
-        followService.unfollow(currentAuth.getId(), userId);
-        return ResponseEntity.ok("언팔로우 성공");
+    public ResponseEntity<?> unfollow(@PathVariable Long userId) {
+        try {
+            Auth currentAuth = authService.getLoginUser();
+            followService.unfollow(currentAuth.getId(), userId);
+            return ResponseEntity.ok().body("{\"message\":\"success\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"message\":\"서버 오류가 발생했습니다.\"}");
+        }
     }
 
     // 팔로워 목록 조회
