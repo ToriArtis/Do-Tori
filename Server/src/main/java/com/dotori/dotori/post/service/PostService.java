@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -219,24 +220,27 @@ public class PostService {
 
     @Transactional
     public void deletePost(Long id) {
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
+        try {
+            Post post = postRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
 
-        // 연관된 ToriBox 삭제
-        toriBoxRepository.deleteByPost(post);
+            // 연관된 ToriBox 삭제
+            toriBoxRepository.deleteByPost(post);
 
-        // 연관된 Bookmark 삭제
-        bookmarkRepository.deleteByPost(post);
+            // 연관된 Bookmark 삭제
+            bookmarkRepository.deleteByPost(post);
 
-        // 연관된 PostThumbnail 삭제
-        post.getThumbnails().clear();
+            // 연관된 PostThumbnail 삭제
+            post.getThumbnails().clear();
 
-        // 연관된 Tag 관계 제거
-        post.getTags().clear();
+            // 연관된 Tag 관계 제거
+            post.getTags().clear();
 
-        // 게시글 삭제 (이때 cascade 옵션에 의해 연관된 Comment도 함께 삭제됨)
-        postRepository.delete(post);
-
+            // 게시글 삭제 (이때 cascade 옵션에 의해 연관된 Comment도 함께 삭제됨)
+            postRepository.delete(post);
+        } catch (Exception e) {
+            throw new RuntimeException("게시글 삭제 중 오류 발생: " + e.getMessage(), e);
+        }
     }
 
     // 게시글 이미지 업로드
@@ -341,18 +345,33 @@ public class PostService {
     // Comment 기능
     // 댓글 목록 조회
     public PageResponseDTO<CommentDTO> getListOfComment(Long postId, PageRequestDTO pageRequestDTO) {
-        Pageable pageable = pageRequestDTO.getPageable("id");
-        Page<Comment> result = commentRepository.listOfPost(postId, pageable);
+        try {
+            log.info("Getting list of comments for postId: {}, page: {}, size: {}, lastCommentId: {}",
+                    postId, pageRequestDTO.getPage(), pageRequestDTO.getSize(), pageRequestDTO.getLastCommentId());
 
-        List<CommentDTO> dtoList = result.getContent().stream()
-                .map(this::convertToCommentDTO)
-                .collect(Collectors.toList());
+            Pageable pageable = pageRequestDTO.getPageable("id");
+            Page<Comment> result;
 
-        return PageResponseDTO.<CommentDTO>withAll()
-                .pageRequestDTO(pageRequestDTO)
-                .postLists(dtoList)
-                .total((int) result.getTotalElements())
-                .build();
+            if (pageRequestDTO.getLastCommentId() != null && pageRequestDTO.getLastCommentId() > 0) {
+                result = commentRepository.findCommentsAfter(postId, pageRequestDTO.getLastCommentId(), pageable);
+            } else {
+                result = commentRepository.findByPostPid(postId, pageable);
+            }
+
+            List<CommentDTO> dtoList = result.getContent().stream()
+                    .map(this::convertToCommentDTO)
+                    .collect(Collectors.toList());
+
+            return PageResponseDTO.<CommentDTO>withAll()
+                    .pageRequestDTO(pageRequestDTO)
+                    .postLists(dtoList)
+                    .total((int) result.getTotalElements())
+                    .realEnd(result.isLast())
+                    .build();
+        } catch (Exception e) {
+            log.error("Error occurred while getting list of comments", e);
+            throw e;
+        }
     }
 
     // 댓글 등록
@@ -456,18 +475,14 @@ public class PostService {
     public List<PostDTO> getPostsByFollowing() {
         Auth auth = getLoginUser();
 
-        // 사용자가 팔로잉한 사람들의 리스트 조회
         List<FollowDTO> followings = followService.getFollowings(auth.getId(), Pageable.unpaged()).getContent();
 
-        // 팔로잉한 사람들의 사용자 ID 리스트 추출
         List<Long> followingIds = followings.stream()
                 .map(FollowDTO::getUserId)
                 .collect(Collectors.toList());
 
-        // 팔로잉한 사람들이 작성한 게시글 리스트 조회
-        List<Post> posts = postRepository.findByAuthIdIn(followingIds);
+        List<Post> posts = postRepository.findByAuthIdInOrderByRegDateDesc(followingIds);
 
-        // 조회한 게시글 리스트를 PostDTO 리스트로 변환하여 반환
         return posts.stream()
                 .map(post -> convertToPostDTO(post, auth))
                 .collect(Collectors.toList());
