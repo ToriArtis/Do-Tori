@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { updatePost, deletePost, likePost, bookmarkPost, createComment, fetchComments, deleteComment } from '../api/postApi';
+import { updatePost, deletePost, createComment, fetchComments, deleteComment } from '../api/postApi';
 import { format } from 'date-fns';
 import { isEqual } from 'lodash';
-import { getItem } from '@/auth/utils/storage';
+import { usePostActions } from './usePostActions';
+import { useAuth } from '../../auth/hooks/useAuth';
 
 export default function usePostItem(post, onPostUpdated) {
   const [isDetailView, setIsDetailView] = useState(false);
@@ -15,22 +16,18 @@ export default function usePostItem(post, onPostUpdated) {
   const [newTag, setNewTag] = useState('');
   const [comments, setComments] = useState([]);
   const [replyingTo, setReplyingTo] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [totalComments, setTotalComments] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [commentSize, setCommentSize] = useState(10);
   const [postData, setPostData] = useState(post || {});
 
-  useEffect(() => {
-    // const userId = localStorage.getItem('USER_ID');
-    // const userNickName = localStorage.getItem('USER_NICKNAME');
-    const userId = getItem('USER_ID');
-    const userNickName = getItem('USER_NICKNAME');
-    setCurrentUser(userId ? { id: userId, nickName: userNickName } : null);
+  const { handleLike, handleBookmark, error } = usePostActions();
+  const { currentUser, isAuthenticated } = useAuth();
 
+  useEffect(() => {
     if (post) {
-        setPostData(post);
+      setPostData(post);
     }
   }, [post]);
 
@@ -69,9 +66,9 @@ export default function usePostItem(post, onPostUpdated) {
       }));
       
       const retainedImages = editImages.filter(image => typeof image === 'string');
-        if (retainedImages && retainedImages.length > 0) {
+      if (retainedImages && retainedImages.length > 0) {
         retainedImages.forEach(image => formData.append('retainedImages', image));
-        }
+      }
       
       editImages.forEach((image, index) => {
         if (image instanceof File) {
@@ -109,34 +106,6 @@ export default function usePostItem(post, onPostUpdated) {
       }
     }
     handleMenuClose();
-  };
-
-  const handleLike = async (e) => {
-    if (e) e.stopPropagation();
-    try {
-      const result = await likePost(postData.pid);
-      setPostData(prevPost => ({
-        ...prevPost,
-        liked: result.isLiked,
-        toriBoxCount: result.likeCount
-      }));
-    } catch (error) {
-      console.error('좋아요 처리 실패:', error);
-    }
-  };
-
-  const handleBookmark = async (e) => {
-    if (e) e.stopPropagation();
-    try {
-      const result = await bookmarkPost(postData.pid);
-      setPostData(prevPost => ({
-        ...prevPost,
-        bookmarked: result.isBookmarked,
-        bookmarkCount: result.bookmarkCount
-      }));
-    } catch (error) {
-      console.error('북마크 처리 실패:', error);
-    }
   };
 
   const handleLoadMore = () => {
@@ -181,30 +150,32 @@ export default function usePostItem(post, onPostUpdated) {
     }
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length + editImages.length > 4) {
-      alert('최대 4장의 이미지만 첨부할 수 있습니다.');
-      return;
-    }
-    setEditImages(prevImages => [...prevImages, ...files]);
-  };
-
-  const handleDeleteImage = async (index) => {
-    setEditImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleAddTag = (e) => {
-    if (e.key === 'Enter' && newTag.trim() !== '') {
-      if (!editTags.includes(newTag.trim())) {
-        setEditTags([...editTags, newTag.trim()]);
+  const handleImageOperations = {
+    upload: (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length + editImages.length > 4) {
+        alert('최대 4장의 이미지만 첨부할 수 있습니다.');
+        return;
       }
-      setNewTag('');
+      setEditImages(prevImages => [...prevImages, ...files]);
+    },
+    delete: (index) => {
+      setEditImages(prev => prev.filter((_, i) => i !== index));
     }
   };
 
-  const handleDeleteTag = (tagToDelete) => {
-    setEditTags(editTags.filter(tag => tag !== tagToDelete));
+  const handleTagOperations = {
+    add: (e) => {
+      if (e.key === 'Enter' && newTag.trim() !== '') {
+        if (!editTags.includes(newTag.trim())) {
+          setEditTags([...editTags, newTag.trim()]);
+        }
+        setNewTag('');
+      }
+    },
+    delete: (tagToDelete) => {
+      setEditTags(editTags.filter(tag => tag !== tagToDelete));
+    }
   };
 
   const handleMenuOpen = (event) => {
@@ -216,11 +187,11 @@ export default function usePostItem(post, onPostUpdated) {
     setAnchorEl(null);
   };
 
-  const formatDate = useCallback((dateString) => {
+  const formatDate = (dateString) => {
     if (!dateString) return '날짜 없음';
     const date = new Date(dateString);
     return isNaN(date.getTime()) ? '날짜 없음' : format(date, 'yyyy. MM. dd. HH:mm:ss');
-  }, []);
+  };
 
   const handleSearchResult = useCallback((searchResult) => {
     console.log('Raw search result:', searchResult);
@@ -272,10 +243,8 @@ export default function usePostItem(post, onPostUpdated) {
     handleComment,
     handleReply,
     handleDeleteComment,
-    handleImageUpload,
-    handleDeleteImage,
-    handleAddTag,
-    handleDeleteTag,
+    handleImageOperations,
+    handleTagOperations,
     handleMenuOpen,
     handleMenuClose,
     setEditContent,
@@ -284,6 +253,8 @@ export default function usePostItem(post, onPostUpdated) {
     setReplyingTo,
     setNewTag,
     formatDate,
-    handleSearchResult
+    handleSearchResult,
+    error,
+    isAuthenticated
   };
 }
